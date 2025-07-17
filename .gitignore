@@ -27,6 +27,7 @@ coverage.json
 
 # === Editor & OS ===
 .vscode/
+.github/
 .DS_Store
 Thumbs.db
 
