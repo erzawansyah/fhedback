@@ -14,8 +14,9 @@ A fully homomorphic encrypted questionnaire that keeps survey responses encrypte
 
 ## Initial Deployed Addresses (Sepolia Testnet)
 
-- **QuestionnaireFactory**: `0xe68204fb0Fe2Fc749f0563021F414fB4C3684C03`
+- **QuestionnaireFactory**: `0x1664D7F2E6E5af625F752cF2B49947A5F978AEab`
 - **FHEQuestionnaire**: `0x848B0066793BcC60346Da1F49049357399B8D595`
+- **Questionnaire**: `0xA1bB2c3D4e5F6a7B8C9d0E1F2a3B4C5D6E7F8G9H`
 
 ## Getting Started
 
