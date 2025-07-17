@@ -10,7 +10,7 @@ describe("Questionnaire", () => {
   let stranger: Signer; // non‑owner random
   let q: Questionnaire;
 
-  // Konfigurasi umum
+  // General configuration
   const title = "Kuesioner Penelitian";
   const scaleLimit = 5;
   const questionLimit = 3;

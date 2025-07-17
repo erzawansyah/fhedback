@@ -13,7 +13,7 @@ describe("FHEQuestionnaire", () => {
   let q: FHEQuestionnaire;
   let contractAddress: string;
 
-  // Konfigurasi umum
+  // General configuration
   const title = "Kuesioner Penelitian";
   const scaleLimit = 5;
   const questionLimit = 3;

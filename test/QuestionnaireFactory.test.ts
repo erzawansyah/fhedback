@@ -10,7 +10,7 @@ describe("QuestionnaireFactory", () => {
   let charlie: Signer;
   let factory: QuestionnaireFactory;
 
-  // Konfigurasi umum untuk testing
+  // General configuration for testing
   const title1 = "Kuesioner Penelitian 1";
   const title2 = "Kuesioner Penelitian 2";
   const title3 = "Kuesioner Penelitian 3";
