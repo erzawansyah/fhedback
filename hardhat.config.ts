@@ -28,8 +28,18 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      sepolia: vars.get("ETHERSCAN_API_KEY", ""),
+      sepolia: vars.get("SEPOLIA_BLOCKSCOUT_API_KEY", "xxxxxxxxxxxxxxxxx"),
     },
+    customChains: [
+      {
+        network: "sepolia",
+        chainId: 11155111,
+        urls: {
+          apiURL: "https://eth-sepolia.blockscout.com/api",
+          browserURL: "https://eth-sepolia.blockscout.com",
+        },
+      },
+    ],
   },
   gasReporter: {
     currency: "USD",
