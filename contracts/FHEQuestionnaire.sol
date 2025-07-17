@@ -19,7 +19,7 @@ contract FHEQuestionnaire is SepoliaConfig {
     uint256 private constant MAX_QUESTION_LIMIT = 20;
 
     /// @dev Enum representing the different states of a questionnaire lifecycle
-    enum QUESTIONNAIRE_STATUS {
+    enum QuestionnaireStatus {
         Initialized, // Questionnaire created but no questions added yet
         Draft, // Questions added but not published
         Published, // Live and accepting responses
@@ -48,7 +48,7 @@ contract FHEQuestionnaire is SepoliaConfig {
     uint256 public respondentLimit;
 
     /// @notice Current status of the questionnaire
-    QUESTIONNAIRE_STATUS public status;
+    QuestionnaireStatus public status;
 
     /// @notice Total number of questions currently in the questionnaire
     uint256 public totalQuestions;
@@ -119,7 +119,7 @@ contract FHEQuestionnaire is SepoliaConfig {
      * @dev Ensures that the function can only be executed when questionnaire status is Initialized
      */
     modifier onlyInitialized() {
-        if (status != QUESTIONNAIRE_STATUS.Initialized) {
+        if (status != QuestionnaireStatus.Initialized) {
             revert ERRORS.StatusNotInitialized();
         }
         _;
@@ -129,7 +129,7 @@ contract FHEQuestionnaire is SepoliaConfig {
      * @dev Ensures that the function can only be executed when questionnaire status is Draft
      */
     modifier onlyDraft() {
-        if (status != QUESTIONNAIRE_STATUS.Draft) {
+        if (status != QuestionnaireStatus.Draft) {
             revert ERRORS.StatusNotDraft();
         }
         _;
@@ -139,7 +139,7 @@ contract FHEQuestionnaire is SepoliaConfig {
      * @dev Ensures that the function can only be executed when questionnaire status is Published
      */
     modifier onlyPublished() {
-        if (status != QUESTIONNAIRE_STATUS.Published) {
+        if (status != QuestionnaireStatus.Published) {
             revert ERRORS.StatusNotPublished();
         }
         _;
@@ -149,7 +149,7 @@ contract FHEQuestionnaire is SepoliaConfig {
      * @dev Ensures that the function can only be executed when questionnaire status is Closed
      */
     modifier onlyClosed() {
-        if (status != QUESTIONNAIRE_STATUS.Closed) {
+        if (status != QuestionnaireStatus.Closed) {
             revert ERRORS.StatusNotClosed();
         }
         _;
@@ -159,7 +159,7 @@ contract FHEQuestionnaire is SepoliaConfig {
      * @dev Ensures that the questionnaire is not in trash status
      */
     modifier notInTrash() {
-        if (status == QUESTIONNAIRE_STATUS.Trashed) {
+        if (status == QuestionnaireStatus.Trashed) {
             revert ERRORS.QuestionnaireAlreadyDeleted();
         }
         _;
@@ -169,7 +169,7 @@ contract FHEQuestionnaire is SepoliaConfig {
      * @dev Ensures that the questionnaire is not closed
      */
     modifier notClosed() {
-        if (status == QUESTIONNAIRE_STATUS.Closed) {
+        if (status == QuestionnaireStatus.Closed) {
             revert ERRORS.QuestionnaireHasClosed();
         }
         _;
@@ -180,8 +180,8 @@ contract FHEQuestionnaire is SepoliaConfig {
      */
     modifier canDelete() {
         if (
-            status != QUESTIONNAIRE_STATUS.Initialized &&
-            status != QUESTIONNAIRE_STATUS.Draft
+            status != QuestionnaireStatus.Initialized &&
+            status != QuestionnaireStatus.Draft
         ) {
             revert ERRORS.CannotBeDeleted();
         }
@@ -198,11 +198,15 @@ contract FHEQuestionnaire is SepoliaConfig {
      * @param _respondentLimit The maximum number of respondents (must be > 0)
      */
     constructor(
+        address _owner,
         string memory _title,
         uint8 _scaleLimit,
         uint256 _questionLimit,
         uint256 _respondentLimit
     ) {
+        // Validate that owner address is not zero
+        if (_owner == address(0)) revert ERRORS.InvalidOwnerAddress();
+
         // Validate that title is not empty
         if (bytes(_title).length == 0) revert ERRORS.InvalidTitle();
 
@@ -217,12 +221,12 @@ contract FHEQuestionnaire is SepoliaConfig {
         if (_respondentLimit == 0) revert ERRORS.InvalidRespondentLimit();
 
         // Initialize contract state
-        owner = msg.sender;
+        owner = _owner;
         title = _title;
         scaleLimit = _scaleLimit;
         questionLimit = _questionLimit;
         respondentLimit = _respondentLimit;
-        status = QUESTIONNAIRE_STATUS.Initialized;
+        status = QuestionnaireStatus.Initialized;
 
         // Emit creation event
         emit EVENTS.QuestionnaireCreated(
@@ -299,7 +303,7 @@ contract FHEQuestionnaire is SepoliaConfig {
             addQuestion(_questions[i]);
         }
         // Change status to Draft after adding questions
-        status = QUESTIONNAIRE_STATUS.Draft;
+        status = QuestionnaireStatus.Draft;
     }
 
     /**
@@ -310,7 +314,7 @@ contract FHEQuestionnaire is SepoliaConfig {
         // Ensure questionnaire has at least one question
         if (totalQuestions == 0) revert ERRORS.MustHaveQuestions();
 
-        status = QUESTIONNAIRE_STATUS.Published;
+        status = QuestionnaireStatus.Published;
         emit EVENTS.QuestionnairePublished(block.timestamp);
     }
 
@@ -319,7 +323,7 @@ contract FHEQuestionnaire is SepoliaConfig {
      * @dev Can only be called by owner when questionnaire is Published
      */
     function closeQuestionnaire() external onlyOwner onlyPublished {
-        status = QUESTIONNAIRE_STATUS.Closed;
+        status = QuestionnaireStatus.Closed;
         emit EVENTS.QuestionnaireClosed(block.timestamp);
     }
 
@@ -328,7 +332,7 @@ contract FHEQuestionnaire is SepoliaConfig {
      * @dev Can only be called by owner when questionnaire is in Initialized or Draft state
      */
     function deleteQuestionnaire() external onlyOwner canDelete {
-        status = QUESTIONNAIRE_STATUS.Trashed;
+        status = QuestionnaireStatus.Trashed;
         emit EVENTS.QuestionnaireDeleted(block.timestamp);
     }
 
@@ -461,7 +465,7 @@ contract FHEQuestionnaire is SepoliaConfig {
 
         // Auto-close if respondent limit is reached
         if (totalRespondents >= respondentLimit) {
-            status = QUESTIONNAIRE_STATUS.Closed;
+            status = QuestionnaireStatus.Closed;
             emit EVENTS.QuestionnaireClosed(block.timestamp);
         }
     }
@@ -611,12 +615,12 @@ contract FHEQuestionnaire is SepoliaConfig {
 
     /**
      * @notice Returns the current status of the questionnaire
-     * @return currentStatus The current QUESTIONNAIRE_STATUS enum value
+     * @return currentStatus The current QuestionnaireStatus enum value
      */
     function getStatus()
         external
         view
-        returns (QUESTIONNAIRE_STATUS currentStatus)
+        returns (QuestionnaireStatus currentStatus)
     {
         return status;
     }

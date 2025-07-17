@@ -47,6 +47,7 @@ contract QuestionnaireFactory {
     ) external returns (address questionnaireAddr) {
         if (qType == QuestionnaireType.Public) {
             Questionnaire questionnaire = new Questionnaire(
+                msg.sender, // Owner is the creator
                 _title,
                 _scaleLimit,
                 _questionLimit,
@@ -55,6 +56,7 @@ contract QuestionnaireFactory {
             questionnaireAddr = address(questionnaire);
         } else if (qType == QuestionnaireType.Private) {
             FHEQuestionnaire questionnaire = new FHEQuestionnaire(
+                msg.sender, // Owner is the creator
                 _title,
                 _scaleLimit,
                 _questionLimit,

@@ -17,7 +17,7 @@ contract Questionnaire {
     uint256 private constant MAX_QUESTION_LIMIT = 20;
 
     /// @dev Enum representing the different states of a questionnaire lifecycle
-    enum QUESTIONNARIE_STATUS {
+    enum QuestionnaireStatus {
         Initialized, // Questionnaire created but no questions added yet
         Draft, // Questions added but not published
         Published, // Live and accepting responses
@@ -46,7 +46,7 @@ contract Questionnaire {
     uint256 public respondentLimit;
 
     /// @notice Current status of the questionnaire
-    QUESTIONNARIE_STATUS public status;
+    QuestionnaireStatus public status;
 
     /// @notice Total number of questions currently in the questionnaire
     uint256 public totalQuestions;
@@ -107,7 +107,7 @@ contract Questionnaire {
      * @dev Ensures that the function can only be executed when questionnaire status is Initialized
      */
     modifier onlyInitialized() {
-        if (status != QUESTIONNARIE_STATUS.Initialized) {
+        if (status != QuestionnaireStatus.Initialized) {
             revert ERRORS.StatusNotInitialized();
         }
         _;
@@ -117,7 +117,7 @@ contract Questionnaire {
      * @dev Ensures that the function can only be executed when questionnaire status is Draft
      */
     modifier onlyDraft() {
-        if (status != QUESTIONNARIE_STATUS.Draft) {
+        if (status != QuestionnaireStatus.Draft) {
             revert ERRORS.StatusNotDraft();
         }
         _;
@@ -127,7 +127,7 @@ contract Questionnaire {
      * @dev Ensures that the function can only be executed when questionnaire status is Published
      */
     modifier onlyPublished() {
-        if (status != QUESTIONNARIE_STATUS.Published) {
+        if (status != QuestionnaireStatus.Published) {
             revert ERRORS.StatusNotPublished();
         }
         _;
@@ -137,7 +137,7 @@ contract Questionnaire {
      * @dev Ensures that the function can only be executed when questionnaire status is Closed
      */
     modifier onlyClosed() {
-        if (status != QUESTIONNARIE_STATUS.Closed) {
+        if (status != QuestionnaireStatus.Closed) {
             revert ERRORS.StatusNotClosed();
         }
         _;
@@ -147,7 +147,7 @@ contract Questionnaire {
      * @dev Ensures that the questionnaire is not in trash status
      */
     modifier notInTrash() {
-        if (status == QUESTIONNARIE_STATUS.Trashed) {
+        if (status == QuestionnaireStatus.Trashed) {
             revert ERRORS.QuestionnaireAlreadyDeleted();
         }
         _;
@@ -157,7 +157,7 @@ contract Questionnaire {
      * @dev Ensures that the questionnaire is not closed
      */
     modifier notClosed() {
-        if (status == QUESTIONNARIE_STATUS.Closed) {
+        if (status == QuestionnaireStatus.Closed) {
             revert ERRORS.QuestionnaireHasClosed();
         }
         _;
@@ -168,8 +168,8 @@ contract Questionnaire {
      */
     modifier canDelete() {
         if (
-            status != QUESTIONNARIE_STATUS.Initialized &&
-            status != QUESTIONNARIE_STATUS.Draft
+            status != QuestionnaireStatus.Initialized &&
+            status != QuestionnaireStatus.Draft
         ) {
             revert ERRORS.CannotBeDeleted();
         }
@@ -186,11 +186,15 @@ contract Questionnaire {
      * @param _respondentLimit The maximum number of respondents (must be > 0)
      */
     constructor(
+        address _owner,
         string memory _title,
         uint8 _scaleLimit,
         uint256 _questionLimit,
         uint256 _respondentLimit
     ) {
+        // Validate that owner address is not zero
+        if (_owner == address(0)) revert ERRORS.InvalidOwnerAddress();
+
         // Validate that title is not empty
         if (bytes(_title).length == 0) revert ERRORS.InvalidTitle();
 
@@ -205,12 +209,12 @@ contract Questionnaire {
         if (_respondentLimit == 0) revert ERRORS.InvalidRespondentLimit();
 
         // Initialize contract state
-        owner = msg.sender;
+        owner = _owner;
         title = _title;
         scaleLimit = _scaleLimit;
         questionLimit = _questionLimit;
         respondentLimit = _respondentLimit;
-        status = QUESTIONNARIE_STATUS.Initialized;
+        status = QuestionnaireStatus.Initialized;
 
         // Emit creation event
         emit EVENTS.QuestionnaireCreated(
@@ -280,7 +284,7 @@ contract Questionnaire {
             addQuestion(_questions[i]);
         }
         // Change status to Draft after adding questions
-        status = QUESTIONNARIE_STATUS.Draft;
+        status = QuestionnaireStatus.Draft;
     }
 
     /**
@@ -291,7 +295,7 @@ contract Questionnaire {
         // Ensure questionnaire has at least one question
         if (totalQuestions == 0) revert ERRORS.MustHaveQuestions();
 
-        status = QUESTIONNARIE_STATUS.Published;
+        status = QuestionnaireStatus.Published;
         emit EVENTS.QuestionnairePublished(block.timestamp);
     }
 
@@ -300,7 +304,7 @@ contract Questionnaire {
      * @dev Can only be called by owner when questionnaire is Published
      */
     function closeQuestionnaire() external onlyOwner onlyPublished {
-        status = QUESTIONNARIE_STATUS.Closed;
+        status = QuestionnaireStatus.Closed;
         emit EVENTS.QuestionnaireClosed(block.timestamp);
     }
 
@@ -309,7 +313,7 @@ contract Questionnaire {
      * @dev Can only be called by owner when questionnaire is in Initialized or Draft state
      */
     function deleteQuestionnaire() external onlyOwner canDelete {
-        status = QUESTIONNARIE_STATUS.Trashed;
+        status = QuestionnaireStatus.Trashed;
         emit EVENTS.QuestionnaireDeleted(block.timestamp);
     }
 
@@ -388,7 +392,7 @@ contract Questionnaire {
 
         // Auto-close if respondent limit is reached
         if (totalRespondents >= respondentLimit) {
-            status = QUESTIONNARIE_STATUS.Closed;
+            status = QuestionnaireStatus.Closed;
             emit EVENTS.QuestionnaireClosed(block.timestamp);
         }
     }
@@ -531,12 +535,12 @@ contract Questionnaire {
 
     /**
      * @notice Returns the current status of the questionnaire
-     * @return currentStatus The current QUESTIONNARIE_STATUS enum value
+     * @return currentStatus The current QuestionnaireStatus enum value
      */
     function getStatus()
         external
         view
-        returns (QUESTIONNARIE_STATUS currentStatus)
+        returns (QuestionnaireStatus currentStatus)
     {
         return status;
     }

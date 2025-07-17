@@ -4,6 +4,7 @@ import { FHEQuestionnaire, FHEQuestionnaire__factory } from "../types";
 import { ContractFactory } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import * as hre from "hardhat";
+import { Address } from "hardhat-deploy/types";
 
 describe("FHEQuestionnaire", () => {
   let owner: HardhatEthersSigner;
@@ -34,13 +35,17 @@ describe("FHEQuestionnaire", () => {
   });
 
   const deploy = async (
+    _owner?: Address,
     ttl = title,
     scale = scaleLimit,
     qLimit = questionLimit,
     rLimit = respondentLimit,
     signer = owner,
   ) => {
+    const ownerAddress =
+      _owner === undefined ? await signer.getAddress() : _owner;
     const contract = await new FHEQuestionnaire__factory(signer).deploy(
+      ownerAddress,
       ttl,
       scale,
       qLimit,
@@ -73,38 +78,40 @@ describe("FHEQuestionnaire", () => {
       expect(await q.status()).to.equal(Status.Initialized);
     });
 
+    it("Gagal deploy: owner kosong", async () => {
+      await expect(
+        deploy("0x0000000000000000000000000000000000000000"),
+      ).to.be.revertedWithCustomError(factory, "InvalidOwnerAddress");
+    });
+
     it("Gagal deploy: judul kosong", async () => {
-      await expect(deploy("")).to.be.revertedWithCustomError(
+      await expect(deploy(owner.address, "")).to.be.revertedWithCustomError(
         factory,
         "InvalidTitle",
       );
     });
 
     it("Gagal deploy: scaleLimit di luar 2‑10", async () => {
-      await expect(deploy(title, 1)).to.be.revertedWithCustomError(
-        factory,
-        "InvalidScale",
-      );
-      await expect(deploy(title, 11)).to.be.revertedWithCustomError(
-        factory,
-        "InvalidScale",
-      );
+      await expect(
+        deploy(owner.address, title, 1),
+      ).to.be.revertedWithCustomError(factory, "InvalidScale");
+      await expect(
+        deploy(owner.address, title, 11),
+      ).to.be.revertedWithCustomError(factory, "InvalidScale");
     });
 
     it("Gagal deploy: questionLimit 0 atau > 20", async () => {
-      await expect(deploy(title, scaleLimit, 0)).to.be.revertedWithCustomError(
-        factory,
-        "InvalidQuestionLimit",
-      );
-      await expect(deploy(title, scaleLimit, 21)).to.be.revertedWithCustomError(
-        factory,
-        "InvalidQuestionLimit",
-      );
+      await expect(
+        deploy(owner.address, title, scaleLimit, 0),
+      ).to.be.revertedWithCustomError(factory, "InvalidQuestionLimit");
+      await expect(
+        deploy(owner.address, title, scaleLimit, 21),
+      ).to.be.revertedWithCustomError(factory, "InvalidQuestionLimit");
     });
 
     it("Gagal deploy: respondentLimit 0", async () => {
       await expect(
-        deploy(title, scaleLimit, questionLimit, 0),
+        deploy(owner.address, title, scaleLimit, questionLimit, 0),
       ).to.be.revertedWithCustomError(factory, "InvalidRespondentLimit");
     });
   });
@@ -314,7 +321,13 @@ describe("FHEQuestionnaire", () => {
       }
 
       // Create questionnaire with very small limit for testing
-      const limitedQ = await deploy(title, scaleLimit, questionLimit, 1); // limit to 1 respondent
+      const limitedQ = await deploy(
+        owner.address,
+        title,
+        scaleLimit,
+        questionLimit,
+        1,
+      ); // limit to 1 respondent
       await limitedQ.addQuestions(["Q1", "Q2"]);
       await limitedQ.publish();
 

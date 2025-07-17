@@ -39,6 +39,9 @@ library QuestionnaireErrors {
     /// Caller is not the owner.
     error OnlyOwner();
 
+    /// Caller is not the owner or a respondent.
+    error InvalidOwnerAddress();
+
     /* ------------------------------------------------------------------ */
     /* Metadata & configuration validation                                */
     /* ------------------------------------------------------------------ */

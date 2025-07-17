@@ -1,13 +1,14 @@
 import { ethers } from "hardhat";
 import { expect, assert } from "chai";
 import { Questionnaire, Questionnaire__factory } from "../types";
-import { ContractFactory, Signer } from "ethers";
+import { ContractFactory } from "ethers";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("Questionnaire", () => {
-  let owner: Signer;
-  let alice: Signer; // respondent1
-  let bob: Signer; // respondent2
-  let stranger: Signer; // non‑owner random
+  let owner: HardhatEthersSigner;
+  let alice: HardhatEthersSigner; // respondent1
+  let bob: HardhatEthersSigner; // respondent2
+  let stranger: HardhatEthersSigner; // non‑owner random
   let q: Questionnaire;
 
   // General configuration
@@ -31,6 +32,7 @@ describe("Questionnaire", () => {
   });
 
   const deploy = async (
+    _owner: string = owner.address,
     ttl = title,
     scale = scaleLimit,
     qLimit = questionLimit,
@@ -38,6 +40,7 @@ describe("Questionnaire", () => {
     signer = owner,
   ) => {
     return await new Questionnaire__factory(signer).deploy(
+      _owner,
       ttl,
       scale,
       qLimit,
@@ -68,38 +71,40 @@ describe("Questionnaire", () => {
       expect(await q.status()).to.equal(Status.Initialized);
     });
 
+    it("Gagal deploy: owner kosong", async () => {
+      await expect(
+        deploy("0x0000000000000000000000000000000000000000"),
+      ).to.be.revertedWithCustomError(factory, "InvalidOwnerAddress");
+    });
+
     it("Gagal deploy: judul kosong", async () => {
-      await expect(deploy("")).to.be.revertedWithCustomError(
+      await expect(deploy(owner.address, "")).to.be.revertedWithCustomError(
         factory,
         "InvalidTitle",
       );
     });
 
     it("Gagal deploy: scaleLimit di luar 2‑10", async () => {
-      await expect(deploy(title, 1)).to.be.revertedWithCustomError(
-        factory,
-        "InvalidScale",
-      );
-      await expect(deploy(title, 11)).to.be.revertedWithCustomError(
-        factory,
-        "InvalidScale",
-      );
+      await expect(
+        deploy(owner.address, title, 1),
+      ).to.be.revertedWithCustomError(factory, "InvalidScale");
+      await expect(
+        deploy(owner.address, title, 11),
+      ).to.be.revertedWithCustomError(factory, "InvalidScale");
     });
 
     it("Gagal deploy: questionLimit 0 atau > 20", async () => {
-      await expect(deploy(title, scaleLimit, 0)).to.be.revertedWithCustomError(
-        factory,
-        "InvalidQuestionLimit",
-      );
-      await expect(deploy(title, scaleLimit, 21)).to.be.revertedWithCustomError(
-        factory,
-        "InvalidQuestionLimit",
-      );
+      await expect(
+        deploy(owner.address, title, scaleLimit, 0),
+      ).to.be.revertedWithCustomError(factory, "InvalidQuestionLimit");
+      await expect(
+        deploy(owner.address, title, scaleLimit, 21),
+      ).to.be.revertedWithCustomError(factory, "InvalidQuestionLimit");
     });
 
     it("Gagal deploy: respondentLimit 0", async () => {
       await expect(
-        deploy(title, scaleLimit, questionLimit, 0),
+        deploy(owner.address, title, scaleLimit, questionLimit, 0),
       ).to.be.revertedWithCustomError(factory, "InvalidRespondentLimit");
     });
   });
