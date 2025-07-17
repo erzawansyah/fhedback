@@ -1,0 +1,6 @@
+{
+    "endOfLine": "auto",
+    "plugins": [
+        "prettier-plugin-solidity"
+    ]
+}

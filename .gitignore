@@ -1,0 +1,53 @@
+# === Project-specific ===
+fhevmTemp
+
+# === Node.js ===
+node_modules/
+*.log
+*.env
+
+# === Hardhat & Solidity ===
+artifacts/
+build/
+cache/
+coverage/
+deployments/
+
+# === TypeScript ===
+dist/
+types/
+*.tsbuildinfo
+
+# === Coverage ===
+.coverage_artifacts/
+.coverage_cache/
+.coverage_contracts/
+nyc_output/
+coverage.json
+
+# === Editor & OS ===
+.vscode/
+.DS_Store
+Thumbs.db
+
+# === Package manager ===
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
+.pnp.*
+
+# === Prettier & ESLint ===
+.prettierignore
+.eslintignore
+
+# === Temporary & Workflow ===
+tmp/
+workflows/*.tmp
+
+# === Deployment/test secrets ===
+secrets.json
+
+# === Hardhat/Solidity config ===
+.solcover.js
+.solhint.json
+.solhintignore
