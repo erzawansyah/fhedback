@@ -9,14 +9,14 @@ A fully homomorphic encrypted questionnaire that keeps survey responses encrypte
 ## Contracts
 
 - **QuestionnaireFactory**: Factory contract to deploy new questionnaires.
-- **FHEQuestionnaire**: Main FHE-powered questionnaire contract.
 - **Questionnaire**: Standard questionnaire contract without homomorphic encryption.
+- **FHEQuestionnaire**: Main FHE-powered questionnaire contract.
 
 ## Initial Deployed Addresses (Sepolia Testnet)
 
-- **QuestionnaireFactory**: `0x1664D7F2E6E5af625F752cF2B49947A5F978AEab`
-- **FHEQuestionnaire**: `0x848B0066793BcC60346Da1F49049357399B8D595`
-- **Questionnaire**: `0xA1bB2c3D4e5F6a7B8C9d0E1F2a3B4C5D6E7F8G9H`
+- **QuestionnaireFactory**: `0x4F8e940DdE65f95F3896E983240a3Be674Ad1854`
+- **Questionnaire**: `0x6f14f236474b711ea62c03c02bcfdcb5baa1e9e1`
+- **FHEQuestionnaire**: `0x4d7c43ed897a884ba7375458489da532fe2e3250`
 
 ## Getting Started
 
