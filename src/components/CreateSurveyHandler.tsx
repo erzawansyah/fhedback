@@ -6,7 +6,7 @@ import { Address } from "viem";
 import { useSignMessage, useAccount } from 'wagmi';
 import { verifySignature } from "@/utils/verifySignature";
 import { toast } from "sonner";
-import { CreateSurveyFormSchema } from "@/app/survey/create/page";
+import { CreateSurveyFormSchema } from "@/lib/schemas";
 import { createSurvey } from "@/utils/createSurvey";
 
 
@@ -105,7 +105,9 @@ export const CreateSurveyHandler: FC<CreateSurveyHandlerProps> = ({
     formValues,
     onComplete,
     newSurveyState: {
-        signed, setSigned, txHash, setTxHash
+        signed,
+        setSigned,
+        setTxHash
     }
 }) => {
     const [activeStep, setActiveStep] = useState(0);
@@ -153,7 +155,7 @@ export const CreateSurveyHandler: FC<CreateSurveyHandlerProps> = ({
                     throw new Error("Wallet not verified")
                 }
             } catch (error) {
-                const errorMessage = error ? error.toString() : "Failed to verify wallet"
+                const errorMessage = error instanceof Error ? error.message : "Failed to verify wallet"
                 toast.error(errorMessage)
                 handleStepError(0, errorMessage)
                 return "error"
@@ -179,18 +181,23 @@ export const CreateSurveyHandler: FC<CreateSurveyHandlerProps> = ({
                 )
                 if (txHashResult) {
                     toast.success("Transaction Submitted", {
-                        description: <p className="text-subtle text-xs">
-                            `Your transaction has been submitted.<br />
-                            <a href={`https://sepolia.etherscan.io/tx/${txHashResult}`} target="__blank">${txHashResult}</a>`
-                        </p>
+                        description: (
+                            <p className="text-subtle text-xs">
+                                Your transaction has been submitted.<br />
+                                <a href={`https://sepolia.etherscan.io/tx/${txHashResult}`} target="_blank" rel="noopener noreferrer">
+                                    {txHashResult}
+                                </a>
+                            </p>
+                        )
                     })
-                    setTxHash(txHash)
+                    setTxHash(txHashResult)
                     return "success"
                 } else {
                     throw new Error("Transaction failed to submit")
                 }
             } catch (error) {
-                toast.error(error ? error.toString() : "Your transaction failed to submit")
+                const errorMessage = error instanceof Error ? error.message : "Your transaction failed to submit"
+                toast.error(errorMessage)
                 return "error"
             }
         },

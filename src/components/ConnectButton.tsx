@@ -1,6 +1,8 @@
-'use client'
+"use client";
+
 import { ConnectButton as RainbowkitConnectButton } from "@rainbow-me/rainbowkit";
 import { FC } from "react";
+
 import { Button } from "./ui/button";
 
 export const ConnectButton: FC = () => {
@@ -39,7 +41,12 @@ export const ConnectButton: FC = () => {
                         {(() => {
                             if (!connected) {
                                 return (
-                                    <Button onClick={openConnectModal} type="button" className="font-heading">
+                                    <Button
+                                        onClick={openConnectModal}
+                                        type="button"
+                                        className="font-heading"
+                                        variant="default"
+                                    >
                                         Connect Wallet
                                     </Button>
                                 );
@@ -47,15 +54,25 @@ export const ConnectButton: FC = () => {
 
                             if (chain.unsupported) {
                                 return (
-                                    <Button variant={"neutral"} onClick={openChainModal} type="button">
+                                    <Button
+                                        variant="reverse"
+                                        onClick={openChainModal}
+                                        type="button"
+                                        className="font-heading text-red bg-error-bg"
+                                    >
                                         Wrong network
                                     </Button>
                                 );
                             }
 
                             return (
-                                <div style={{ display: 'flex', gap: 12 }}>
-                                    <Button variant={"neutral"} onClick={openAccountModal} type="button" className="font-heading">
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="neutral"
+                                        onClick={openAccountModal}
+                                        type="button"
+                                        className="font-heading"
+                                    >
                                         {account.displayName}
                                         {account.displayBalance
                                             ? ` (${account.displayBalance})`
@@ -69,4 +86,4 @@ export const ConnectButton: FC = () => {
             }}
         </RainbowkitConnectButton.Custom>
     );
-}
+};

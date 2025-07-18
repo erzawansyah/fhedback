@@ -1,30 +1,61 @@
-"use client"
-import React from 'react'
-import { Button } from './ui/button'
-import { useUI } from '@/context/UIContext'
-import { Moon, Sun } from 'lucide-react'
+"use client";
+
+import React, { useEffect, useState } from "react";
+import { Moon, Sun } from "lucide-react";
+
+import { Button } from "./ui/button";
+import { useUI } from "@/context/UIContext";
 
 const ThemeSwitcher = () => {
-    const { toggleTheme } = useUI()
+    const { toggleTheme, theme } = useUI();
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // Prevent hydration mismatch by not rendering until mounted
+    if (!mounted) {
+        return (
+            <Button
+                size="icon"
+                variant="default"
+                className="relative overflow-hidden"
+                aria-label="Toggle theme"
+            >
+                <Sun className="h-[1.2rem] w-[1.2rem]" />
+            </Button>
+        );
+    }
 
     return (
-        <Button size={"icon"} variant={"default"} onClick={toggleTheme} className="relative overflow-hidden cursor-pointer">
-            <span className="absolute inset-0 flex items-center justify-center transition-opacity duration-300 ease-in-out
-                opacity-100 scale-100
-                dark:opacity-0 dark:scale-90
-                ">
-                <Sun className="transition-transform duration-300 ease-in-out" />
+        <Button
+            size="icon"
+            variant="default"
+            onClick={toggleTheme}
+            className="relative overflow-hidden cursor-pointer"
+            aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
+        >
+            <span
+                className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out ${theme === 'light'
+                        ? 'opacity-100 scale-100 rotate-0'
+                        : 'opacity-0 scale-90 rotate-180'
+                    }`}
+            >
+                <Sun className="h-[1.2rem] w-[1.2rem]" />
             </span>
-            <span className="absolute inset-0 flex items-center justify-center transition-opacity duration-300 ease-in-out
-                opacity-0 scale-90
-                dark:opacity-100 dark:scale-100
-                ">
-                <Moon className="transition-transform duration-300 ease-in-out" />
+            <span
+                className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out ${theme === 'dark'
+                        ? 'opacity-100 scale-100 rotate-0'
+                        : 'opacity-0 scale-90 -rotate-90'
+                    }`}
+            >
+                <Moon className="h-[1.2rem] w-[1.2rem]" />
             </span>
-            {/* Untuk aksesibilitas, bisa tambahkan span sr-only */}
-            <span className="sr-only">Ganti tema</span>
+            {/* For accessibility - screen reader only */}
+            <span className="sr-only">Toggle theme</span>
         </Button>
-    )
-}
+    );
+};
 
-export default ThemeSwitcher
+export default ThemeSwitcher;

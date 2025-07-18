@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { abi } from "@/lib/contracts/LikertMultiItemQuestionnaire";
 import { FC } from "react";
-import { useWatchContractEvent, type UseWatchContractEventReturnType } from "wagmi";
+import { useWatchContractEvent } from "wagmi";
 
 export const TestWatchEvent: FC = () => {
     useWatchContractEvent({
