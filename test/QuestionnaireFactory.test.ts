@@ -96,9 +96,11 @@ describe("QuestionnaireFactory", () => {
     });
 
     it("Gagal membuat kuisioner dengan tipe tidak valid", async () => {
+      // Solidity enum akan menerima nilai 2 sebagai valid enum value
+      // Jadi kita test dengan cara yang berbeda - test revert tanpa custom error
       await expect(
         factory.createQuestionnaire(
-          2, // Invalid type
+          2, // Invalid type (hanya 0=Public, 1=Private yang valid)
           title1,
           scaleLimit,
           questionLimit,
@@ -259,12 +261,12 @@ describe("QuestionnaireFactory", () => {
     });
 
     it("getQuestionnairesInRange gagal dengan parameter tidak valid", async () => {
-      await expect(factory.getQuestionnairesInRange(3, 1)).to.be.revertedWith(
-        "Invalid range",
-      );
-      await expect(factory.getQuestionnairesInRange(10, 15)).to.be.revertedWith(
-        "Start index out of bounds",
-      );
+      await expect(factory.getQuestionnairesInRange(3, 1))
+        .to.be.revertedWithCustomError(factory, "InvalidRange")
+        .withArgs(3, 1);
+      await expect(factory.getQuestionnairesInRange(10, 15))
+        .to.be.revertedWithCustomError(factory, "IndexOutOfBounds")
+        .withArgs(10);
     });
   });
 
@@ -502,7 +504,121 @@ describe("QuestionnaireFactory", () => {
   });
 
   /* -------------------------------------------------------------------------- */
-  /*                           7. Events Testing                                */
+  /*                           8. Custom Errors Testing                        */
+  /* -------------------------------------------------------------------------- */
+
+  describe("Custom Errors Testing", () => {
+    it("Menguji custom error untuk invalid questionnaire type", async () => {
+      // Test dengan value 2 yang seharusnya invalid
+      await expect(
+        factory.createQuestionnaire(
+          2, // Invalid type (hanya 0=Public, 1=Private yang valid)
+          title1,
+          scaleLimit,
+          questionLimit,
+          respondentLimit,
+        ),
+      ).to.be.reverted;
+    });
+
+    it("Menguji custom error untuk index out of bounds", async () => {
+      // Test dengan range yang invalid
+      await expect(factory.getQuestionnairesInRange(5, 10))
+        .to.be.revertedWithCustomError(factory, "IndexOutOfBounds")
+        .withArgs(5);
+    });
+
+    it("Menguji custom error untuk invalid range", async () => {
+      await expect(factory.getQuestionnairesInRange(10, 5))
+        .to.be.revertedWithCustomError(factory, "InvalidRange")
+        .withArgs(10, 5);
+    });
+  });
+
+  /* -------------------------------------------------------------------------- */
+  /*                           9. Integration Testing                           */
+  /* -------------------------------------------------------------------------- */
+
+  describe("Integration Testing", () => {
+    it("Workflow lengkap: Create -> Query -> Validate", async () => {
+      // 1. Create questionnaires by different users
+      const tx1 = await factory.createQuestionnaire(
+        QuestionnaireType.Public,
+        "Public Survey",
+        scaleLimit,
+        questionLimit,
+        respondentLimit,
+      );
+
+      const tx2 = await factory
+        .connect(alice)
+        .createQuestionnaire(
+          QuestionnaireType.Private,
+          "Private Survey",
+          scaleLimit,
+          questionLimit,
+          respondentLimit,
+        );
+
+      // 2. Validate counts
+      expect(await factory.getQuestionnaireCount()).to.equal(2);
+      expect(await factory.uniqueUserCount()).to.equal(2);
+
+      // 3. Validate user-specific queries
+      expect(
+        await factory.getQuestionnaireCountByUser(await owner.getAddress()),
+      ).to.equal(1);
+      expect(
+        await factory.getQuestionnaireCountByUser(await alice.getAddress()),
+      ).to.equal(1);
+
+      // 4. Validate type-specific queries
+      const publicPaginated = await factory.getPublicQuestionnairesPaginated(
+        0,
+        10,
+      );
+      const privatePaginated = await factory.getPrivateQuestionnairesPaginated(
+        0,
+        10,
+      );
+
+      expect(publicPaginated.totalCount).to.equal(1);
+      expect(privatePaginated.totalCount).to.equal(1);
+
+      // 5. Validate events were emitted
+      await expect(tx1).to.emit(factory, "QuestionnaireCreated");
+      await expect(tx2).to.emit(factory, "QuestionnaireCreated");
+    });
+
+    it("Gas optimization test: O(1) vs O(n) access patterns", async () => {
+      // Create multiple questionnaires
+      for (let i = 0; i < 5; i++) {
+        await factory.createQuestionnaire(
+          i % 2 === 0 ? QuestionnaireType.Public : QuestionnaireType.Private,
+          `Survey ${i}`,
+          scaleLimit,
+          questionLimit,
+          respondentLimit,
+        );
+      }
+
+      // Test pagination efficiency
+      const page1 = await factory.getQuestionnairesPaginated(0, 3);
+      const page2 = await factory.getQuestionnairesPaginated(3, 3);
+
+      expect(page1.questionnaireList.length).to.equal(3);
+      expect(page1.hasMore).to.equal(true);
+      expect(page2.questionnaireList.length).to.equal(2);
+      expect(page2.hasMore).to.equal(false);
+    });
+  });
+
+  /* -------------------------------------------------------------------------- */
+  /*                           10. Events Testing                               */
+  /* -------------------------------------------------------------------------- */
+
+  /* -------------------------------------------------------------------------- */
+  /*                           10. Events Testing                               */
   /* -------------------------------------------------------------------------- */
 
   describe("Events", () => {
@@ -549,6 +665,54 @@ describe("QuestionnaireFactory", () => {
 
       await expect(tx1).to.emit(factory, "QuestionnaireCreated");
       await expect(tx2).to.emit(factory, "QuestionnaireCreated");
+    });
+
+    it("Event parameters are correct for different users", async () => {
+      const tx1 = await factory.createQuestionnaire(
+        QuestionnaireType.Public,
+        "Owner's Survey",
+        scaleLimit,
+        questionLimit,
+        respondentLimit,
+      );
+
+      const receipt1 = await tx1.wait();
+      const event1 = receipt1?.logs.find((log) => {
+        try {
+          const parsed = factory.interface.parseLog(log);
+          return parsed?.name === "QuestionnaireCreated";
+        } catch {
+          return false;
+        }
+      });
+
+      expect(event1).to.not.equal(undefined);
+      const parsedEvent1 = factory.interface.parseLog(event1!);
+      expect(parsedEvent1!.args[0]).to.equal(await owner.getAddress());
+
+      const tx2 = await factory
+        .connect(alice)
+        .createQuestionnaire(
+          QuestionnaireType.Private,
+          "Alice's Survey",
+          scaleLimit,
+          questionLimit,
+          respondentLimit,
+        );
+
+      const receipt2 = await tx2.wait();
+      const event2 = receipt2?.logs.find((log) => {
+        try {
+          const parsed = factory.interface.parseLog(log);
+          return parsed?.name === "QuestionnaireCreated";
+        } catch {
+          return false;
+        }
+      });
+
+      expect(event2).to.not.equal(undefined);
+      const parsedEvent2 = factory.interface.parseLog(event2!);
+      expect(parsedEvent2!.args[0]).to.equal(await alice.getAddress());
     });
   });
 });

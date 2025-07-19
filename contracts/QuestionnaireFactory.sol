@@ -7,24 +7,43 @@ import "./FHEQuestionnaire.sol";
 /// @notice Tracks every deployed Questionnaire, maps them to creators,
 ///         counts total questionnaires, and counts unique users.
 contract QuestionnaireFactory {
-    /// Jenis kuisioner yang didukung
+    /// Type of questionnaire
+    /// - Public: All results are visible to everyone
+    /// - Private: Results are encrypted and only visible to the owner
     enum QuestionnaireType {
         Public,
         Private
     }
-    // Mapping index ke tipe kuisioner
-    mapping(uint256 => QuestionnaireType) private questionnaireTypes;
+
     /* -------------------------------------------------------------- */
     /* Storage                                                        */
     /* -------------------------------------------------------------- */
-    /// Global list of all questionnaire contract addresses.
-    address[] private questionnaires;
+    /// Struct to store questionnaire details
+    struct QuestionnaireDetails {
+        address addr;
+        QuestionnaireType qType;
+        address owner;
+        uint256 createdAt;
+    }
+    QuestionnaireDetails[] private questionnaires;
     /// Owner => array of index positions in `questionnaires`.
     mapping(address => uint256[]) private userQuestionnaireIds;
     /// Owner address has appeared at least once.
     mapping(address => bool) private isUserRegistered;
     /// Total number of distinct creators.
     uint256 public uniqueUserCount;
+    /// Address => index in questionnaires array (for O(1) lookup)
+    mapping(address => uint256) private questionnaireToIndex;
+    /// Address => whether questionnaire exists
+    mapping(address => bool) private questionnaireExists;
+
+    /* -------------------------------------------------------------- */
+    /* Custom Errors                                                 */
+    /* -------------------------------------------------------------- */
+    error InvalidQuestionnaireType();
+    error QuestionnaireNotFound(address questionnaireAddr);
+    error IndexOutOfBounds(uint256 index);
+    error InvalidRange(uint256 startIndex, uint256 endIndex);
 
     /* -------------------------------------------------------------- */
     /* Events                                                         */
@@ -64,12 +83,23 @@ contract QuestionnaireFactory {
             );
             questionnaireAddr = address(questionnaire);
         } else {
-            revert("Invalid questionnaire type");
+            revert InvalidQuestionnaireType();
         }
         // 2. Track globally.
-        questionnaires.push(questionnaireAddr);
+        questionnaires.push(
+            QuestionnaireDetails({
+                addr: questionnaireAddr,
+                qType: qType,
+                owner: msg.sender,
+                createdAt: block.timestamp
+            })
+        );
         uint256 newIndex = questionnaires.length - 1;
-        questionnaireTypes[newIndex] = qType;
+
+        // Update mappings for O(1) access
+        questionnaireToIndex[questionnaireAddr] = newIndex;
+        questionnaireExists[questionnaireAddr] = true;
+
         // 3. Track per-user (by index to avoid duplicating addresses).
         userQuestionnaireIds[msg.sender].push(newIndex);
         // 4. Register unique user once.
@@ -79,6 +109,7 @@ contract QuestionnaireFactory {
                 ++uniqueUserCount;
             }
         }
+        // 5. Emit event.
         emit QuestionnaireCreated(msg.sender, questionnaireAddr);
     }
 
@@ -102,7 +133,7 @@ contract QuestionnaireFactory {
         // Hitung total kuisioner publik
         uint256 count = 0;
         for (uint256 i = 0; i < total; ++i) {
-            if (questionnaireTypes[i] == QuestionnaireType.Public) {
+            if (questionnaires[i].qType == QuestionnaireType.Public) {
                 ++count;
             }
         }
@@ -116,9 +147,9 @@ contract QuestionnaireFactory {
         uint256 idx = 0;
         uint256 found = 0;
         for (uint256 i = 0; i < total && found < offset + returnCount; ++i) {
-            if (questionnaireTypes[i] == QuestionnaireType.Public) {
+            if (questionnaires[i].qType == QuestionnaireType.Public) {
                 if (found >= offset && idx < returnCount) {
-                    questionnaireList[idx++] = questionnaires[i];
+                    questionnaireList[idx++] = questionnaires[i].addr;
                 }
                 ++found;
             }
@@ -143,7 +174,7 @@ contract QuestionnaireFactory {
         // Hitung total kuisioner privat
         uint256 count = 0;
         for (uint256 i = 0; i < total; ++i) {
-            if (questionnaireTypes[i] == QuestionnaireType.Private) {
+            if (questionnaires[i].qType == QuestionnaireType.Private) {
                 ++count;
             }
         }
@@ -157,9 +188,9 @@ contract QuestionnaireFactory {
         uint256 idx = 0;
         uint256 found = 0;
         for (uint256 i = 0; i < total && found < offset + returnCount; ++i) {
-            if (questionnaireTypes[i] == QuestionnaireType.Private) {
+            if (questionnaires[i].qType == QuestionnaireType.Private) {
                 if (found >= offset && idx < returnCount) {
-                    questionnaireList[idx++] = questionnaires[i];
+                    questionnaireList[idx++] = questionnaires[i].addr;
                 }
                 ++found;
             }
@@ -199,7 +230,7 @@ contract QuestionnaireFactory {
         // Create result array
         questionnaireList = new address[](returnCount);
         for (uint256 i = 0; i < returnCount; ++i) {
-            questionnaireList[i] = questionnaires[offset + i];
+            questionnaireList[i] = questionnaires[offset + i].addr;
         }
 
         // Check if there is more data next
@@ -241,7 +272,7 @@ contract QuestionnaireFactory {
         // Create result array
         questionnaireList = new address[](returnCount);
         for (uint256 i = 0; i < returnCount; ++i) {
-            questionnaireList[i] = questionnaires[idxList[offset + i]];
+            questionnaireList[i] = questionnaires[idxList[offset + i]].addr;
         }
 
         // Check if there is more data next
@@ -256,11 +287,12 @@ contract QuestionnaireFactory {
         uint256 startIndex,
         uint256 endIndex
     ) external view returns (address[] memory questionnaireList) {
-        require(startIndex < endIndex, "Invalid range");
-        require(
-            startIndex < questionnaires.length,
-            "Start index out of bounds"
-        );
+        if (startIndex >= endIndex) {
+            revert InvalidRange(startIndex, endIndex);
+        }
+        if (startIndex >= questionnaires.length) {
+            revert IndexOutOfBounds(startIndex);
+        }
 
         // Limit endIndex so it does not exceed array length
         if (endIndex > questionnaires.length) {
@@ -271,7 +303,7 @@ contract QuestionnaireFactory {
         questionnaireList = new address[](length);
 
         for (uint256 i = 0; i < length; ++i) {
-            questionnaireList[i] = questionnaires[startIndex + i];
+            questionnaireList[i] = questionnaires[startIndex + i].addr;
         }
     }
 
@@ -293,7 +325,8 @@ contract QuestionnaireFactory {
 
         // Start from the latest questionnaire (last index)
         for (uint256 i = 0; i < returnCount; ++i) {
-            questionnaireList[i] = questionnaires[totalQuestionnaires - 1 - i];
+            questionnaireList[i] = questionnaires[totalQuestionnaires - 1 - i]
+                .addr;
         }
     }
 
@@ -304,7 +337,11 @@ contract QuestionnaireFactory {
     /// Return every questionnaire ever created (off-chain callers only).
     /// @dev WARNING: This function can be expensive in gas if there are many questionnaires
     function getQuestionnaires() external view returns (address[] memory) {
-        return questionnaires;
+        address[] memory list = new address[](questionnaires.length);
+        for (uint256 i = 0; i < questionnaires.length; ++i) {
+            list[i] = questionnaires[i].addr;
+        }
+        return list;
     }
 
     /// Return how many questionnaires exist in total.
@@ -321,7 +358,7 @@ contract QuestionnaireFactory {
         uint256 len = idxList.length;
         address[] memory list = new address[](len);
         for (uint256 i = 0; i < len; ++i) {
-            list[i] = questionnaires[idxList[i]];
+            list[i] = questionnaires[idxList[i]].addr;
         }
         return list;
     }
@@ -336,5 +373,90 @@ contract QuestionnaireFactory {
     /// @dev Check if a user is registered (has ever created a questionnaire)
     function isUserExists(address owner) external view returns (bool) {
         return isUserRegistered[owner];
+    }
+
+    /* -------------------------------------------------------------- */
+    /* Questionnaire details access functions                        */
+    /* -------------------------------------------------------------- */
+
+    /// @dev Get questionnaire details by index
+    function getQuestionnaireDetails(
+        uint256 index
+    )
+        external
+        view
+        returns (
+            address addr,
+            QuestionnaireType qType,
+            address owner,
+            uint256 createdAt
+        )
+    {
+        if (index >= questionnaires.length) {
+            revert IndexOutOfBounds(index);
+        }
+        QuestionnaireDetails storage q = questionnaires[index];
+        return (q.addr, q.qType, q.owner, q.createdAt);
+    }
+
+    /// @dev Get questionnaire type by address
+    function getQuestionnaireType(
+        address questionnaireAddr
+    ) external view returns (QuestionnaireType) {
+        if (!questionnaireExists[questionnaireAddr]) {
+            revert QuestionnaireNotFound(questionnaireAddr);
+        }
+        uint256 index = questionnaireToIndex[questionnaireAddr];
+        return questionnaires[index].qType;
+    }
+
+    /// @dev Get questionnaire creation time by address
+    function getQuestionnaireCreatedAt(
+        address questionnaireAddr
+    ) external view returns (uint256) {
+        if (!questionnaireExists[questionnaireAddr]) {
+            revert QuestionnaireNotFound(questionnaireAddr);
+        }
+        uint256 index = questionnaireToIndex[questionnaireAddr];
+        return questionnaires[index].createdAt;
+    }
+
+    /// @dev Get questionnaire owner by address
+    function getQuestionnaireOwner(
+        address questionnaireAddr
+    ) external view returns (address) {
+        if (!questionnaireExists[questionnaireAddr]) {
+            revert QuestionnaireNotFound(questionnaireAddr);
+        }
+        uint256 index = questionnaireToIndex[questionnaireAddr];
+        return questionnaires[index].owner;
+    }
+
+    /// @dev Check if a questionnaire exists
+    function isQuestionnaireExists(
+        address questionnaireAddr
+    ) external view returns (bool) {
+        return questionnaireExists[questionnaireAddr];
+    }
+
+    /// @dev Get all questionnaire details by address in one call
+    function getQuestionnaireDetailsByAddress(
+        address questionnaireAddr
+    )
+        external
+        view
+        returns (
+            address addr,
+            QuestionnaireType qType,
+            address owner,
+            uint256 createdAt
+        )
+    {
+        if (!questionnaireExists[questionnaireAddr]) {
+            revert QuestionnaireNotFound(questionnaireAddr);
+        }
+        uint256 index = questionnaireToIndex[questionnaireAddr];
+        QuestionnaireDetails storage q = questionnaires[index];
+        return (q.addr, q.qType, q.owner, q.createdAt);
     }
 }
