@@ -1,10 +1,23 @@
+import { ComingSoon } from "@/components/ui/coming-soon"
+
 const AnalyticsPage = () => {
     return (
-        <div className="flex flex-col items-center justify-center h-screen">
-            <h1 className="text-2xl font-bold mb-4">Analytics Page</h1>
-            <p className="text-gray-600">This is the analytics page content.</p>
-        </div>
-    );
+        <ComingSoon
+            title="Advanced Analytics Dashboard"
+            description="Get deep insights into your survey performance with comprehensive analytics, real-time metrics, and detailed response analysis."
+            expectedDate="Q2 2025"
+            features={[
+                "Real-time response tracking",
+                "Demographic breakdowns",
+                "Response quality metrics",
+                "Export capabilities",
+                "Custom date ranges",
+                "Comparison tools",
+                "Heat maps and visualizations",
+                "Performance benchmarks"
+            ]}
+        />
+    )
 }
 
-export default AnalyticsPage;
+export default AnalyticsPage

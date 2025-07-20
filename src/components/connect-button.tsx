@@ -3,7 +3,7 @@ import { ConnectButton as RainbowkitConnectButton } from "@rainbow-me/rainbowkit
 import { FC } from "react";
 import { Button } from "./ui/button";
 import Image from "next/image";
-import { UserRoundCog } from "lucide-react";
+import { UserRoundCog, Wallet } from "lucide-react";
 
 // Connect Wallet Button
 const ConnectWalletButton: FC<{ onClick: () => void }> = ({ onClick }) => (
@@ -11,8 +11,8 @@ const ConnectWalletButton: FC<{ onClick: () => void }> = ({ onClick }) => (
         onClick={onClick}
         type="button"
         className="font-heading cursor-pointer"
-        variant="default"
     >
+        <Wallet className="inline h-8 w-8 mr-1" />
         Connect Wallet
     </Button>
 );
@@ -20,7 +20,6 @@ const ConnectWalletButton: FC<{ onClick: () => void }> = ({ onClick }) => (
 // Wrong Network Button
 const WrongNetworkButton: FC<{ onClick: () => void }> = ({ onClick }) => (
     <Button
-        variant="reverse"
         onClick={onClick}
         type="button"
         className="font-heading text-red bg-error-bg cursor-pointer"
@@ -39,7 +38,6 @@ const AccountInfoButton: FC<{
     return (
         <div className="flex gap-2">
             <Button
-                variant="neutral"
                 onClick={onClick}
                 type="button"
                 className="font-heading cursor-pointer"
@@ -47,7 +45,7 @@ const AccountInfoButton: FC<{
                 {displayName}
                 {displayBalance ? ` (${displayBalance})` : ''}
             </Button>
-            <Button size={"icon"} variant={"neutral"} className="cursor-pointer">
+            <Button size={"icon"} className="cursor-pointer">
                 {displayAvatar ? <Image
                     src={displayAvatar}
                     alt={displayName}

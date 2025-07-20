@@ -1,10 +1,23 @@
+import { ComingSoon } from "@/components/ui/coming-soon"
+
 const RewardsPage = () => {
     return (
-        <div className="flex flex-col items-center justify-center h-screen">
-            <h1 className="text-2xl font-bold mb-4">Rewards Page</h1>
-            <p className="text-gray-600">This is the rewards page content.</p>
-        </div>
-    );
+        <ComingSoon
+            title="Rewards Center"
+            description="Track your earnings, redeem tokens, and discover new ways to earn rewards by participating in surveys and community activities."
+            expectedDate="Q2 2025"
+            features={[
+                "Token balance tracking",
+                "Earning history",
+                "Redemption options",
+                "Referral rewards",
+                "Achievement badges",
+                "Loyalty bonuses",
+                "Withdrawal options",
+                "Staking opportunities"
+            ]}
+        />
+    )
 }
 
-export default RewardsPage;
+export default RewardsPage

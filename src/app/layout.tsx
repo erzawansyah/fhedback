@@ -45,10 +45,10 @@ const RootLayout = ({
             <AppSidebar />
             <SidebarInset>
               <AppHeader />
-              <main className="flex-1 px-4">
+              <main className="flex-1 px-6">
                 {children}
               </main>
-              <footer className="px-4 text-center text-sm text-gray-500">
+              <footer className="px-6 py-2 text-center text-sm text-gray-500">
                 &copy; {new Date().getFullYear()} Fhedback. All rights reserved.
               </footer>
             </SidebarInset>

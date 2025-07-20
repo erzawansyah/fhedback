@@ -29,8 +29,8 @@ export const BrandLogo: FC = () => {
             />
             {state === "expanded" && showText && (
                 <div className="ml-2">
-                    <h2 className="text-2xl uppercase">FHE<span className="font-semibold">dback</span></h2>
-                    <p className="font-mono text-gray-700">Confidential Survey</p>
+                    <h2 className="text-2xl uppercase">FHEdback</h2>
+                    <p className="text-gray-700 dark:text-gray-300">Confidential Survey</p>
                 </div>
             )}
         </div>
