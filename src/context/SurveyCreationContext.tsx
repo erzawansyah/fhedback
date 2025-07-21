@@ -20,6 +20,9 @@ interface SurveyCreationContextType {
     config: SurveyConfig;
     setSurveyAddress: (address: Address | null) => void;
     resetSurveyConfig: () => void;
+    setMetadata: (metadata: string | null) => void;
+    removeMetadata: () => void;
+    metadata: string | null;
 }
 
 
@@ -47,6 +50,9 @@ const questionnaireStatus = [
 export const SurveyCreationProvider = ({ children }: { children: ReactNode }) => {
     // Initialize state from localStorage or default config
     const [config, setConfig, removeConfig] = useSyncedState<SurveyConfig>("surveyConfig", defaultSurveyConfig);
+    const [metadata, setMetadata, removeMetadata] = useSyncedState<string | null>("surveyMetadata", null);
+
+
     const { data: surveyType, isSuccess: surveyTypeFetched } = useReadContract({
         address: factoryAddress as Address,
         abi: abis.factory,
@@ -58,6 +64,7 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
         address: config.address as Address | undefined,
         abi: abis.general,
     } as const;
+
     const { data: surveyData, isSuccess: surveyDataFetched } = useReadContracts({
         contracts: [
             {
@@ -85,8 +92,6 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
             }
         ]
     });
-
-
 
     const setSurveyAddress = (address: Address | null) => {
         setConfig(prev => ({ ...prev, address }));
@@ -120,7 +125,14 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
     }, [config.address, surveyType, surveyTypeFetched, surveyData, surveyDataFetched, setConfig]);
 
     return (
-        <SurveyCreationContext.Provider value={{ config, setSurveyAddress, resetSurveyConfig }}>
+        <SurveyCreationContext.Provider value={{
+            config,
+            setSurveyAddress,
+            resetSurveyConfig,
+            setMetadata: (metadata: string | null) => setMetadata(metadata),
+            removeMetadata: () => removeMetadata(),
+            metadata: metadata || null
+        }}>
             {children}
         </SurveyCreationContext.Provider>
     );

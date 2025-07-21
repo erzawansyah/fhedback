@@ -2,14 +2,14 @@ import { NextResponse, type NextRequest } from "next/server";
 import { pinata } from "@/lib/pinata/config";
 import { verifyMessage } from "ethers";
 
-interface CreateRequest {
+export interface CreateMetadataRequestBody {
   address: `0x${string}` | null;
   signature: string;
   message: string;
   data: {
     title: string;
     description: string;
-    categories: string[];
+    categories: string;
     minLabel: string;
     maxLabel: string;
     tags: string[];
@@ -20,7 +20,7 @@ interface CreateRequest {
 // This endpoint is used to create a new survey metadata entry in Pinata
 export async function POST(request: NextRequest) {
   try {
-    const body: CreateRequest = await request.json();
+    const body: CreateMetadataRequestBody = await request.json();
     const { address, message, signature, data } = body;
     if (!address || !message || !signature) {
       return NextResponse.json(
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-interface UpdateRequest {
+export interface UpdateMetadataRequestBody {
   address: `0x${string}` | null;
   signature: string;
   message: string;
@@ -82,7 +82,7 @@ interface UpdateRequest {
   data: {
     title: string;
     description: string;
-    categories: string[];
+    categories: string;
     minLabel: string;
     maxLabel: string;
     tags: string[];
@@ -91,7 +91,7 @@ interface UpdateRequest {
 
 export async function UPDATE(request: NextRequest) {
   try {
-    const body: UpdateRequest = await request.json();
+    const body: UpdateMetadataRequestBody = await request.json();
     const { address, message, signature, existingCid, ...data } = body;
     if (!address || !message || !signature) {
       return NextResponse.json(

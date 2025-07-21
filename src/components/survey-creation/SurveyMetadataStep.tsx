@@ -12,24 +12,33 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { toast } from "sonner"
+import { setMetadata } from "@/lib/utils/setMetadata"
+import { useAccount, useWaitForTransactionReceipt } from "wagmi"
+import { sign } from "@/lib/utils/signMessage"
 
 // Schema untuk metadata survey
 const surveyMetadataSchema = z.object({
     displayTitle: z.string().min(1, "Display title is required").max(200, "Title must be less than 200 characters"),
-    description: z.string().max(1000, "Description must be less than 1000 characters").optional(),
+    description: z.string().max(1000, "Description must be less than 1000 characters").optional().or(z.literal("")),
     category: z.string().min(1, "Category is required"),
     scaleLabels: z.object({
         minLabel: z.string().min(1, "Min label is required"),
         maxLabel: z.string().min(1, "Max label is required"),
     }),
-    tags: z.array(z.string()).optional(),
+    tags: z.string().optional().or(z.literal("")),
 })
 
 export type SurveyMetadataData = z.infer<typeof surveyMetadataSchema>
 
 export const SurveyMetadataStep = () => {
+    const [txHash, setTxHash] = useState<`0x${string}` | string | null>(null)
+    const { isSuccess, isError } = useWaitForTransactionReceipt({
+        hash: typeof txHash === "string" && txHash.startsWith("0x") ? (txHash as `0x${string}`) : undefined,
+    })
     const [isLoading, setIsLoading] = useState(false);
     const [limitScale] = useState(5);
+    const account = useAccount()
 
     const form = useForm<SurveyMetadataData>({
         resolver: zodResolver(surveyMetadataSchema),
@@ -41,34 +50,58 @@ export const SurveyMetadataStep = () => {
                 minLabel: "Strongly Disagree",
                 maxLabel: "Strongly Agree",
             },
-            tags: [],
+            tags: "",
         },
     })
 
-    // Mock wallet interaction
-    const handleWalletInteraction = async (data: SurveyMetadataData) => {
-        console.log("Mock: Wallet interaction for survey metadata", data)
-
-        // Simulate wallet transaction
-        return new Promise<boolean>((resolve) => {
-            setTimeout(() => {
-                console.log("Mock: Survey metadata transaction confirmed")
-                resolve(true)
-            }, 2000)
-        })
-    }
-
     const onSubmit = async (data: SurveyMetadataData) => {
+        let signature: { message: string; hash: string } | null = null;
         try {
-            setIsLoading(true)
-            const success = await handleWalletInteraction(data)
-            if (success) {
-                console.log("Survey metadata saved:", data)
-                // Reset form after successful submission
-                form.reset()
+            const { message, signature: hash } = await sign(account.address as `0x${string}`)
+            if (!hash) {
+                throw new Error("Failed to sign message")
+            }
+            signature = {
+                message: message,
+                hash: hash,
             }
         } catch (error) {
+            console.error("Error signing message:", error)
+            toast.error(`Failed to sign message: ${error instanceof Error ? error.message : "Unknown error"}`)
+            return
+        }
+
+
+        try {
+            setIsLoading(true)
+            const txHashResult = await setMetadata({
+                address: account.address as `0x${string}` | null,
+                signature: signature.hash,
+                message: signature.message,
+                data: {
+                    title: data.displayTitle,
+                    description: data.description || "",
+                    categories: data.category,
+                    minLabel: data.scaleLabels.minLabel,
+                    maxLabel: data.scaleLabels.maxLabel,
+                    tags: data.tags?.split(",").map(tag => tag.trim()) || [],
+                },
+            })
+
+            setTxHash(txHashResult)
+            toast.success("Survey metadata saved successfully!")
+
+            if (isSuccess) {
+                toast.success("Transaction confirmed! Metadata set successfully.")
+            }
+
+            if (isError) {
+                toast.error("Transaction failed! Please try again.")
+            }
+
+        } catch (error) {
             console.error("Error in wallet interaction:", error)
+            toast.error(`Failed to save survey metadata: ${error instanceof Error ? error.message : "Unknown error"}`)
         } finally {
             setIsLoading(false)
         }
