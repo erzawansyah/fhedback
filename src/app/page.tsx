@@ -56,15 +56,15 @@ export default function Home() {
       </Card>
 
       {/* Choose Journey */}
-      <Card className="bg-secondary-background mt-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <div className="bg-secondary-background mt-8">
+        <div>
+          <div className="flex items-center gap-2">
             <AlertOctagon className="h-8 w-8 text-red-600" />
             <h3 className="text-2xl">Choose Your Journey</h3>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-6 font-mono">
+          </div>
+        </div>
+        <div className="mt-4">
+          <p className="mb-8 font-mono">
             Whether you want to create a survey or share your feedback, FHEdback ensures your privacy is protected at every step. Select your path below and experience secure, encrypted interactions powered by Zama’s cutting-edge technology.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -111,8 +111,8 @@ export default function Home() {
             }
 
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

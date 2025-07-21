@@ -9,7 +9,8 @@ import '@rainbow-me/rainbowkit/styles.css';
 
 import AppHeader from "@/components/app-header";
 import AppSidebar from "@/components/app-sidebar";
-import Web3Provider from "@/lib/wagmi/providers";
+import Providers from "./providers";
+import { Toaster } from "@/components/ui/sonner";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
@@ -40,20 +41,21 @@ const RootLayout = ({
       <body
         className={`${spaceGrotesk.variable} ${sora.variable} antialiased`}
       >
-        <Web3Provider>
+        <Providers>
           <SidebarProvider>
             <AppSidebar />
             <SidebarInset>
               <AppHeader />
-              <main className="flex-1 px-6">
+              <main className="flex-1 px-6 py-6">
                 {children}
               </main>
-              <footer className="px-6 py-2 text-center text-sm text-gray-500">
+              <footer className="container mx-auto px-6 py-2 text-center text-sm text-gray-500">
                 &copy; {new Date().getFullYear()} Fhedback. All rights reserved.
               </footer>
             </SidebarInset>
+            <Toaster />
           </SidebarProvider>
-        </Web3Provider>
+        </Providers>
       </body>
     </html>
   );

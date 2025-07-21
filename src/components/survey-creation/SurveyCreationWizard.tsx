@@ -175,17 +175,10 @@ export const SurveyCreationWizard = () => {
     }
 
     return (
-        <div className="container mx-auto py-8 px-4 max-w-7xl">
+        <div className="mx-auto">
             <div className="flex gap-8">
                 {/* Main Content Area */}
                 <div className="flex-1">
-                    <div className="mb-8">
-                        <h1 className="text-3xl font-bold mb-2">Create New Survey</h1>
-                        <p className="text-gray-600">
-                            Step {getCurrentStepNumber()} of {STEPS.length}: {STEPS.find(s => s.key === currentStep)?.title}
-                        </p>
-                    </div>
-
                     <Card className="min-h-[600px]">
                         <CardContent className="p-8">
                             {currentStep === "settings" && (

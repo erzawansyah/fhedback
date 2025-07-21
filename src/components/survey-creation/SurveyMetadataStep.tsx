@@ -1,9 +1,10 @@
 "use client"
 
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
-import { Info, Wallet, ArrowLeft } from "lucide-react"
+import { Info, Wallet } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -26,34 +27,21 @@ const surveyMetadataSchema = z.object({
 
 export type SurveyMetadataData = z.infer<typeof surveyMetadataSchema>
 
-interface SurveyMetadataStepProps {
-    onNext: (data: SurveyMetadataData) => void
-    onBack: () => void
-    onSkip: () => void
-    initialData?: Partial<SurveyMetadataData>
-    limitScale: number
-    isLoading?: boolean
-}
+export const SurveyMetadataStep = () => {
+    const [isLoading, setIsLoading] = useState(false);
+    const [limitScale] = useState(5);
 
-export const SurveyMetadataStep = ({
-    onNext,
-    onBack,
-    onSkip,
-    initialData,
-    limitScale,
-    isLoading = false
-}: SurveyMetadataStepProps) => {
     const form = useForm<SurveyMetadataData>({
         resolver: zodResolver(surveyMetadataSchema),
         defaultValues: {
-            displayTitle: initialData?.displayTitle || "",
-            description: initialData?.description || "",
-            category: initialData?.category || "",
+            displayTitle: "",
+            description: "",
+            category: "",
             scaleLabels: {
-                minLabel: initialData?.scaleLabels?.minLabel || "Strongly Disagree",
-                maxLabel: initialData?.scaleLabels?.maxLabel || "Strongly Agree",
+                minLabel: "Strongly Disagree",
+                maxLabel: "Strongly Agree",
             },
-            tags: initialData?.tags || [],
+            tags: [],
         },
     })
 
@@ -72,17 +60,22 @@ export const SurveyMetadataStep = ({
 
     const onSubmit = async (data: SurveyMetadataData) => {
         try {
+            setIsLoading(true)
             const success = await handleWalletInteraction(data)
             if (success) {
-                onNext(data)
+                console.log("Survey metadata saved:", data)
+                // Reset form after successful submission
+                form.reset()
             }
         } catch (error) {
             console.error("Error in wallet interaction:", error)
+        } finally {
+            setIsLoading(false)
         }
     }
 
     return (
-        <Card className="w-full max-w-2xl mx-auto">
+        <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Info className="w-5 h-5" />
@@ -206,29 +199,31 @@ export const SurveyMetadataStep = ({
                                         </FormItem>
                                     )}
                                 />
+
+
                             </div>
+
+                            <FormField
+                                control={form.control}
+                                name="tags"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Tags</FormLabel>
+                                        <FormControl>
+                                            <Input
+                                                placeholder="Add tags (comma separated)"
+                                                {...field}
+                                                disabled={isLoading}
+                                            />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                         </div>
 
-                        <div className="flex justify-between">
-                            <Button
-                                type="button"
-                                variant="neutral"
-                                onClick={onBack}
-                                disabled={isLoading}
-                            >
-                                <ArrowLeft className="w-4 h-4 mr-2" />
-                                Back
-                            </Button>
-
+                        <div className="flex justify-end">
                             <div className="space-x-2">
-                                <Button
-                                    type="button"
-                                    variant="neutral"
-                                    onClick={onSkip}
-                                    disabled={isLoading}
-                                >
-                                    Skip for Now
-                                </Button>
                                 <Button
                                     type="submit"
                                     disabled={isLoading}

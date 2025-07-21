@@ -1,0 +1,472 @@
+[
+    {
+        "inputs": [
+            {
+                "internalType": "address",
+                "name": "_owner",
+                "type": "address"
+            },
+            {
+                "internalType": "string",
+                "name": "_title",
+                "type": "string"
+            },
+            {
+                "internalType": "uint8",
+                "name": "_scaleLimit",
+                "type": "uint8"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_questionLimit",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "_respondentLimit",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+    },
+    {
+        "inputs": [],
+        "name": "AlreadyResponded",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "CannotBeDeleted",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "EmptyQuestion",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "InvalidOwnerAddress",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "InvalidQuestionId",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "InvalidQuestionLimit",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "InvalidRespondentLimit",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "InvalidScale",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "InvalidTitle",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MaxQuestionsReached",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "MustHaveQuestions",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "NotForOwner",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "OnlyOwner",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "QuestionnaireMetadataCIDEmpty",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "RespondentLimitReached",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "ResponseCountMismatch",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "StatusNotDraft",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "StatusNotInitialized",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "StatusNotPublished",
+        "type": "error"
+    },
+    {
+        "inputs": [],
+        "name": "UserHasNotResponded",
+        "type": "error"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "metadataCID",
+                "type": "string"
+            }
+        ],
+        "name": "MetadataUpdated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "uint256",
+                "name": "questionId",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "questionText",
+                "type": "string"
+            }
+        ],
+        "name": "QuestionAdded",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "timestamp",
+                "type": "uint256"
+            }
+        ],
+        "name": "QuestionnaireClosed",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "timestamp",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "string",
+                "name": "title",
+                "type": "string"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint8",
+                "name": "scaleLimit",
+                "type": "uint8"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "questionLimit",
+                "type": "uint256"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "respondentLimit",
+                "type": "uint256"
+            }
+        ],
+        "name": "QuestionnaireCreated",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "timestamp",
+                "type": "uint256"
+            }
+        ],
+        "name": "QuestionnaireDeleted",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "timestamp",
+                "type": "uint256"
+            }
+        ],
+        "name": "QuestionnairePublished",
+        "type": "event"
+    },
+    {
+        "anonymous": false,
+        "inputs": [
+            {
+                "indexed": true,
+                "internalType": "address",
+                "name": "respondent",
+                "type": "address"
+            },
+            {
+                "indexed": false,
+                "internalType": "uint256",
+                "name": "timestamp",
+                "type": "uint256"
+            }
+        ],
+        "name": "ResponseSubmitted",
+        "type": "event"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string[]",
+                "name": "_questions",
+                "type": "string[]"
+            }
+        ],
+        "name": "addQuestions",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "closeQuestionnaire",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "deleteQuestionnaire",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getAllQuestions",
+        "outputs": [
+            {
+                "internalType": "string[]",
+                "name": "",
+                "type": "string[]"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "getQuestionnaireStatistics",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "respondents",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "questionsCount",
+                "type": "uint256"
+            },
+            {
+                "internalType": "uint256",
+                "name": "slotsRemaining",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "metadataCID",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "publish",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "questionLimit",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "name": "questions",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "respondentLimit",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "scaleLimit",
+        "outputs": [
+            {
+                "internalType": "uint8",
+                "name": "",
+                "type": "uint8"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [
+            {
+                "internalType": "string",
+                "name": "_metadataCID",
+                "type": "string"
+            }
+        ],
+        "name": "setMetadata",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "title",
+        "outputs": [
+            {
+                "internalType": "string",
+                "name": "",
+                "type": "string"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "totalQuestions",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "totalRespondents",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    }
+]
