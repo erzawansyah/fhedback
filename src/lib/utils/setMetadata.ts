@@ -1,16 +1,13 @@
 import { CreateMetadataRequestBody } from "@/app/api/metadata/route";
 import { writeContract } from "@wagmi/core";
 import { wagmiConfig } from "../wagmi/config";
-import {
-  QUESTIONNAIRE_ABIS,
-  QUESTIONNAIRE_FACTORY_ADDRESS,
-} from "../contracts";
+import { QUESTIONNAIRE_ABIS } from "../contracts";
 import { Address } from "viem";
 
 const abis = QUESTIONNAIRE_ABIS;
-const factoryAddress = QUESTIONNAIRE_FACTORY_ADDRESS;
 
 export const setMetadata = async (
+  constractAddress: Address,
   body: CreateMetadataRequestBody
 ): Promise<`0x${string}`> => {
   try {
@@ -26,14 +23,17 @@ export const setMetadata = async (
       throw new Error("Failed to set metadata");
     }
 
-    const cid = await result.text();
+    const data: { cid: string } = await result.json();
+    if (!data.cid) {
+      throw new Error("No CID returned from metadata API");
+    }
 
     try {
       const txHash = await writeContract(wagmiConfig, {
-        address: factoryAddress as Address,
+        address: constractAddress,
         abi: abis.general,
         functionName: "setMetadata",
-        args: [cid],
+        args: [data.cid],
       });
       return txHash as `0x${string}`;
     } catch (error) {

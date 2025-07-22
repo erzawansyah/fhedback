@@ -14,17 +14,25 @@ interface SurveyConfig {
     limitScale: number;
     totalQuestions: number;
     respondentLimit: number;
+    metadataCid: string | null;
+}
+
+
+interface SurveyMetadata {
+    title: string;
+    description: string;
+    categories: string;
+    minLabel: string;
+    maxLabel: string;
+    tags: string[];
 }
 
 interface SurveyCreationContextType {
     config: SurveyConfig;
     setSurveyAddress: (address: Address | null) => void;
     resetSurveyConfig: () => void;
-    setMetadata: (metadata: string | null) => void;
-    removeMetadata: () => void;
-    metadata: string | null;
+    metadata: SurveyMetadata | null;
 }
-
 
 const SurveyCreationContext = createContext<SurveyCreationContextType | undefined>(undefined);
 
@@ -36,6 +44,7 @@ const defaultSurveyConfig: SurveyConfig = {
     limitScale: 0,
     totalQuestions: 0,
     respondentLimit: 0,
+    metadataCid: null,
 };
 
 const abis = QUESTIONNAIRE_ABIS
@@ -50,20 +59,24 @@ const questionnaireStatus = [
 export const SurveyCreationProvider = ({ children }: { children: ReactNode }) => {
     // Initialize state from localStorage or default config
     const [config, setConfig, removeConfig] = useSyncedState<SurveyConfig>("surveyConfig", defaultSurveyConfig);
-    const [metadata, setMetadata, removeMetadata] = useSyncedState<string | null>("surveyMetadata", null);
+    const [metadata, setMetadata, removeMetadata] = useSyncedState<SurveyMetadata | null>("surveyMetadata", null);
 
 
-    const { data: surveyType, isSuccess: surveyTypeFetched } = useReadContract({
+    const factoryContract = {
         address: factoryAddress as Address,
         abi: abis.factory,
-        functionName: "getQuestionnaireType",
-        args: [config.address as Address],
-    })
+    } as const;
 
     const surveyContract = {
         address: config.address as Address | undefined,
         abi: abis.general,
     } as const;
+
+    const { data: surveyType, isSuccess: surveyTypeFetched } = useReadContract({
+        ...factoryContract,
+        functionName: "getQuestionnaireType",
+        args: [config.address as Address],
+    })
 
     const { data: surveyData, isSuccess: surveyDataFetched } = useReadContracts({
         contracts: [
@@ -89,9 +102,16 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
                 ...surveyContract,
                 functionName: "status",
                 args: [],
-            }
+            },
         ]
     });
+
+    const { data: metadataCid, isSuccess: metadataCidFetched } = useReadContract({
+        ...surveyContract,
+        functionName: "metadataCID",
+        args: [],
+    })
+
 
     const setSurveyAddress = (address: Address | null) => {
         setConfig(prev => ({ ...prev, address }));
@@ -100,7 +120,25 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
     const resetSurveyConfig = () => {
         setConfig(defaultSurveyConfig);
         removeConfig();
+        removeMetadata();
     };
+
+    const getMetadataContent = async (cid: string) => {
+        try {
+            const response = await fetch(`/api/metadata?cid=${cid}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+            if (!response.ok) {
+                throw new Error('Failed to fetch metadata');
+            }
+            return await response.json();
+        } catch (error) {
+            throw new Error(`Error fetching metadata: ${error}`);
+        }
+    }
 
     // If address set, get the survey config from the blockchain
     useEffect(() => {
@@ -124,14 +162,35 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
         }
     }, [config.address, surveyType, surveyTypeFetched, surveyData, surveyDataFetched, setConfig]);
 
+    // If metadata CID fetched, get the metadata and set it
+    useEffect(() => {
+        if (metadataCidFetched && metadataCid) {
+            setConfig(prev => ({ ...prev, metadataCid: metadataCid as string }));
+            getMetadataContent(metadataCid as string)
+                .then((content) => {
+                    setMetadata({
+                        title: content.title || '',
+                        description: content.description || '',
+                        categories: content.categories || '',
+                        minLabel: content.minLabel || '',
+                        maxLabel: content.maxLabel || '',
+                        tags: Array.isArray(content.tags) ? content.tags : [],
+                    });
+                })
+                .catch((error) => {
+                    console.error('Error fetching metadata:', error);
+                    setMetadata(null);
+                });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [metadataCidFetched, metadataCid, setMetadata]);
+
     return (
         <SurveyCreationContext.Provider value={{
             config,
             setSurveyAddress,
             resetSurveyConfig,
-            setMetadata: (metadata: string | null) => setMetadata(metadata),
-            removeMetadata: () => removeMetadata(),
-            metadata: metadata || null
+            metadata
         }}>
             {children}
         </SurveyCreationContext.Provider>

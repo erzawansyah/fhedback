@@ -1,19 +1,23 @@
 import { useState, useEffect, useCallback } from "react";
 
 function useSyncedState<T>(key: string, initialValue: T) {
-  const getInitial = () => {
-    const stored = localStorage.getItem(key);
-    if (stored !== null) {
-      try {
-        return JSON.parse(stored) as T;
-      } catch {
-        return initialValue;
-      }
-    }
-    return initialValue;
-  };
+  const [value, setValue] = useState<T>(initialValue);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  const [value, setValue] = useState<T>(getInitial);
+  // Inisialisasi data dari localStorage setelah component mount di client
+  useEffect(() => {
+    if (typeof window !== "undefined" && !isInitialized) {
+      const stored = localStorage.getItem(key);
+      if (stored !== null) {
+        try {
+          setValue(JSON.parse(stored) as T);
+        } catch {
+          // Jika gagal parse, gunakan initialValue
+        }
+      }
+      setIsInitialized(true);
+    }
+  }, [key, initialValue, isInitialized]);
 
   // Stabilkan setValue dengan useCallback
   const setValueStable = useCallback((newValue: T | ((prev: T) => T)) => {
@@ -21,10 +25,16 @@ function useSyncedState<T>(key: string, initialValue: T) {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(key, JSON.stringify(value));
-  }, [key, value]);
+    // Hanya simpan ke localStorage jika sudah diinisialisasi dan di client-side
+    if (typeof window !== "undefined" && isInitialized) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+  }, [key, value, isInitialized]);
 
   useEffect(() => {
+    // Hanya tambahkan event listener jika di client-side
+    if (typeof window === "undefined") return;
+
     const handler = (e: StorageEvent) => {
       if (e.key === key) {
         if (e.newValue !== null) {
@@ -39,7 +49,9 @@ function useSyncedState<T>(key: string, initialValue: T) {
   }, [key, initialValue]);
 
   const removeKey = useCallback(() => {
-    localStorage.removeItem(key);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(key);
+    }
     setValue(initialValue);
   }, [initialValue, key]);
 
