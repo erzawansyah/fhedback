@@ -2,7 +2,7 @@
 import useSyncedState from '@/hooks/use-synced-state';
 import { QUESTIONNAIRE_ABIS, QUESTIONNAIRE_FACTORY_ADDRESS } from '@/lib/contracts';
 
-import React, { createContext, useContext, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import { Address } from 'viem';
 import { useReadContract, useReadContracts } from 'wagmi';
 
@@ -32,6 +32,7 @@ interface SurveyCreationContextType {
     setSurveyAddress: (address: Address | null) => void;
     resetSurveyConfig: () => void;
     metadata: SurveyMetadata | null;
+    refresh: () => void;
 }
 
 const SurveyCreationContext = createContext<SurveyCreationContextType | undefined>(undefined);
@@ -57,6 +58,7 @@ const questionnaireStatus = [
     "trashed",
 ]
 export const SurveyCreationProvider = ({ children }: { children: ReactNode }) => {
+    const [refreshed, setRefreshed] = useState(false);
     // Initialize state from localStorage or default config
     const [config, setConfig, removeConfig] = useSyncedState<SurveyConfig>("surveyConfig", defaultSurveyConfig);
     const [metadata, setMetadata, removeMetadata] = useSyncedState<SurveyMetadata | null>("surveyMetadata", null);
@@ -113,9 +115,9 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
     })
 
 
-    const setSurveyAddress = (address: Address | null) => {
+    const setSurveyAddress = React.useCallback((address: Address | null) => {
         setConfig(prev => ({ ...prev, address }));
-    };
+    }, [setConfig]);
 
     const resetSurveyConfig = () => {
         setConfig(defaultSurveyConfig);
@@ -139,6 +141,19 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
             throw new Error(`Error fetching metadata: ${error}`);
         }
     }
+
+    const refresh = () => {
+        setRefreshed(true);
+    };
+
+    useEffect(() => {
+        if (refreshed) {
+            const address = config.address;
+            setConfig(defaultSurveyConfig);
+            setSurveyAddress(address);
+            setRefreshed(false);
+        }
+    }, [refreshed, setConfig, setSurveyAddress, config.address]);
 
     // If address set, get the survey config from the blockchain
     useEffect(() => {
@@ -164,7 +179,7 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
 
     // If metadata CID fetched, get the metadata and set it
     useEffect(() => {
-        if (metadataCidFetched && metadataCid) {
+        if (config.address && metadataCidFetched && metadataCid && metadataCid !== null && metadataCid !== "") {
             setConfig(prev => ({ ...prev, metadataCid: metadataCid as string }));
             getMetadataContent(metadataCid as string)
                 .then((content) => {
@@ -182,15 +197,17 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
                     setMetadata(null);
                 });
         }
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [metadataCidFetched, metadataCid, setMetadata]);
+    }, [metadataCidFetched, metadataCid, setMetadata, config.address]);
 
     return (
         <SurveyCreationContext.Provider value={{
             config,
             setSurveyAddress,
             resetSurveyConfig,
-            metadata
+            metadata,
+            refresh
         }}>
             {children}
         </SurveyCreationContext.Provider>

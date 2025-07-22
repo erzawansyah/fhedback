@@ -60,7 +60,7 @@ export type SubmissionStatus = "idle" | "loading" | "signing" | "verifying" | "s
  */
 export const SurveyMetadataStep = () => {
     // Get survey creation context and contract configuration
-    const { config, metadata } = useSurveyCreation()
+    const { config, metadata, refresh } = useSurveyCreation()
     const contractAddress = config.address as `0x${string}` | null;
 
     // State for tracking blockchain transaction hash
@@ -111,8 +111,7 @@ export const SurveyMetadataStep = () => {
         try {
             // Check if wallet is connected and has an address
             if (!account.address) {
-                toast.error("No connected wallet address found.")
-                return null;
+                throw new Error("Wallet is not connected or address is not available")
             }
 
             // Request user to sign a verification message
@@ -120,8 +119,7 @@ export const SurveyMetadataStep = () => {
 
             // Validate that signature was successfully created
             if (!signature) {
-                toast.error("Failed to sign message")
-                return null
+                throw new Error("Failed to sign verification message")
             }
 
             return {
@@ -153,7 +151,7 @@ export const SurveyMetadataStep = () => {
      */
     const onSubmit = async (data: SurveyMetadataData) => {
         // Check if user is editing metadata or submitting new
-        const isEditing = config.metadataCid !== null && status !== "success" && editing
+        const isEditing = config.metadataCid !== null && metadata !== null
         if (isEditing) {
             // If not editing, just return without submitting
             setStatus("idle")
@@ -231,10 +229,11 @@ export const SurveyMetadataStep = () => {
      * Monitors blockchain transaction receipt and provides user feedback
      */
     useEffect(() => {
-        const isEditing = config.metadataCid !== null && status !== "success" && editing
+        const isEditing = config.metadataCid !== null && metadata !== null
         if (isSuccess && txHash) {
             // Transaction was successful - show success message and reset form
             setStatus("success")
+            refresh()
             toast.success("Transaction confirmed! Metadata saved successfully.")
             setEditing(false)
             setTxHash(null)
@@ -245,6 +244,7 @@ export const SurveyMetadataStep = () => {
             if (isEditing) {
                 toast.error("Transaction failed. Metadata not updated.")
                 setTimeout(() => {
+                    refresh()
                     setStatus("success")
                 }, 2000)
             } else {
@@ -252,7 +252,8 @@ export const SurveyMetadataStep = () => {
             }
             setTxHash(null)
         }
-    }, [isSuccess, isError, txHash, form, config.metadataCid, status, editing])
+        //eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isSuccess, isError, txHash, form, config.metadataCid, metadata])
 
     // Render the survey metadata form component
     return (
@@ -421,7 +422,10 @@ export const SurveyMetadataStep = () => {
                                                     type="button"
                                                     variant="neutral"
                                                     className="w-full"
-                                                    onClick={() => setEditing(false)}
+                                                    onClick={() => {
+                                                        setEditing(false)
+                                                        refresh()
+                                                    }}
                                                     disabled={disabled}
                                                 >
                                                     Cancel Editing
@@ -461,7 +465,6 @@ export const SurveyMetadataStep = () => {
                                 ) : (
                                     <Button
                                         type="submit"
-                                        className="w-full"
                                         disabled={disabled}
                                     >
                                         {

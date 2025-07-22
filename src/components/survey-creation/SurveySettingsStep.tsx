@@ -174,6 +174,8 @@ export const SurveySettingsStep: React.FC = () => {
                                             <Input
                                                 type="number"
                                                 placeholder="5"
+                                                min={1}
+                                                max={20}
                                                 {...field}
                                                 onChange={(e) => field.onChange(Number(e.target.value))}
                                                 disabled={!editable}
@@ -194,6 +196,8 @@ export const SurveySettingsStep: React.FC = () => {
                                             <Input
                                                 type="number"
                                                 placeholder="5"
+                                                min={2}
+                                                max={10}
                                                 {...field}
                                                 onChange={(e) => field.onChange(Number(e.target.value))}
                                                 disabled={!editable}
@@ -214,6 +218,9 @@ export const SurveySettingsStep: React.FC = () => {
                                             <Input
                                                 type="number"
                                                 placeholder="100"
+                                                min={0}
+                                                max={1000}
+                                                step={10}
                                                 {...field}
                                                 onChange={(e) => field.onChange(Number(e.target.value))}
                                                 disabled={!editable}
