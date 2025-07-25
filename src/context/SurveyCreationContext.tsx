@@ -15,6 +15,7 @@ interface SurveyConfig {
     totalQuestions: number;
     respondentLimit: number;
     metadataCid: string | null;
+    questionsAdded: boolean;
 }
 
 
@@ -32,8 +33,11 @@ interface SurveyCreationContextType {
     setSurveyAddress: (address: Address | null) => void;
     resetSurveyConfig: () => void;
     metadata: SurveyMetadata | null;
+    questions: string[];
+    setQuestions: (questions: string[]) => void;
     refresh: () => void;
     refreshed?: boolean;
+    handleQuestionsAdded: () => void;
 }
 
 const SurveyCreationContext = createContext<SurveyCreationContextType | undefined>(undefined);
@@ -47,6 +51,7 @@ const defaultSurveyConfig: SurveyConfig = {
     totalQuestions: 0,
     respondentLimit: 0,
     metadataCid: null,
+    questionsAdded: false,
 };
 
 const abis = QUESTIONNAIRE_ABIS
@@ -66,6 +71,7 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
     // useSyncedState automatically syncs with localStorage for persistence
     const [config, setConfig, removeConfig] = useSyncedState<SurveyConfig>("surveyConfig", defaultSurveyConfig);
     const [metadata, setMetadata, removeMetadata] = useSyncedState<SurveyMetadata | null>("surveyMetadata", null);
+    const [questions, setQuestions] = useSyncedState<string[]>("surveyQuestions", []);
 
     // Contract configurations for blockchain interactions
     const factoryContract = {
@@ -73,7 +79,7 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
         abi: abis.factory,
     } as const;
 
-    const surveyContract = {
+    const generalSurveyContract = {
         address: config.address as Address | undefined,
         abi: abis.general,
     } as const;
@@ -92,28 +98,28 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
     const { data: surveyData, isSuccess: surveyDataFetched } = useReadContracts({
         contracts: [
             {
-                ...surveyContract,
+                ...generalSurveyContract,
                 functionName: "title",
                 args: [],
             }, {
-                ...surveyContract,
+                ...generalSurveyContract,
                 functionName: "scaleLimit",
                 args: [],
             },
             {
-                ...surveyContract,
+                ...generalSurveyContract,
                 functionName: "questionLimit",
                 args: [],
             }, {
-                ...surveyContract,
+                ...generalSurveyContract,
                 functionName: "respondentLimit",
                 args: [],
             },
             {
-                ...surveyContract,
+                ...generalSurveyContract,
                 functionName: "status",
                 args: [],
-            },
+            }
         ],
         query: {
             enabled: !!config.address, // Only fetch when address is available
@@ -122,7 +128,7 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
 
     // Wagmi hook to fetch metadata CID from survey contract
     const { data: metadataCid, isSuccess: metadataCidFetched } = useReadContract({
-        ...surveyContract,
+        ...generalSurveyContract,
         functionName: "metadataCID",
         args: [],
         query: {
@@ -130,10 +136,28 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
         }
     })
 
+    // Wagmi hook to fetch quetions from survey contract
+    const { data: questionsData, isSuccess: questionsFetched } = useReadContract({
+        ...generalSurveyContract,
+        functionName: "getQuestions",
+        args: [],
+        query: {
+            enabled: !!config.address, // Only fetch when address is available
+        }
+    });
+
 
     // Function to set survey address and trigger data fetch
     const setSurveyAddress = React.useCallback((address: Address | null) => {
         setConfig(prev => ({ ...prev, address }));
+    }, [setConfig]);
+
+    /**
+     * Function to handle questions added state
+     * This will be used to track if questions have been added to the survey
+     */
+    const handleQuestionsAdded = React.useCallback(() => {
+        setConfig(prev => ({ ...prev, questionsAdded: true }));
     }, [setConfig]);
 
     // Function to completely reset survey configuration and clear localStorage
@@ -141,7 +165,8 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
         setConfig(defaultSurveyConfig);
         removeConfig();
         removeMetadata();
-    }, [setConfig, removeConfig, removeMetadata]);
+        setQuestions([]);
+    }, [setConfig, removeConfig, removeMetadata, setQuestions]);
 
     const getMetadataContent = async (cid: string) => {
         try {
@@ -170,13 +195,15 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
         setRefreshed(true);
     }, []);
 
+
+
     /**
      * Effect to handle refresh logic
      * When refresh is triggered, this will:
      * 1. Preserve the current survey address
      * 2. Reset config to default values (triggers re-fetch)
      * 3. Restore the address to trigger blockchain data fetch
-     * 4. Clear metadata to force fresh metadata fetch
+     * 4. Clear metadata and questions to force fresh fetch
      */
     useEffect(() => {
         if (refreshed) {
@@ -184,8 +211,9 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
 
             // Reset all configurations to default
             setConfig(defaultSurveyConfig);
-            // Clear metadata to force fresh fetch
+            // Clear metadata and questions to force fresh fetch
             setMetadata(null);
+            setQuestions([]);
 
             // Restore address to trigger fresh blockchain data fetch
             if (currentAddress) {
@@ -195,7 +223,7 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
             // Reset refresh flag
             setRefreshed(false);
         }
-    }, [refreshed, setConfig, setSurveyAddress, setMetadata, config.address]);
+    }, [refreshed, setConfig, setSurveyAddress, setMetadata, setQuestions, config.address]);
 
     // Effect to sync blockchain data with local config when survey data is fetched
     useEffect(() => {
@@ -253,14 +281,30 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [metadataCidFetched, metadataCid, config.address]);
 
+    // Effect to update questions when fetched from contract
+    useEffect(() => {
+        if (config.address && questionsFetched && Array.isArray(questionsData) && questionsData.length > 0) {
+            // Update questions state with fetched data from blockchain
+            const fetchedQuestions = questionsData as string[];
+            setQuestions(fetchedQuestions);
+
+            // Update questionsAdded status based on whether questions exist
+            const hasQuestions = fetchedQuestions.length > 0;
+            setConfig(prev => ({ ...prev, questionsAdded: hasQuestions }));
+        }
+    }, [config.address, questionsFetched, questionsData, setQuestions, setConfig]);
+
     return (
         <SurveyCreationContext.Provider value={{
             config,
             setSurveyAddress,
             resetSurveyConfig,
             metadata,
+            questions,
+            setQuestions,
             refresh,
             refreshed,
+            handleQuestionsAdded,
         }}>
             {children}
         </SurveyCreationContext.Provider>

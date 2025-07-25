@@ -8,6 +8,10 @@ export {
   type SurveyMetadataData,
 } from "./SurveyMetadataStep";
 export {
+  SurveyQuestionsStep,
+  type SurveyQuestionsData,
+} from "./SurveyQuestionsStep";
+export {
   QuestionsStep,
   type Question,
   type QuestionType,
