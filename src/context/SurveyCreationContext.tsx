@@ -33,6 +33,7 @@ interface SurveyCreationContextType {
     resetSurveyConfig: () => void;
     metadata: SurveyMetadata | null;
     refresh: () => void;
+    refreshed?: boolean;
 }
 
 const SurveyCreationContext = createContext<SurveyCreationContextType | undefined>(undefined);
@@ -58,12 +59,15 @@ const questionnaireStatus = [
     "trashed",
 ]
 export const SurveyCreationProvider = ({ children }: { children: ReactNode }) => {
+    // State to track if refresh has been triggered
     const [refreshed, setRefreshed] = useState(false);
+
     // Initialize state from localStorage or default config
+    // useSyncedState automatically syncs with localStorage for persistence
     const [config, setConfig, removeConfig] = useSyncedState<SurveyConfig>("surveyConfig", defaultSurveyConfig);
     const [metadata, setMetadata, removeMetadata] = useSyncedState<SurveyMetadata | null>("surveyMetadata", null);
 
-
+    // Contract configurations for blockchain interactions
     const factoryContract = {
         address: factoryAddress as Address,
         abi: abis.factory,
@@ -74,12 +78,17 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
         abi: abis.general,
     } as const;
 
+    // Wagmi hooks to fetch survey type from factory contract
     const { data: surveyType, isSuccess: surveyTypeFetched } = useReadContract({
         ...factoryContract,
         functionName: "getQuestionnaireType",
         args: [config.address as Address],
+        query: {
+            enabled: !!config.address, // Only fetch when address is available
+        }
     })
 
+    // Wagmi hooks to fetch multiple survey data from survey contract
     const { data: surveyData, isSuccess: surveyDataFetched } = useReadContracts({
         contracts: [
             {
@@ -105,25 +114,34 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
                 functionName: "status",
                 args: [],
             },
-        ]
+        ],
+        query: {
+            enabled: !!config.address, // Only fetch when address is available
+        }
     });
 
+    // Wagmi hook to fetch metadata CID from survey contract
     const { data: metadataCid, isSuccess: metadataCidFetched } = useReadContract({
         ...surveyContract,
         functionName: "metadataCID",
         args: [],
+        query: {
+            enabled: !!config.address, // Only fetch when address is available
+        }
     })
 
 
+    // Function to set survey address and trigger data fetch
     const setSurveyAddress = React.useCallback((address: Address | null) => {
         setConfig(prev => ({ ...prev, address }));
     }, [setConfig]);
 
-    const resetSurveyConfig = () => {
+    // Function to completely reset survey configuration and clear localStorage
+    const resetSurveyConfig = React.useCallback(() => {
         setConfig(defaultSurveyConfig);
         removeConfig();
         removeMetadata();
-    };
+    }, [setConfig, removeConfig, removeMetadata]);
 
     const getMetadataContent = async (cid: string) => {
         try {
@@ -134,38 +152,64 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
                 },
             });
             if (!response.ok) {
-                throw new Error('Failed to fetch metadata');
+                throw new Error(`Failed to fetch metadata: ${response.statusText}`);
             }
             return await response.json();
         } catch (error) {
+            console.error('Error fetching metadata:', error);
             throw new Error(`Error fetching metadata: ${error}`);
         }
     }
 
-    const refresh = () => {
+    /**
+     * Function to refresh survey data by refetching from blockchain
+     * This will reset config to default values while preserving the address,
+     * triggering a fresh fetch of all survey data from smart contracts
+     */
+    const refresh = React.useCallback(() => {
         setRefreshed(true);
-    };
+    }, []);
 
+    /**
+     * Effect to handle refresh logic
+     * When refresh is triggered, this will:
+     * 1. Preserve the current survey address
+     * 2. Reset config to default values (triggers re-fetch)
+     * 3. Restore the address to trigger blockchain data fetch
+     * 4. Clear metadata to force fresh metadata fetch
+     */
     useEffect(() => {
         if (refreshed) {
-            const address = config.address;
+            const currentAddress = config.address;
+
+            // Reset all configurations to default
             setConfig(defaultSurveyConfig);
-            setSurveyAddress(address);
+            // Clear metadata to force fresh fetch
+            setMetadata(null);
+
+            // Restore address to trigger fresh blockchain data fetch
+            if (currentAddress) {
+                setSurveyAddress(currentAddress);
+            }
+
+            // Reset refresh flag
             setRefreshed(false);
         }
-    }, [refreshed, setConfig, setSurveyAddress, config.address]);
+    }, [refreshed, setConfig, setSurveyAddress, setMetadata, config.address]);
 
-    // If address set, get the survey config from the blockchain
+    // Effect to sync blockchain data with local config when survey data is fetched
     useEffect(() => {
         if (config.address && surveyTypeFetched && surveyDataFetched) {
             const [titleRes, scaleLimitRes, questionLimitRes, respondentLimitRes, statusRes] = surveyData || [];
+
+            // Extract values with fallbacks for failed responses
             const title = titleRes?.status === 'success' ? titleRes.result : '';
             const scaleLimit = scaleLimitRes?.status === 'success' ? scaleLimitRes.result : 0;
             const questionLimit = questionLimitRes?.status === 'success' ? questionLimitRes.result : 0;
             const respondentLimit = respondentLimitRes?.status === 'success' ? respondentLimitRes.result : 0;
             const status = statusRes?.status === 'success' ? statusRes.result : null;
 
-
+            // Update config with blockchain data, ensuring proper type conversion
             setConfig(prev => ({
                 ...prev,
                 title: typeof title === 'string' ? title : String(title ?? ''),
@@ -173,16 +217,22 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
                 limitScale: typeof scaleLimit === 'number' ? scaleLimit : Number(scaleLimit ?? 0),
                 totalQuestions: typeof questionLimit === 'number' ? questionLimit : Number(questionLimit ?? 0),
                 respondentLimit: typeof respondentLimit === 'number' ? respondentLimit : Number(respondentLimit ?? 0),
+                // Set isFhe based on survey type from factory contract
+                isFhe: surveyType === 1, // Assuming 1 = FHE type, 0 = General type
             }));
         }
     }, [config.address, surveyType, surveyTypeFetched, surveyData, surveyDataFetched, setConfig]);
 
-    // If metadata CID fetched, get the metadata and set it
+    // Effect to fetch and update metadata when metadata CID is available
     useEffect(() => {
         if (config.address && metadataCidFetched && metadataCid && metadataCid !== null && metadataCid !== "") {
+            // Update config with the metadata CID
             setConfig(prev => ({ ...prev, metadataCid: metadataCid as string }));
+
+            // Fetch metadata content from IPFS/Pinata via API
             getMetadataContent(metadataCid as string)
                 .then((content) => {
+                    // Successfully fetched metadata, update state with proper fallbacks
                     setMetadata({
                         title: content.title || '',
                         description: content.description || '',
@@ -193,13 +243,15 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
                     });
                 })
                 .catch((error) => {
+                    // Failed to fetch metadata, log error and set metadata to null
                     console.error('Error fetching metadata:', error);
                     setMetadata(null);
                 });
         }
-
+        // Note: Intentionally excluding getMetadataContent and setMetadata from deps
+        // to prevent unnecessary re-fetches when these functions change
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [metadataCidFetched, metadataCid, setMetadata, config.address]);
+    }, [metadataCidFetched, metadataCid, config.address]);
 
     return (
         <SurveyCreationContext.Provider value={{
@@ -207,7 +259,8 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
             setSurveyAddress,
             resetSurveyConfig,
             metadata,
-            refresh
+            refresh,
+            refreshed,
         }}>
             {children}
         </SurveyCreationContext.Provider>

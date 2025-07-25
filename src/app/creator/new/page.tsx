@@ -1,15 +1,28 @@
 "use client"
+import React from "react"
 import PageTitle from "@/components/layout/page-title"
-import { SurveyMetadataStep, SurveySettingsStep } from "@/components/survey-creation"
-import { Card, CardContent } from "@/components/ui/card"
+import { SurveyMetadataStep, SurveyQuestionsStep, SurveySettingsStep } from "@/components/survey-creation"
 import { useSurveyCreation } from "@/context/SurveyCreationContext"
 import { CirclePlus, SquarePen } from "lucide-react"
+import NewSurveySidebar from "./sidebar"
 
 const NewSurveyPage = () => {
-    const { config, metadata, resetSurveyConfig } = useSurveyCreation();
-
+    const { config, resetSurveyConfig, refreshed } = useSurveyCreation();
+    /**
+     * Handle survey reset action
+     * This will clear all survey configuration and start fresh
+     */
     const resetSurvey = () => {
         resetSurveyConfig();
+    }
+
+    // Show loading state during refresh
+    if (refreshed) {
+        return (
+            <div className="text-center py-8">
+                <p className="text-sm text-gray-600">Survey configuration is being refreshed...</p>
+            </div>
+        );
     }
 
     return (
@@ -24,70 +37,20 @@ const NewSurveyPage = () => {
             />
             <div className="grid grid-cols-4 gap-6 min-h-92">
                 <div className="col-span-4 lg:col-span-3 space-y-6">
+                    {/* Step 1: Survey Settings - Always visible */}
                     <SurveySettingsStep />
-                    {
-                        config.status === "initialized" && <SurveyMetadataStep />
-                    }
+
+                    {/* Step 2: Survey Metadata - Only visible after survey is created */}
+                    {config.address && (
+                        <SurveyMetadataStep />
+                    )}
+                    {/* Step 3: Survey Questions - Only visible after metadata is set */}
+                    {config.metadataCid && (
+                        <SurveyQuestionsStep />
+                    )}
                 </div>
                 <div className="col-span-4 lg:col-span-1">
-                    <Card>
-                        <CardContent>
-                            {
-                                config.address ? (
-                                    <>
-                                        <p className="text-sm text-gray-600">
-                                            Your survey has been created! You can view it{" "}
-                                            <a
-                                                href={`/surveys/${config.address}`}
-                                                className="text-blue-600 hover:underline"
-                                            >
-                                                here
-                                            </a>.
-                                        </p>
-                                        <ol>
-                                            <li className="text-sm text-gray-600">
-                                                <span className="font-semibold">Survey Title:</span> {config.title}
-                                            </li>
-                                            <li className="text-sm text-gray-600">
-                                                <span className="font-semibold">Total Questions:</span> {config.totalQuestions}
-                                            </li>
-                                            <li className="text-sm text-gray-600">
-                                                <span className="font-semibold">Respondent Limit:</span> {config.respondentLimit}
-                                            </li>
-                                            <li className="text-sm text-gray-600">
-                                                <span className="font-semibold">Scale Limit:</span> {config.limitScale}
-                                            </li>
-                                            <li className="text-sm text-gray-600">
-                                                <span className="font-semibold">FHE Enabled:</span> {config.isFhe ? "Yes" : "No"}
-                                            </li>
-                                            <li className="text-sm text-gray-600">
-                                                <span className="font-semibold">Status:</span> {config.status}
-                                            </li>
-                                        </ol>
-                                    </>
-                                ) : (
-                                    <p className="text-sm text-gray-600">
-                                        Please fill out the survey settings to get started.
-                                    </p>
-                                )
-                            }
-                        </CardContent>
-                    </Card>
-                    {
-                        metadata ? (
-                            <Card className="mt-6">
-                                <CardContent>
-                                    <p>Metadata CID</p>
-                                    <p className="text-sm text-gray-600 overflow-x-auto">
-                                        {config.metadataCid}
-                                    </p>
-                                    <code className="text-xs text-gray-700">
-                                        {JSON.stringify(metadata, null, 2)}
-                                    </code>
-                                </CardContent>
-                            </Card>
-                        ) : null
-                    }
+                    <NewSurveySidebar />
                 </div>
             </div>
         </div>

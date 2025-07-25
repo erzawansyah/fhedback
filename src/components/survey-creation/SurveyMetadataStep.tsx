@@ -51,7 +51,7 @@ const surveyMetadataSchema = z.object({
 export type SurveyMetadataData = z.infer<typeof surveyMetadataSchema>
 
 // Submission status type
-export type SubmissionStatus = "idle" | "loading" | "signing" | "verifying" | "success" | "error";
+export type SubmissionStatus = "idle" | "loading" | "signing" | "verifying" | "submitted" | "error" | "editing";
 
 /**
  * SurveyMetadataStep Component
@@ -60,28 +60,35 @@ export type SubmissionStatus = "idle" | "loading" | "signing" | "verifying" | "s
  */
 export const SurveyMetadataStep = () => {
     // Get survey creation context and contract configuration
-    const { config, metadata, refresh } = useSurveyCreation()
+    const { config, metadata } = useSurveyCreation()
     const contractAddress = config.address as `0x${string}` | null;
 
-    // State for tracking blockchain transaction hash
-    const [txHash, setTxHash] = useState<`0x${string}` | string | null>(null)
-
-    // state for editing metadata
-    const [editing, setEditing] = useState(true);
-
-    // Hook to monitor transaction receipt status
-    const { isSuccess, isError } = useWaitForTransactionReceipt({
-        hash: typeof txHash === "string" && txHash.startsWith("0x") ? (txHash as `0x${string}`) : undefined,
-    })
+    // temporary state for editing mode to store original values
+    const [originalValues, setOriginalValues] = useState<SurveyMetadataData | null>(null);
 
     // Loading state for form submission and transaction processing
     const [status, setStatus] = useState<SubmissionStatus>("idle");
 
+    // State for tracking blockchain transaction hash
+    const [txHash, setTxHash] = useState<`0x${string}` | string | null>(null)
+
+    // Hook to monitor transaction receipt status
+    const { isSuccess, isError } = useWaitForTransactionReceipt({
+        hash: typeof txHash === "string" && txHash.startsWith("0x") ? (txHash as `0x${string}`) : undefined,
+        query: {
+            enabled: !!txHash && txHash.startsWith("0x"),
+            refetchInterval: 5000, // Check every 5 seconds
+        },
+    })
+
+
     // Get connected wallet account information
     const account = useAccount()
 
-    // Disable form fields and submission button based on loading state
-    const disabled = status === "loading" || status === "signing" || status === "verifying" || !editing;
+    // Determine if form should be disabled (during processing or when not in edit mode and already submitted)
+    const isProcessing = status === "loading" || status === "signing" || status === "verifying"
+    const isSubmittedAndNotEditing = status === "submitted" && !!config.metadataCid
+    const disabled = Boolean(isProcessing || isSubmittedAndNotEditing)
 
     /**
      * Initialize React Hook Form with Zod validation schema
@@ -134,57 +141,118 @@ export const SurveyMetadataStep = () => {
     }
 
     /**
-     * If config.metadataCid is set, so status is set to "success"
-     * This indicates that metadata has been successfully fetched or set before
+     * Effect to initialize editing state based on existing metadata
+     * If metadata already exists, disable editing initially and reset form values
      */
     useEffect(() => {
-        if (config.metadataCid) {
-            setStatus("success")
-            setEditing(false)
+        if (config.metadataCid && metadata) {
+            setStatus("submitted")
+            // Reset form values to match current metadata whenever metadata changes
+            const metadataValues = {
+                displayTitle: metadata.title || "",
+                description: metadata.description || "",
+                category: metadata.categories || "",
+                scaleLabels: {
+                    minLabel: metadata.minLabel || "Strongly Disagree",
+                    maxLabel: metadata.maxLabel || "Strongly Agree",
+                },
+                tags: metadata.tags?.join(", ") || "",
+            }
+            form.reset(metadataValues)
+        } else if (!config.metadataCid) {
+            setStatus("idle")
         }
-    }, [config.metadataCid])
+    }, [config.metadataCid, metadata, form])
+
+    /**
+     * Effect hook to handle transaction status changes
+     * Monitors blockchain transaction receipt and provides user feedback
+     */
+    useEffect(() => {
+        if (isSuccess && txHash) {
+            // Transaction was successful - show success message and refresh data
+            setStatus("submitted")
+            setTxHash(null)
+            // Clear original values after successful save
+            setOriginalValues(null)
+            toast.success("Transaction confirmed! Metadata saved successfully.")
+        } else if (isError && txHash) {
+            // Transaction failed - show error message and reset state
+            setStatus("error")
+            setTxHash(null)
+            toast.error("Transaction failed. Please try again.")
+        }
+    }, [isSuccess, isError, txHash])
+
+
+    // handle editing state
+    // Activate edit mode and store original values for potential cancellation
+    const activateEditMode = () => {
+        if (status === "submitted") {
+            // Store current form values as original values before allowing edits
+            setOriginalValues({
+                displayTitle: form.getValues("displayTitle"),
+                description: form.getValues("description"),
+                category: form.getValues("category"),
+                scaleLabels: {
+                    minLabel: form.getValues("scaleLabels.minLabel"),
+                    maxLabel: form.getValues("scaleLabels.maxLabel"),
+                },
+                tags: form.getValues("tags"),
+            })
+            setStatus("editing")
+        }
+    }
+
+    const cancelEditMode = () => {
+        if (status === "editing" && originalValues) {
+            // Reset form to original values
+            form.reset(originalValues)
+            setStatus("submitted")
+            setOriginalValues(null)
+        }
+    }
+
+
 
     /**
      * Handle form submission for survey metadata
      * This function processes the form data and submits it to the blockchain
      * @param data - Validated form data containing survey metadata
      */
-    const onSubmit = async (data: SurveyMetadataData) => {
-        // Check if user is editing metadata or submitting new
-        const isEditing = config.metadataCid !== null && metadata !== null
-        if (isEditing) {
-            // If not editing, just return without submitting
-            setStatus("idle")
-        }
 
-        // First verify the wallet address by requesting signature
-        setStatus("signing")
-        const verifyResult = await verifyAddress()
-        if (!verifyResult || !verifyResult.message || !verifyResult.signature) {
-            if (isEditing) {
-                setStatus("success")
-            }
-            toast.error("Failed to verify address. Please try again.")
+    const onSubmit = async (data: SurveyMetadataData) => {
+        // Check if wallet is connected
+        if (!account.address) {
+            toast.error("Please connect your wallet to save metadata.")
             return
         }
 
-        // Extract verification data
-        const { message, signature: hash } = verifyResult
-
         // Ensure contract address is available before proceeding
         if (!contractAddress) {
-            if (isEditing) {
-                setStatus("success")
-            }
             toast.error("Survey contract address is not set.")
             return
         }
 
+        // Start the signing process
+        setStatus("signing")
+
         try {
-            // Set loading state to prevent multiple submissions
+            // Step 1: Verify wallet ownership by requesting signature
+            const verifyResult = await verifyAddress()
+            if (!verifyResult || !verifyResult.message || !verifyResult.signature) {
+                setStatus("error")
+                toast.error("Failed to verify address. Please try again.")
+                return
+            }
+
+            // Extract verification data
+            const { message, signature: hash } = verifyResult
+
+            // Step 2: Prepare metadata for blockchain submission
             setStatus("loading")
             const preparedData = {
-                address: account.address as `0x${string}` | null,
+                address: account.address as `0x${string}`,
                 signature: hash,
                 message: message,
                 data: {
@@ -194,66 +262,31 @@ export const SurveyMetadataStep = () => {
                     minLabel: data.scaleLabels.minLabel,
                     maxLabel: data.scaleLabels.maxLabel,
                     // Parse tags from comma-separated string to array
-                    tags: data.tags?.split(",").map(tag => tag.trim()) || [],
+                    tags: data.tags?.split(",").map(tag => tag.trim()).filter(tag => tag.length > 0) || [],
                 },
             }
-            // Submit metadata to blockchain via smart contract
-            let txHashResult: `0x${string}` | string | null = null;
-            if (isEditing) {
-                txHashResult = await setMetadata(contractAddress, preparedData)
+
+            // Step 3: Submit metadata to blockchain via smart contract
+            const txHashResult = await setMetadata(contractAddress, preparedData)
+
+            if (txHashResult) {
+                // Store transaction hash for monitoring
+                setTxHash(txHashResult)
+                setStatus("verifying")
+                toast.success("Transaction sent! Waiting for confirmation...")
             } else {
-                txHashResult = await setMetadata(contractAddress, preparedData)
+                throw new Error("Failed to get transaction hash")
             }
-
-            // Store transaction hash for monitoring
-            setTxHash(txHashResult)
-
-            // successfully submitted metadata
-            setStatus("verifying")
-
-            // Show success notification to user
-            toast.success("Transaction sent! Waiting for confirmation...")
         } catch (error) {
-            setStatus("error")
-            toast.error(`Failed to save survey metadata: ${error instanceof Error ? error.message : "Unknown error"}`)
-            if (isEditing) {
-                setTimeout(() => {
-                    setStatus("success")
-                }, 2000)
+            // If there was an error and we're in editing mode, reset to original values
+            if (status === "editing" && originalValues) {
+                cancelEditMode()
+            } else {
+                setStatus("error")
             }
+            toast.error(`Failed to save survey metadata: ${error instanceof Error ? error.message : "Unknown error"}`)
         }
     }
-
-    /**
-     * Effect hook to handle transaction status changes
-     * Monitors blockchain transaction receipt and provides user feedback
-     */
-    useEffect(() => {
-        const isEditing = config.metadataCid !== null && metadata !== null
-        if (isSuccess && txHash) {
-            // Transaction was successful - show success message and reset form
-            setStatus("success")
-            refresh()
-            toast.success("Transaction confirmed! Metadata saved successfully.")
-            setEditing(false)
-            setTxHash(null)
-        } else if (isError) {
-            // Transaction failed - show error message and reset hash
-            setStatus("error")
-            setEditing(false)
-            if (isEditing) {
-                toast.error("Transaction failed. Metadata not updated.")
-                setTimeout(() => {
-                    refresh()
-                    setStatus("success")
-                }, 2000)
-            } else {
-                toast.error("Transaction failed. Please try again.")
-            }
-            setTxHash(null)
-        }
-        //eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isSuccess, isError, txHash, form, config.metadataCid, metadata])
 
     // Render the survey metadata form component
     return (
@@ -261,11 +294,11 @@ export const SurveyMetadataStep = () => {
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Info className="w-5 h-5" />
-                    Step 2: Survey Metadata (Optional)
+                    Step 2: Survey Metadata
+                    {config.metadataCid && (
+                        <span className="text-sm font-normal text-green-600">(Configured)</span>
+                    )}
                 </CardTitle>
-                <p className="text-sm text-gray-600">
-                    Add display information for your survey. This can be skipped and completed later.
-                </p>
             </CardHeader>
             <CardContent>
                 <Form {...form}>
@@ -316,10 +349,12 @@ export const SurveyMetadataStep = () => {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Category *</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={disabled}>
+                                    <Select onValueChange={field.onChange} value={field.value} disabled={disabled}>
                                         <FormControl>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Select category" />
+                                                <SelectValue placeholder="Select category" aria-label={field.value}>
+                                                    {(field.value ? field.value.charAt(0).toUpperCase() + field.value.slice(1) : "Select Category")}
+                                                </SelectValue>
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
@@ -409,78 +444,51 @@ export const SurveyMetadataStep = () => {
                             />
                         </div>
 
-                        {/* Form Submission Button */}
+                        {/* Form Submission Buttons */}
                         <div className="flex justify-end">
-                            {
-                                config.metadataCid !== null ? (
-                                    <>
-                                        {/* apakah sedang dalam mode edit */}
-                                        {
-                                            editing ? <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                {/* Kalau iya, tambahkan 2 tombol, edit atau cancel */}
-                                                <Button
-                                                    type="button"
-                                                    variant="neutral"
-                                                    className="w-full"
-                                                    onClick={() => {
-                                                        setEditing(false)
-                                                        refresh()
-                                                    }}
-                                                    disabled={disabled}
-                                                >
-                                                    Cancel Editing
-                                                </Button>
-                                                <Button
-                                                    type="submit"
-                                                    className="w-full"
-                                                    disabled={disabled}
-                                                >
-                                                    {
-                                                        status === "loading" || status === "signing" || status === "verifying" ? (
-                                                            <Loader className="animate-spin w-4 h-4 mr-2" />
-                                                        ) : <Wallet className="w-4 h-4 mr-2" />
-                                                    }
-                                                    {
-                                                        status === "loading" ? "Updating..." :
-                                                            status === "signing" ? "Signing..." :
-                                                                status === "verifying" ? "Waiting for verification..." :
-                                                                    "Sign & Update Metadata"
-                                                    }
-                                                </Button>
-                                            </div> : <>
-                                                {/* Kalau tidak, maka tampilkan tombol untuk mulai mengedit */}
-                                                {
-                                                    config.status === "initialized" && <Button
-                                                        type="button"
-                                                        variant="default"
-                                                        onClick={() => setEditing(true)}
-                                                    >
-                                                        <Pencil className="w-4 h-4 mr-2" />
-                                                        Edit Metadata
-                                                    </Button>
-                                                }
-                                            </>
-                                        }
-                                    </>
-                                ) : (
+                            {status === "submitted" && config.metadataCid ? (
+                                // Show edit button when metadata exists and not in editing mode
+                                <Button
+                                    type="button"
+                                    variant="neutral"
+                                    className="flex items-center gap-2"
+                                    onClick={activateEditMode}
+                                >
+                                    <Pencil className="w-4 h-4" />
+                                    Edit Metadata
+                                </Button>
+                            ) : (
+                                // Show action buttons when in editing mode or initial creation
+                                <div className="flex gap-2">
+                                    {status === "editing" && (
+                                        <Button
+                                            type="button"
+                                            variant="neutral"
+                                            onClick={cancelEditMode}
+                                            disabled={disabled}
+                                        >
+                                            Cancel
+                                        </Button>
+                                    )}
                                     <Button
                                         type="submit"
                                         disabled={disabled}
+                                        className="flex items-center gap-2"
                                     >
-                                        {
-                                            status === "loading" || status === "signing" || status === "verifying" ? (
-                                                <Loader className="animate-spin w-4 h-4 mr-2" />
-                                            ) : <Wallet className="w-4 h-4 mr-2" />
-                                        }
-                                        {
-                                            status === "loading" ? "Updating..." :
-                                                status === "signing" ? "Signing..." :
-                                                    status === "verifying" ? "Waiting for verification..." :
-                                                        "Sign & Set Metadata"
+                                        {(status === "loading" || status === "signing" || status === "verifying") ? (
+                                            <Loader className="w-4 h-4 animate-spin" />
+                                        ) : (
+                                            <Wallet className="w-4 h-4" />
+                                        )}
+                                        {status === "loading" ? "Saving..." :
+                                            status === "signing" ? "Signing..." :
+                                                status === "verifying" ? "Verifying..." :
+                                                    status === "editing" ? "Update Metadata" :
+                                                        config.metadataCid ? "Update Metadata" : "Save Metadata"
                                         }
                                     </Button>
-                                )
-                            }
+                                </div>
+                            )}
                         </div>
                     </form>
                 </Form>

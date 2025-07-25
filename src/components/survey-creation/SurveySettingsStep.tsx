@@ -32,13 +32,20 @@ export type SurveySettingsData = z.infer<typeof surveySettingsSchema>
 type CreateSurveyState = "idle" | "signing" | "loading" | "verifying" | "success" | "error"
 
 export const SurveySettingsStep: React.FC = () => {
+    // State for transaction hash and creation process
     const [txHash, setTxHash] = useState<`0x${string}` | null>(null)
     const [state, setState] = useState<CreateSurveyState>("idle")
+
+    // Wallet and blockchain hooks
     const account = useAccount()
     const { data: receipt } = useWaitForTransactionReceipt({
         hash: txHash ? txHash : undefined,
     })
+
+    // Survey creation context
     const { setSurveyAddress, config } = useSurveyCreation()
+
+    // Form configuration with validation
     const form = useForm<SurveySettingsData>({
         resolver: zodResolver(surveySettingsSchema),
         defaultValues: {
@@ -46,17 +53,27 @@ export const SurveySettingsStep: React.FC = () => {
             totalQuestions: config.totalQuestions || 5,
             limitScale: config.limitScale || 5,
             respondentLimit: config.respondentLimit || 100,
-            disableFHE: !!config.isFhe || false,
+            disableFHE: !config.isFhe || false, // Fixed: disableFHE should be opposite of isFhe
         },
     })
+
+    // Determine if form should be editable
     const editable = config.address === null || state === "error" || state === "idle"
 
+    /**
+     * Callback to set survey address when contract is deployed
+     * This will trigger the context to fetch survey data from blockchain
+     */
     const setAddress = useCallback((address: `0x${string}` | undefined) => {
         if (address) {
             setSurveyAddress(address)
         }
     }, [setSurveyAddress])
 
+    /**
+     * Effect to set initial state based on existing survey configuration
+     * If survey already exists, set state to success
+     */
     useEffect(() => {
         if (config.address) {
             setState("success")
@@ -65,9 +82,28 @@ export const SurveySettingsStep: React.FC = () => {
         }
     }, [config.address])
 
+    /**
+     * Effect to sync form values with context data
+     * Updates form whenever config data changes from blockchain
+     */
+    useEffect(() => {
+        // Update form values when config data changes
+        form.reset({
+            title: config.title || "",
+            totalQuestions: config.totalQuestions || 5,
+            limitScale: config.limitScale || 5,
+            respondentLimit: config.respondentLimit || 100,
+            disableFHE: !config.isFhe || false, // disableFHE is opposite of isFhe
+        })
+    }, [config.title, config.totalQuestions, config.limitScale, config.respondentLimit, config.isFhe, form])
+
+    /**
+     * Effect to handle transaction receipt and extract contract address
+     * When transaction is successful, extract deployed contract address from logs
+     */
     useEffect(() => {
         if (receipt && receipt.status === "success") {
-            // contract address in logs
+            // Extract contract address from transaction logs
             const contractAddress = receipt.logs?.[0]?.address || undefined
             if (contractAddress) {
                 setState("success")
@@ -77,33 +113,50 @@ export const SurveySettingsStep: React.FC = () => {
                 setState("error")
                 toast.error("Failed to retrieve contract address from transaction receipt.")
             }
+        } else if (receipt && receipt.status === "reverted") {
+            setState("error")
+            toast.error("Transaction was reverted. Please try again.")
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [receipt, txHash])
 
+    /**
+     * Handle form submission for creating survey on blockchain
+     * This function will:
+     * 1. Verify wallet connection
+     * 2. Request user signature for verification
+     * 3. Deploy survey contract to blockchain
+     * 4. Monitor transaction status
+     */
     const onSubmit = async (data: SurveySettingsData) => {
+        // Check wallet connection first
         if (!account.address) {
             toast.error("Please connect your wallet to create a survey.")
             return
         }
 
+        // Reset transaction hash and set signing state
         setState("signing")
         setTxHash(null)
+
         try {
+            // Step 1: Verify wallet ownership by requesting signature
             const isVerified = await signAndVerify(account.address as `0x${string}`)
             if (!isVerified) {
                 setState("error")
                 throw new Error("Signature verification failed")
             }
+
+            // Step 2: Set loading state and deploy contract
             setState("loading")
         } catch (error) {
             setState("error")
-            toast.error("Failed to sign message. Please try again." + (error instanceof Error ? error.message : ""))
+            toast.error("Failed to sign message. Please try again. " + (error instanceof Error ? error.message : ""))
             return
         }
 
         try {
-            // Simulate wallet transaction
+            // Step 3: Deploy survey contract to blockchain
             const hash = await createSurvey(data)
             if (hash) {
                 setTxHash(hash)
@@ -132,19 +185,26 @@ export const SurveySettingsStep: React.FC = () => {
             </CardHeader>
 
             <CardContent>
-                {!editable && (
-                    <Alert className="items-center mb-8">
-                        <Info />
+                {/* Survey Deployment Success Alert */}
+                {!editable && config.address && (
+                    <Alert className="mb-6">
+                        <Info className="h-4 w-4" />
                         <AlertTitle className="text-lg font-semibold">
                             Survey Successfully Deployed
                         </AlertTitle>
                         <AlertDescription className="text-sm">
-                            Your survey has been created and deployed on-chain. You can now proceed to the next step to add questions and configure further details.
+                            Your survey has been created and deployed on-chain at address:
+                            <code className="block bg-gray-100 p-1 rounded mt-1 text-xs break-all">
+                                {config.address}
+                            </code>
+                            You can now proceed to the next step to add metadata and configure further details.
                         </AlertDescription>
                     </Alert>
                 )}
-                <Form  {...form}>
+
+                <Form {...form}>
                     <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+                        {/* Survey Title Field */}
                         <FormField
                             control={form.control}
                             name="title"
@@ -163,7 +223,9 @@ export const SurveySettingsStep: React.FC = () => {
                             )}
                         />
 
+                        {/* Survey Configuration Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {/* Total Questions Field */}
                             <FormField
                                 control={form.control}
                                 name="totalQuestions"
@@ -186,12 +248,13 @@ export const SurveySettingsStep: React.FC = () => {
                                 )}
                             />
 
+                            {/* Scale Limit Field */}
                             <FormField
                                 control={form.control}
                                 name="limitScale"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Limit Scale *</FormLabel>
+                                        <FormLabel>Rating Scale *</FormLabel>
                                         <FormControl>
                                             <Input
                                                 type="number"
@@ -208,6 +271,7 @@ export const SurveySettingsStep: React.FC = () => {
                                 )}
                             />
 
+                            {/* Respondent Limit Field */}
                             <FormField
                                 control={form.control}
                                 name="respondentLimit"
@@ -218,9 +282,8 @@ export const SurveySettingsStep: React.FC = () => {
                                             <Input
                                                 type="number"
                                                 placeholder="100"
-                                                min={0}
+                                                min={1}
                                                 max={1000}
-                                                step={10}
                                                 {...field}
                                                 onChange={(e) => field.onChange(Number(e.target.value))}
                                                 disabled={!editable}
@@ -230,59 +293,58 @@ export const SurveySettingsStep: React.FC = () => {
                                     </FormItem>
                                 )}
                             />
-
                         </div>
 
+                        {/* FHE Privacy Option */}
                         <FormField
                             control={form.control}
                             name="disableFHE"
                             render={({ field }) => (
-                                <FormItem className="flex items-start space-x-2">
+                                <FormItem className="flex items-start space-x-3 space-y-0">
                                     <FormControl>
                                         <Switch
-                                            className="mt-2"
                                             checked={field.value}
                                             onCheckedChange={field.onChange}
                                             disabled={!editable}
                                         />
                                     </FormControl>
-                                    <div>
+                                    <div className="space-y-1 leading-none">
                                         <FormLabel>
                                             Disable FHE (Fully Homomorphic Encryption)
                                         </FormLabel>
-                                        <p className="text-xs text-subtle italic">
-                                            If you disable FHE, survey responses will be visible to everyone. Enabling FHE keeps all answers private and encrypted, so only aggregated results are shown.
+                                        <p className="text-xs text-muted-foreground">
+                                            If disabled, survey responses will be visible to everyone.
+                                            When enabled (recommended), FHE keeps all answers private and encrypted,
+                                            so only aggregated results are shown.
                                         </p>
                                     </div>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
+
+                        {/* Submit Button */}
                         <div className="flex justify-end">
-                            {
-                                editable && (
-                                    <Button
-                                        type="submit"
-                                        className="flex items-center gap-2"
-                                        disabled={state === "loading" || state === "verifying" || state === "signing"}
-                                    >
-                                        {
-                                            state === "loading" || state === "signing" || state === "verifying" ? (
-                                                <Loader className="w-4 h-4 animate-spin" />
-                                            ) : (<Wallet className="w-4 h-4" />
-                                            )
-                                        }
-                                        {
-                                            state === "loading" ? "Creating Survey..." :
-                                                state === "signing" ? "Signing..." :
-                                                    state === "verifying" ? "Verifying..." :
-                                                        state === "success" ? "Survey Created!" :
-                                                            state === "error" ? "Error Creating Survey" :
-                                                                "Sign & Create Survey"
-                                        }
-                                    </Button>
-                                )
-                            }
+                            {editable && (
+                                <Button
+                                    type="submit"
+                                    className="flex items-center gap-2"
+                                    disabled={state === "loading" || state === "verifying" || state === "signing"}
+                                >
+                                    {(state === "loading" || state === "signing" || state === "verifying") ? (
+                                        <Loader className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <Wallet className="w-4 h-4" />
+                                    )}
+                                    {state === "loading" ? "Creating Survey..." :
+                                        state === "signing" ? "Signing..." :
+                                            state === "verifying" ? "Verifying..." :
+                                                state === "success" ? "Survey Created!" :
+                                                    state === "error" ? "Error Creating Survey" :
+                                                        "Sign & Create Survey"
+                                    }
+                                </Button>
+                            )}
                         </div>
                     </form>
                 </Form>
