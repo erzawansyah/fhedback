@@ -2,6 +2,7 @@
 import React from "react"
 import PageTitle from "@/components/layout/page-title"
 import { SurveyMetadataStep, SurveySettingsStep, SurveyQuestionsStep } from "@/components/survey-creation"
+import { ProgressTrackerCard } from "@/components/survey-creation/sidebar"
 import { useSurveyCreationContext } from "@/context/SurveyCreationContext"
 import { CirclePlus, SquarePen } from "lucide-react"
 import NewSurveySidebar from "./sidebar"
@@ -37,6 +38,9 @@ const NewSurveyPage = () => {
             />
             <div className="grid grid-cols-4 gap-6 min-h-92">
                 <div className="col-span-4 lg:col-span-3 space-y-6">
+                    {/* Progress Tracker - Moved from sidebar to top of form area */}
+                    <ProgressTrackerCard />
+
                     {/* Step 1: Survey Settings - Always visible */}
                     <SurveySettingsStep />
 
