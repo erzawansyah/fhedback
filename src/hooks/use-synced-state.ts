@@ -1,62 +1,101 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 function useSyncedState<T>(key: string, initialValue: T) {
   const [value, setValue] = useState<T>(initialValue);
   const [isInitialized, setIsInitialized] = useState(false);
+  const initialValueRef = useRef(initialValue);
+
+  // Update ref jika initialValue berubah
+  useEffect(() => {
+    initialValueRef.current = initialValue;
+  }, [initialValue]);
 
   // Inisialisasi data dari localStorage setelah component mount di client
   useEffect(() => {
     if (typeof window !== "undefined" && !isInitialized) {
-      const stored = localStorage.getItem(key);
-      if (stored !== null) {
-        try {
-          setValue(JSON.parse(stored) as T);
-        } catch {
-          // Jika gagal parse, gunakan initialValue
+      try {
+        const stored = localStorage.getItem(key);
+        if (stored !== null) {
+          const parsedValue = JSON.parse(stored) as T;
+          setValue(parsedValue);
         }
+      } catch (error) {
+        console.warn(
+          `Failed to parse localStorage value for key "${key}":`,
+          error
+        );
+        // Jika gagal parse, hapus item yang corrupt
+        localStorage.removeItem(key);
+      } finally {
+        setIsInitialized(true);
       }
-      setIsInitialized(true);
     }
-  }, [key, initialValue, isInitialized]);
+  }, [key, isInitialized]);
 
   // Stabilkan setValue dengan useCallback
   const setValueStable = useCallback((newValue: T | ((prev: T) => T)) => {
-    setValue(newValue);
+    setValue((prevValue) => {
+      const nextValue =
+        typeof newValue === "function"
+          ? (newValue as (prev: T) => T)(prevValue)
+          : newValue;
+      return nextValue;
+    });
   }, []);
 
+  // Simpan ke localStorage setiap kali value berubah
   useEffect(() => {
-    // Hanya simpan ke localStorage jika sudah diinisialisasi dan di client-side
     if (typeof window !== "undefined" && isInitialized) {
-      localStorage.setItem(key, JSON.stringify(value));
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch (error) {
+        console.error(
+          `Failed to save to localStorage for key "${key}":`,
+          error
+        );
+      }
     }
   }, [key, value, isInitialized]);
 
+  // Event listener untuk sinkronisasi antar tab
   useEffect(() => {
-    // Hanya tambahkan event listener jika di client-side
     if (typeof window === "undefined") return;
 
     const handler = (e: StorageEvent) => {
       if (e.key === key) {
-        if (e.newValue !== null) {
-          setValue(JSON.parse(e.newValue));
-        } else {
-          setValue(initialValue);
+        try {
+          if (e.newValue !== null) {
+            const parsedValue = JSON.parse(e.newValue) as T;
+            setValue(parsedValue);
+          } else {
+            setValue(initialValueRef.current);
+          }
+        } catch (error) {
+          console.warn(
+            `Failed to parse storage event value for key "${key}":`,
+            error
+          );
+          setValue(initialValueRef.current);
         }
       }
     };
+
     window.addEventListener("storage", handler);
     return () => window.removeEventListener("storage", handler);
-  }, [key, initialValue]);
+  }, [key]); // Hanya bergantung pada key
 
   const removeKey = useCallback(() => {
     if (typeof window !== "undefined") {
-      localStorage.removeItem(key);
+      try {
+        localStorage.removeItem(key);
+      } catch (error) {
+        console.error(`Failed to remove localStorage key "${key}":`, error);
+      }
     }
-    setValue(initialValue);
-  }, [initialValue, key]);
+    setValue(initialValueRef.current);
+  }, [key]); // Tidak perlu initialValue di dependency
 
-  // Gunakan setValueStable di return statement
-  return [value, setValueStable, removeKey] as const;
+  return [value, setValueStable, removeKey, isInitialized] as const;
 }
 
 export default useSyncedState;

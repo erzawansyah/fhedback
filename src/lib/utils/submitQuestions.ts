@@ -10,7 +10,7 @@ export interface QuestionSubmissionData {
   address: `0x${string}`;
   signature: string | `0x${string}`;
   message: string;
-  isFhe: boolean;
+  encrypted: boolean;
   questions: string[];
 }
 
@@ -25,7 +25,7 @@ export const submitQuestions = async (
   data: QuestionSubmissionData
 ): Promise<`0x${string}` | null> => {
   try {
-    const { address, signature, message, isFhe, questions } = data;
+    const { address, signature, message, encrypted, questions } = data;
     const isVerified = await verify(
       address,
       message,
@@ -36,7 +36,7 @@ export const submitQuestions = async (
       throw new Error("Signature verification failed");
     }
 
-    const abi = isFhe ? abis.fhe : abis.standard;
+    const abi = encrypted ? abis.fhe : abis.standard;
 
     const txHash = await writeContract(wagmiConfig, {
       address: contractAddress as Address,

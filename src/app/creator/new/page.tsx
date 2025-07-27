@@ -1,19 +1,19 @@
 "use client"
 import React from "react"
 import PageTitle from "@/components/layout/page-title"
-import { SurveyMetadataStep, SurveyQuestionsStep, SurveySettingsStep } from "@/components/survey-creation"
-import { useSurveyCreation } from "@/context/SurveyCreationContext"
+import { SurveyMetadataStep, SurveySettingsStep, SurveyQuestionsStep } from "@/components/survey-creation"
+import { useSurveyCreationContext } from "@/context/SurveyCreationContext"
 import { CirclePlus, SquarePen } from "lucide-react"
 import NewSurveySidebar from "./sidebar"
 
 const NewSurveyPage = () => {
-    const { config, resetSurveyConfig, refreshed } = useSurveyCreation();
+    const { steps, resetSteps, refreshed } = useSurveyCreationContext();
     /**
      * Handle survey reset action
      * This will clear all survey configuration and start fresh
      */
     const resetSurvey = () => {
-        resetSurveyConfig();
+        resetSteps();
     }
 
     // Show loading state during refresh
@@ -41,11 +41,12 @@ const NewSurveyPage = () => {
                     <SurveySettingsStep />
 
                     {/* Step 2: Survey Metadata - Only visible after survey is created */}
-                    {config.address && (
+                    {steps.step1 && (
                         <SurveyMetadataStep />
                     )}
+
                     {/* Step 3: Survey Questions - Only visible after metadata is set */}
-                    {config.metadataCid && (
+                    {steps.step2 && (
                         <SurveyQuestionsStep />
                     )}
                 </div>

@@ -1,320 +1,581 @@
 "use client";
 import useSyncedState from '@/hooks/use-synced-state';
 import { QUESTIONNAIRE_ABIS, QUESTIONNAIRE_FACTORY_ADDRESS } from '@/lib/contracts';
+import { getMetadataContent } from '@/lib/utils/getMetadataContent';
+import { SurveyCreationConfig, SurveyCreationMetadata, SurveyCreationQuestions, SurveyCreationStep, SurveyStatus } from '@/types/survey-creation';
 
-import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
+import React, { createContext, useContext, ReactNode, useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { Address } from 'viem';
 import { useReadContract, useReadContracts } from 'wagmi';
 
-interface SurveyConfig {
-    address: Address | null;
-    status: string | null;
-    title: string;
-    isFhe: boolean;
-    limitScale: number;
-    totalQuestions: number;
-    respondentLimit: number;
-    metadataCid: string | null;
-    questionsAdded: boolean;
-}
-
-
-interface SurveyMetadata {
-    title: string;
-    description: string;
-    categories: string;
-    minLabel: string;
-    maxLabel: string;
-    tags: string[];
-}
-
 interface SurveyCreationContextType {
-    config: SurveyConfig;
+    config: SurveyCreationConfig | null;
+    metadata: SurveyCreationMetadata | null;
+    questions: SurveyCreationQuestions | null;
     setSurveyAddress: (address: Address | null) => void;
-    resetSurveyConfig: () => void;
-    metadata: SurveyMetadata | null;
-    questions: string[];
-    setQuestions: (questions: string[]) => void;
+    setMetadataCid: () => void;
+    setQuestionsStatus: () => void;
+    steps: SurveyCreationStep;
+    resetSteps: () => void;
+    errors: SurveyCreationError[];
+    resetErrors: () => void;
+    clearError: (index: number) => void;
+    isLoading: boolean;
+    refreshed: boolean;
     refresh: () => void;
-    refreshed?: boolean;
-    handleQuestionsAdded: () => void;
 }
+
+interface SurveyCreationError {
+    id: string; // Unique identifier for each error
+    message: string;
+    name?: string;
+    code?: string;
+    timestamp: number; // For error expiration
+    severity: 'error' | 'warning' | 'info';
+}
+
+// Helper function to validate blockchain data
+const validateBlockchainData = (data: unknown, expectedType: 'string' | 'number' | 'boolean'): boolean => {
+    switch (expectedType) {
+        case 'string':
+            return typeof data === 'string' || (data != null && data.toString().length > 0);
+        case 'number':
+            return !isNaN(Number(data)) && isFinite(Number(data));
+        case 'boolean':
+            return typeof data === 'boolean' || data === 0 || data === 1 || data === '0' || data === '1';
+        default:
+            return false;
+    }
+};
+
+// Helper function to safely convert blockchain data
+const safeConvertData = {
+    toString: (data: unknown, fallback: string = ""): string => {
+        return validateBlockchainData(data, 'string') ? String(data) : fallback;
+    },
+    toNumber: (data: unknown, fallback: number = 0): number => {
+        return validateBlockchainData(data, 'number') ? Number(data) : fallback;
+    },
+    toBoolean: (data: unknown, fallback: boolean = false): boolean => {
+        if (validateBlockchainData(data, 'boolean')) {
+            return data === 1 || data === '1' || data === true;
+        }
+        return fallback;
+    }
+};
 
 const SurveyCreationContext = createContext<SurveyCreationContextType | undefined>(undefined);
 
-const defaultSurveyConfig: SurveyConfig = {
-    address: null,
-    title: '',
-    status: null,
-    isFhe: false,
-    limitScale: 0,
-    totalQuestions: 0,
-    respondentLimit: 0,
-    metadataCid: null,
-    questionsAdded: false,
+const defaultStep: SurveyCreationStep = {
+    step1: false,
+    step2: false,
+    step3: false,
 };
 
-const abis = QUESTIONNAIRE_ABIS
-const factoryAddress = QUESTIONNAIRE_FACTORY_ADDRESS
-const questionnaireStatus = [
+const abis = QUESTIONNAIRE_ABIS;
+const factoryAddress = QUESTIONNAIRE_FACTORY_ADDRESS;
+const questionnaireStatus: SurveyStatus[] = [
     "initialized",
     "draft",
     "published",
     "closed",
     "trashed",
-]
+];
+
+// Error auto-cleanup timeout (5 minutes)
+const ERROR_CLEANUP_TIMEOUT = 5 * 60 * 1000;
+
 export const SurveyCreationProvider = ({ children }: { children: ReactNode }) => {
-    // State to track if refresh has been triggered
+    // Refs for cleanup and preventing memory leaks
+    const mountedRef = useRef(true);
+    const errorTimeoutRefs = useRef<Map<string, NodeJS.Timeout>>(new Map());
+    const abortControllerRef = useRef<AbortController | null>(null);
+
+    // State management
     const [refreshed, setRefreshed] = useState(false);
+    const [errors, setErrors] = useState<SurveyCreationError[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
 
-    // Initialize state from localStorage or default config
-    // useSyncedState automatically syncs with localStorage for persistence
-    const [config, setConfig, removeConfig] = useSyncedState<SurveyConfig>("surveyConfig", defaultSurveyConfig);
-    const [metadata, setMetadata, removeMetadata] = useSyncedState<SurveyMetadata | null>("surveyMetadata", null);
-    const [questions, setQuestions] = useSyncedState<string[]>("surveyQuestions", []);
+    // Synced state with localStorage
+    const [steps, setSteps, removeSteps] = useSyncedState<SurveyCreationStep>("survey_creation.steps", defaultStep);
+    const [config, setConfig] = useSyncedState<SurveyCreationConfig | null>("survey_creation.config", null);
+    const [metadata, setMetadata] = useSyncedState<SurveyCreationMetadata | null>("survey_creation.metadata", null);
+    const [questions, setQuestions] = useSyncedState<SurveyCreationQuestions | null>("survey_creation.questions", null);
 
-    // Contract configurations for blockchain interactions
-    const factoryContract = {
-        address: factoryAddress as Address,
-        abi: abis.factory,
-    } as const;
+    // Memoized contract configurations
+    const contractConfigs = useMemo(() => {
+        const factoryContract = {
+            address: factoryAddress as Address,
+            abi: abis.factory,
+        } as const;
 
-    const generalSurveyContract = {
-        address: config.address as Address | undefined,
-        abi: abis.general,
-    } as const;
+        const generalSurveyContract = config?.address ? {
+            address: config.address as Address,
+            abi: abis.general,
+        } as const : null;
 
-    // Wagmi hooks to fetch survey type from factory contract
-    const { data: surveyType, isSuccess: surveyTypeFetched } = useReadContract({
-        ...factoryContract,
-        functionName: "getQuestionnaireType",
-        args: [config.address as Address],
-        query: {
-            enabled: !!config.address, // Only fetch when address is available
+        return { factoryContract, generalSurveyContract };
+    }, [config?.address]);
+
+    // Stable callback functions with proper dependencies
+    const addError = useCallback((error: Omit<SurveyCreationError, 'id' | 'timestamp'>) => {
+        if (!mountedRef.current) return;
+
+        const errorId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const newError: SurveyCreationError = {
+            ...error,
+            id: errorId,
+            timestamp: Date.now(),
+            severity: error.severity || 'error'
+        };
+
+        setErrors(prev => {
+            // Prevent duplicate errors
+            const isDuplicate = prev.some(e =>
+                e.message === newError.message &&
+                e.name === newError.name &&
+                (Date.now() - e.timestamp) < 1000 // Within 1 second
+            );
+
+            if (isDuplicate) return prev;
+
+            // Limit to maximum 10 errors
+            const updatedErrors = [...prev, newError];
+            return updatedErrors.slice(-10);
+        });
+
+        // Auto-cleanup error after timeout
+        const timeoutId = setTimeout(() => {
+            if (mountedRef.current) {
+                setErrors(prev => prev.filter(e => e.id !== errorId));
+                errorTimeoutRefs.current.delete(errorId);
+            }
+        }, ERROR_CLEANUP_TIMEOUT);
+
+        errorTimeoutRefs.current.set(errorId, timeoutId);
+    }, []);
+
+    const clearError = useCallback((index: number) => {
+        setErrors(prev => {
+            const errorToRemove = prev[index];
+            if (errorToRemove) {
+                const timeoutId = errorTimeoutRefs.current.get(errorToRemove.id);
+                if (timeoutId) {
+                    clearTimeout(timeoutId);
+                    errorTimeoutRefs.current.delete(errorToRemove.id);
+                }
+            }
+            return prev.filter((_, i) => i !== index);
+        });
+    }, []);
+
+    const resetErrors = useCallback(() => {
+        // Clear all timeout refs
+        errorTimeoutRefs.current.forEach(timeoutId => clearTimeout(timeoutId));
+        errorTimeoutRefs.current.clear();
+        setErrors([]);
+    }, []);
+
+    const resetSteps = useCallback(() => {
+        // Reset steps
+        setSteps(defaultStep);
+        removeSteps();
+
+        // Reset all survey data to null/default
+        setConfig(null);
+        setMetadata(null);
+        setQuestions(null);
+
+        // Reset errors
+        resetErrors();
+
+        // Cancel any pending async operations
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
         }
-    })
 
-    // Wagmi hooks to fetch multiple survey data from survey contract
-    const { data: surveyData, isSuccess: surveyDataFetched } = useReadContracts({
-        contracts: [
+        // Clear error timeouts
+        errorTimeoutRefs.current.forEach(timeoutId => clearTimeout(timeoutId));
+        errorTimeoutRefs.current.clear();
+    }, [setSteps, removeSteps, setConfig, setMetadata, setQuestions, resetErrors]);
+
+    // function to refresh any survey data
+    const refresh = useCallback(() => {
+        setRefreshed(true);
+    }, []);
+
+    // Function to set survey address and update steps
+    const setSurveyAddress = useCallback((address: Address | null) => {
+        if (!address) {
+            addError({
+                message: "Survey address cannot be null or empty",
+                severity: 'error'
+            });
+            return;
+        }
+
+        setConfig(prev => ({
+            ...prev,
+            address: address
+        }));
+        setSteps(prev => ({ ...prev, step1: true }));
+    }, [setConfig, setSteps, addError]);
+
+    // Function to set metadata CID and update steps
+    const setMetadataCid = useCallback(() => {
+        setSteps(prev => ({ ...prev, step2: true }));
+    }, [setSteps]);
+
+    // Function to set questions status and update steps
+    const setQuestionsStatus = useCallback(() => {
+        setSteps(prev => ({ ...prev, step3: true }));
+    }, [setSteps]);
+
+    // useReadContracts to fetch survey configuration
+    const {
+        data: surveyConfig,
+        isSuccess: surveyConfigFetched,
+        isLoading: surveyConfigLoading,
+        error: surveyConfigError
+    } = useReadContracts({
+        contracts: contractConfigs.generalSurveyContract ? [
             {
-                ...generalSurveyContract,
+                ...contractConfigs.generalSurveyContract,
                 functionName: "title",
                 args: [],
             }, {
-                ...generalSurveyContract,
+                ...contractConfigs.generalSurveyContract,
                 functionName: "scaleLimit",
                 args: [],
             },
             {
-                ...generalSurveyContract,
+                ...contractConfigs.generalSurveyContract,
                 functionName: "questionLimit",
                 args: [],
             }, {
-                ...generalSurveyContract,
+                ...contractConfigs.generalSurveyContract,
                 functionName: "respondentLimit",
                 args: [],
             },
             {
-                ...generalSurveyContract,
+                ...contractConfigs.generalSurveyContract,
                 functionName: "status",
                 args: [],
+            },
+            {
+                ...contractConfigs.factoryContract,
+                functionName: "getQuestionnaireType",
+                args: [config?.address as Address],
             }
-        ],
+        ] : [],
         query: {
-            enabled: !!config.address, // Only fetch when address is available
+            enabled: steps.step1 && !!config?.address && !!contractConfigs.generalSurveyContract,
+            retry: 2,
+            retryDelay: 1000,
         }
     });
 
-    // Wagmi hook to fetch metadata CID from survey contract
-    const { data: metadataCid, isSuccess: metadataCidFetched } = useReadContract({
-        ...generalSurveyContract,
+    // useReadContract to fetch metadata CID
+    const {
+        data: surveyMetadataCid,
+        isSuccess: surveyMetadataCidFetched,
+        isLoading: surveyMetadataLoading,
+        error: surveyMetadataCidError,
+    } = useReadContract({
+        ...contractConfigs.generalSurveyContract!,
         functionName: "metadataCID",
         args: [],
         query: {
-            enabled: !!config.address, // Only fetch when address is available
-        }
-    })
-
-    // Wagmi hook to fetch quetions from survey contract
-    const { data: questionsData, isSuccess: questionsFetched } = useReadContract({
-        ...generalSurveyContract,
-        functionName: "getQuestions",
-        args: [],
-        query: {
-            enabled: !!config.address, // Only fetch when address is available
+            enabled: steps.step1 && !!config?.address && !!contractConfigs.generalSurveyContract,
+            retry: 2,
+            retryDelay: 1000,
         }
     });
 
+    // useReadContract to fetch questions
+    const {
+        data: questionsData,
+        isSuccess: questionsFetched,
+        isLoading: questionsLoading,
+        error: questionsError,
+    } = useReadContract({
+        ...contractConfigs.generalSurveyContract!,
+        functionName: "getAllQuestions",
+        args: [],
+        query: {
+            enabled: steps.step3 && !!config?.address && !!contractConfigs.generalSurveyContract,
+            retry: 2,
+            retryDelay: 1000,
+        }
+    });
 
-    // Function to set survey address and trigger data fetch
-    const setSurveyAddress = React.useCallback((address: Address | null) => {
-        setConfig(prev => ({ ...prev, address }));
-    }, [setConfig]);
+    // Update loading state based on contract fetch states
+    useEffect(() => {
+        setIsLoading(surveyConfigLoading || surveyMetadataLoading || questionsLoading);
+    }, [surveyConfigLoading, surveyMetadataLoading, questionsLoading]);
 
-    /**
-     * Function to handle questions added state
-     * This will be used to track if questions have been added to the survey
-     */
-    const handleQuestionsAdded = React.useCallback(() => {
-        setConfig(prev => ({ ...prev, questionsAdded: true }));
-    }, [setConfig]);
+    // Handle survey configuration updates with proper error handling
+    useEffect(() => {
+        if (!mountedRef.current) return;
 
-    // Function to completely reset survey configuration and clear localStorage
-    const resetSurveyConfig = React.useCallback(() => {
-        setConfig(defaultSurveyConfig);
-        removeConfig();
-        removeMetadata();
-        setQuestions([]);
-    }, [setConfig, removeConfig, removeMetadata, setQuestions]);
-
-    const getMetadataContent = async (cid: string) => {
-        try {
-            const response = await fetch(`/api/metadata?cid=${cid}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+        if (surveyConfigError) {
+            addError({
+                message: `Failed to fetch survey config: ${surveyConfigError.message}`,
+                name: surveyConfigError.name,
+                severity: 'error'
             });
-            if (!response.ok) {
-                throw new Error(`Failed to fetch metadata: ${response.statusText}`);
+            return;
+        }
+
+        if (steps.step1 && !!config?.address && surveyConfigFetched && surveyConfig) {
+            try {
+                const configResult = surveyConfig;
+
+                // Check for individual contract call failures
+                for (let i = 0; i < configResult.length; i++) {
+                    if (configResult[i].status === "failure" && configResult[i].error) {
+                        addError({
+                            message: `Config fetch error at index ${i}: ${configResult[i].error?.message ?? 'Unknown error'}`,
+                            name: configResult[i].error?.name,
+                            severity: 'warning'
+                        });
+                    }
+                }
+
+                const [title, limitScale, totalQuestions, respondentLimit, status, type] = configResult;
+
+                setConfig(prev => ({
+                    ...prev,
+                    title: title && title.status === "success" ? safeConvertData.toString(title.result) : "",
+                    limitScale: limitScale && limitScale.status === "success" ? safeConvertData.toNumber(limitScale.result) : 0,
+                    totalQuestions: totalQuestions && totalQuestions.status === "success" ? safeConvertData.toNumber(totalQuestions.result) : 0,
+                    respondentLimit: respondentLimit && respondentLimit.status === "success" ? safeConvertData.toNumber(respondentLimit.result) : 0,
+                    status: status && status.status === "success" && safeConvertData.toNumber(status.result) < questionnaireStatus.length
+                        ? questionnaireStatus[safeConvertData.toNumber(status.result)] as SurveyStatus
+                        : "initialized",
+                    encrypted: type && type.status === "success" ? safeConvertData.toBoolean(type.result) : false,
+                    address: prev?.address ?? null,
+                }));
+            } catch (error) {
+                addError({
+                    message: `Error processing survey config: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                    severity: 'error'
+                });
             }
-            return await response.json();
-        } catch (error) {
-            console.error('Error fetching metadata:', error);
-            throw new Error(`Error fetching metadata: ${error}`);
         }
-    }
+    }, [surveyConfigFetched, surveyConfig, surveyConfigError, setConfig, addError, steps.step1, config?.address]);
 
-    /**
-     * Function to refresh survey data by refetching from blockchain
-     * This will reset config to default values while preserving the address,
-     * triggering a fresh fetch of all survey data from smart contracts
-     */
-    const refresh = React.useCallback(() => {
-        setRefreshed(true);
-    }, []);
-
-
-
-    /**
-     * Effect to handle refresh logic
-     * When refresh is triggered, this will:
-     * 1. Preserve the current survey address
-     * 2. Reset config to default values (triggers re-fetch)
-     * 3. Restore the address to trigger blockchain data fetch
-     * 4. Clear metadata and questions to force fresh fetch
-     */
+    // Handle metadata CID updates with abort controller for cleanup
     useEffect(() => {
-        if (refreshed) {
-            const currentAddress = config.address;
+        if (!mountedRef.current) return;
 
-            // Reset all configurations to default
-            setConfig(defaultSurveyConfig);
-            // Clear metadata and questions to force fresh fetch
-            setMetadata(null);
-            setQuestions([]);
+        if (surveyMetadataCidError) {
+            addError({
+                message: `Failed to fetch metadata CID: ${surveyMetadataCidError.message}`,
+                name: surveyMetadataCidError.name,
+                severity: 'error'
+            });
+            return;
+        }
 
-            // Restore address to trigger fresh blockchain data fetch
-            if (currentAddress) {
-                setSurveyAddress(currentAddress);
+        if (surveyMetadataCidFetched && surveyMetadataCid) {
+            // Cancel previous request if exists
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
             }
 
-            // Reset refresh flag
-            setRefreshed(false);
-        }
-    }, [refreshed, setConfig, setSurveyAddress, setMetadata, setQuestions, config.address]);
+            // Create new abort controller
+            abortControllerRef.current = new AbortController();
+            const currentCid = metadata?.metadataCid;
+            const newCid = surveyMetadataCid as string;
 
-    // Effect to sync blockchain data with local config when survey data is fetched
-    useEffect(() => {
-        if (config.address && surveyTypeFetched && surveyDataFetched) {
-            const [titleRes, scaleLimitRes, questionLimitRes, respondentLimitRes, statusRes] = surveyData || [];
-
-            // Extract values with fallbacks for failed responses
-            const title = titleRes?.status === 'success' ? titleRes.result : '';
-            const scaleLimit = scaleLimitRes?.status === 'success' ? scaleLimitRes.result : 0;
-            const questionLimit = questionLimitRes?.status === 'success' ? questionLimitRes.result : 0;
-            const respondentLimit = respondentLimitRes?.status === 'success' ? respondentLimitRes.result : 0;
-            const status = statusRes?.status === 'success' ? statusRes.result : null;
-
-            // Update config with blockchain data, ensuring proper type conversion
-            setConfig(prev => ({
-                ...prev,
-                title: typeof title === 'string' ? title : String(title ?? ''),
-                status: typeof status === 'number' ? questionnaireStatus[status] : String(questionnaireStatus[Number(status)] ?? ''),
-                limitScale: typeof scaleLimit === 'number' ? scaleLimit : Number(scaleLimit ?? 0),
-                totalQuestions: typeof questionLimit === 'number' ? questionLimit : Number(questionLimit ?? 0),
-                respondentLimit: typeof respondentLimit === 'number' ? respondentLimit : Number(respondentLimit ?? 0),
-                // Set isFhe based on survey type from factory contract
-                isFhe: surveyType === 1, // Assuming 1 = FHE type, 0 = General type
-            }));
-        }
-    }, [config.address, surveyType, surveyTypeFetched, surveyData, surveyDataFetched, setConfig]);
-
-    // Effect to fetch and update metadata when metadata CID is available
-    useEffect(() => {
-        if (config.address && metadataCidFetched && metadataCid && metadataCid !== null && metadataCid !== "") {
-            // Update config with the metadata CID
-            setConfig(prev => ({ ...prev, metadataCid: metadataCid as string }));
-
-            // Fetch metadata content from IPFS/Pinata via API
-            getMetadataContent(metadataCid as string)
-                .then((content) => {
-                    // Successfully fetched metadata, update state with proper fallbacks
-                    setMetadata({
-                        title: content.title || '',
-                        description: content.description || '',
-                        categories: content.categories || '',
-                        minLabel: content.minLabel || '',
-                        maxLabel: content.maxLabel || '',
-                        tags: Array.isArray(content.tags) ? content.tags : [],
-                    });
+            if (currentCid !== newCid) {
+                setMetadata(null)
+            }
+            // debug time for metadata fetching
+            const startTime = Date.now();
+            console.log(`Fetching metadata content for CID: ${newCid}. Start: ${startTime}ms`);
+            getMetadataContent(newCid)
+                .then(data => {
+                    // Check if component is still mounted and CID hasn't changed
+                    if (mountedRef.current && newCid === surveyMetadataCid) {
+                        setMetadata(prev => ({
+                            ...prev,
+                            title: safeConvertData.toString(data.title),
+                            description: safeConvertData.toString(data.description),
+                            categories: safeConvertData.toString(data.categories),
+                            minLabel: safeConvertData.toString(data.minLabel),
+                            maxLabel: safeConvertData.toString(data.maxLabel),
+                            tags: Array.isArray(data.tags) ? data.tags : [],
+                            metadataCid: newCid, // Set the CID that was fetched
+                        }));
+                    }
+                    const endTime = Date.now();
+                    console.log(`Metadata fetching took ${endTime - startTime}ms`);
                 })
-                .catch((error) => {
-                    // Failed to fetch metadata, log error and set metadata to null
-                    console.error('Error fetching metadata:', error);
-                    setMetadata(null);
+                .catch(error => {
+                    // Only add error if not aborted and component is mounted
+                    if (mountedRef.current && error.name !== 'AbortError') {
+                        addError({
+                            message: `Failed to fetch metadata content: ${error.message}`,
+                            name: error.name,
+                            code: error.code,
+                            severity: 'error'
+                        });
+                    }
                 });
         }
-        // Note: Intentionally excluding getMetadataContent and setMetadata from deps
-        // to prevent unnecessary re-fetches when these functions change
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [metadataCidFetched, metadataCid, config.address]);
 
-    // Effect to update questions when fetched from contract
+        // Cleanup function
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, [metadata?.metadataCid, metadata?.title, surveyMetadataCidFetched, surveyMetadataCid, surveyMetadataCidError, setMetadata, addError]);
+
+    // Handle questions updates with proper validation
     useEffect(() => {
-        if (config.address && questionsFetched && Array.isArray(questionsData) && questionsData.length > 0) {
-            // Update questions state with fetched data from blockchain
-            const fetchedQuestions = questionsData as string[];
-            setQuestions(fetchedQuestions);
+        if (!mountedRef.current) return;
 
-            // Update questionsAdded status based on whether questions exist
-            const hasQuestions = fetchedQuestions.length > 0;
-            setConfig(prev => ({ ...prev, questionsAdded: hasQuestions }));
+        if (questionsError) {
+            addError({
+                message: `Failed to fetch questions: ${questionsError.message}`,
+                name: questionsError.name,
+                severity: 'error'
+            });
+            return;
         }
-    }, [config.address, questionsFetched, questionsData, setQuestions, setConfig]);
+
+        if (steps.step3 && questionsFetched && questionsData) {
+            try {
+                if (Array.isArray(questionsData) && questionsData.length > 0) {
+                    console.log("Processing questions data:", questionsData);
+                    // Validate questions data structure
+                    const validQuestions = questionsData.filter(q =>
+                        q && typeof q === 'string' &&
+                        safeConvertData.toString(q.toString()).length > 0
+                    );
+                    console.log("Valid questions found:", validQuestions);
+
+                    if (validQuestions.length > 0) {
+                        setQuestions(validQuestions);
+                    } else {
+                        addError({
+                            message: "No valid questions found in the data",
+                            severity: 'warning'
+                        });
+                    }
+                } else if (Array.isArray(questionsData) && questionsData.length === 0) {
+                    setQuestions([]);
+                    addError({
+                        message: "No questions found for this survey",
+                        severity: 'info'
+                    });
+                } else {
+                    addError({
+                        message: "Invalid questions data format received from contract",
+                        severity: 'error'
+                    });
+                }
+            } catch (error) {
+                addError({
+                    message: `Error processing questions data: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                    severity: 'error'
+                });
+            }
+        }
+    }, [steps.step3, questionsFetched, questionsData, questionsError, setQuestions, addError]);
+
+
+    // Effect to handle refreshed state
+    useEffect(() => {
+        if (refreshed) {
+            // Save necessary state before resetting
+            const currentSteps = steps;
+            const currentAddress: Address | null | undefined = config?.address;
+            const currentMetadataCid: string | null | undefined = metadata?.metadataCid;
+            setIsLoading(true);
+            resetSteps();
+            if (currentSteps.step1 && currentAddress) {
+                setSurveyAddress(currentAddress);
+            }
+            if (currentSteps.step2 && currentMetadataCid) {
+                setMetadataCid();
+            }
+            if (currentSteps.step3) {
+                setQuestionsStatus();
+            }
+            setTimeout(() => {
+                setRefreshed(false);
+                setIsLoading(false);
+            }, 1000); // Simulate refresh delay
+        }
+    }, [refreshed, steps, config?.address, metadata?.metadataCid, resetSteps, setSurveyAddress, setMetadataCid, setQuestionsStatus]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        // Capture current ref values to use in cleanup
+        const errorTimeouts = errorTimeoutRefs.current;
+        const abortController = abortControllerRef.current;
+
+        return () => {
+            mountedRef.current = false;
+
+            // Clear all error timeouts using captured reference
+            errorTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+            errorTimeouts.clear();
+
+            // Abort any pending requests using captured reference
+            if (abortController) {
+                abortController.abort();
+            }
+        };
+    }, []);
+
+    const contextValue = useMemo(() => ({
+        config,
+        metadata,
+        questions,
+        setSurveyAddress,
+        setMetadataCid,
+        setQuestionsStatus,
+        errors,
+        resetErrors,
+        clearError,
+        steps,
+        resetSteps,
+        isLoading,
+        refreshed,
+        refresh
+    }), [
+        config,
+        metadata,
+        questions,
+        setSurveyAddress,
+        setMetadataCid,
+        setQuestionsStatus,
+        errors,
+        resetErrors,
+        clearError,
+        steps,
+        resetSteps,
+        isLoading,
+        refreshed,
+        refresh
+    ]);
 
     return (
-        <SurveyCreationContext.Provider value={{
-            config,
-            setSurveyAddress,
-            resetSurveyConfig,
-            metadata,
-            questions,
-            setQuestions,
-            refresh,
-            refreshed,
-            handleQuestionsAdded,
-        }}>
+        <SurveyCreationContext.Provider value={contextValue}>
             {children}
         </SurveyCreationContext.Provider>
     );
 };
 
-export const useSurveyCreation = () => {
+export const useSurveyCreationContext = () => {
     const context = useContext(SurveyCreationContext);
     if (!context) {
-        throw new Error('useSurveyCreation must be used within a SurveyCreationProvider');
+        throw new Error('useSurveyCreationContext must be used within a SurveyCreationProvider');
     }
     return context;
 };

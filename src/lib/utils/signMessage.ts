@@ -63,13 +63,19 @@ export const verify = async (
   }
 };
 
-export const signAndVerify = async (address: string): Promise<boolean> => {
+export const signAndVerify = async (
+  address: string
+): Promise<{
+  isVerified: boolean;
+  signature: `0x${string}`;
+  message: string;
+}> => {
   const { message, signature } = await sign(address);
   const isVerified = await verify(address, message, signature);
 
-  if (!isVerified) {
-    return false;
-  }
-
-  return true;
+  return {
+    isVerified,
+    signature,
+    message,
+  };
 };

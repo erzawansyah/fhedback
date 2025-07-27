@@ -1,17 +1,25 @@
 "use client"
 import React from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { useSurveyCreation } from "@/context/SurveyCreationContext"
+import { useSurveyCreationContext } from "@/context/SurveyCreationContext"
+import { Button } from "@/components/ui/button"
+import { Loader } from "lucide-react"
 
 const NewSurveySidebar = () => {
-    const { config, metadata } = useSurveyCreation()
+    const { config, metadata, refresh, refreshed } = useSurveyCreationContext()
 
     return (
         <div className="space-y-6">
+            {/* Refresh Button */}
+            <Button variant="neutral" onClick={refresh} className="w-full">
+                {refreshed ? <Loader className="animate-spin w-4 h-4 mr-2" /> : null}
+                {refreshed ? "Refreshing..." : "Refresh"}
+            </Button>
+
             {/* Survey Configuration Summary */}
             <Card>
                 <CardContent className="pt-6">
-                    {config.address ? (
+                    {config && config.address ? (
                         <div className="space-y-4">
                             <div>
                                 <h3 className="font-semibold text-sm mb-2">Survey Created Successfully!</h3>
@@ -52,7 +60,7 @@ const NewSurveySidebar = () => {
                                     <span className="font-semibold">Scale:</span> 1-{config.limitScale}
                                 </div>
                                 <div className="text-sm">
-                                    <span className="font-semibold">Privacy:</span> {config.isFhe ? "FHE Enabled" : "Public"}
+                                    <span className="font-semibold">Privacy:</span> {config.encrypted ? "FHE Enabled" : "Public"}
                                 </div>
                                 <div className="text-sm">
                                     <span className="font-semibold">Status:</span>
@@ -80,7 +88,7 @@ const NewSurveySidebar = () => {
             </Card>
 
             {/* Metadata Information Card */}
-            {metadata && config.metadataCid && (
+            {metadata && metadata.metadataCid && (
                 <Card>
                     <CardContent className="pt-6">
                         <div className="space-y-3">
@@ -89,7 +97,7 @@ const NewSurveySidebar = () => {
                                 <p className="text-xs text-gray-600 mb-2">
                                     Metadata CID:
                                     <code className="block bg-gray-100 p-1 rounded mt-1 break-all">
-                                        {config.metadataCid}
+                                        {metadata.metadataCid}
                                     </code>
                                 </p>
                             </div>
@@ -105,6 +113,8 @@ const NewSurveySidebar = () => {
                     </CardContent>
                 </Card>
             )}
+
+
         </div>
     )
 }
