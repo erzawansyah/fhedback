@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Address } from "viem";
 import { useReadContract } from "wagmi";
 import { getMetadataContent } from "@/lib/utils/getMetadataContent";
+import { safeConvertData } from "@/lib/utils/safeConvertData";
 import { SurveyCreationMetadata } from "@/types/survey-creation";
 
 interface useSetSurveyMetadataProps {
@@ -20,13 +21,6 @@ interface useSetSurveyMetadataProps {
     severity: "error" | "warning" | "info";
   }) => void;
 }
-
-// Helper function to safely convert data
-const safeConvertData = {
-  toString: (data: unknown, fallback: string = ""): string => {
-    return data != null && data.toString().length > 0 ? String(data) : fallback;
-  },
-};
 
 export const useSetSurveyMetadata = ({
   address,

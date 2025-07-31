@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Address } from "viem";
 import { useReadContract } from "wagmi";
+import { safeConvertData } from "@/lib/utils/safeConvertData";
 import { SurveyCreationQuestions } from "@/types/survey-creation";
 
 interface useSetSurveyQuestionsProps {
@@ -18,13 +19,6 @@ interface useSetSurveyQuestionsProps {
     severity: "error" | "warning" | "info";
   }) => void;
 }
-
-// Helper function to safely convert data
-const safeConvertData = {
-  toString: (data: unknown): string => {
-    return data != null && data.toString().length > 0 ? String(data) : "";
-  },
-};
 
 export const useSetSurveyQuestions = ({
   address,

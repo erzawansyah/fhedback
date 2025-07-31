@@ -5,6 +5,7 @@ import {
   QUESTIONNAIRE_ABIS,
   QUESTIONNAIRE_FACTORY_ADDRESS,
 } from "@/lib/contracts";
+import { safeConvertData } from "@/lib/utils/safeConvertData";
 import { SurveyCreationConfig, SurveyStatus } from "@/types/survey-creation";
 
 interface useSetSurveyConfigProps {
@@ -24,20 +25,6 @@ const questionnaireStatus: SurveyStatus[] = [
   "closed",
   "trashed",
 ];
-
-// Helper function to validate and convert blockchain data
-const safeConvertData = {
-  toString: (data: unknown, fallback: string = ""): string => {
-    return data != null && data.toString().length > 0 ? String(data) : fallback;
-  },
-  toNumber: (data: unknown, fallback: number = 0): number => {
-    const num = Number(data);
-    return !isNaN(num) && isFinite(num) ? num : fallback;
-  },
-  toBoolean: (data: unknown, fallback: boolean = false): boolean => {
-    return data === 1 || data === "1" || data === true ? true : fallback;
-  },
-};
 
 export const useSetSurveyConfig = ({
   isEnabled,
