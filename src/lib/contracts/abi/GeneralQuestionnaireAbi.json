@@ -432,6 +432,19 @@
     },
     {
         "inputs": [],
+        "name": "status",
+        "outputs": [
+            {
+                "internalType": "enum Questionnaire.QuestionnaireStatus",
+                "name": "",
+                "type": "uint8"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
         "name": "title",
         "outputs": [
             {

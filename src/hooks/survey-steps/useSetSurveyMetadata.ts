@@ -133,11 +133,8 @@ export const useSetSurveyMetadata = ({
 
       // Skip if we've already processed this CID
       if (processedCidRef.current === newCid) {
-        console.log(`Skipping already processed CID: ${newCid}`);
         return;
       }
-
-      console.log(`Processing metadata CID: ${newCid}`);
 
       // Cancel previous request if exists
       if (abortControllerRef.current) {
@@ -159,9 +156,6 @@ export const useSetSurveyMetadata = ({
       setTimeout(() => {
         // Check if still mounted and CID is still current
         if (!mountedRef.current || processedCidRef.current !== newCid) {
-          console.log(
-            `Aborting metadata fetch for CID: ${newCid} - component unmounted or CID changed`
-          );
           return;
         }
 
@@ -179,7 +173,6 @@ export const useSetSurveyMetadata = ({
                 tags: Array.isArray(data.tags) ? data.tags : [],
                 metadataCid: newCid, // Set the CID that was fetched
               };
-              console.log(`Metadata loaded for CID: ${newCid}`, newMetadata);
               setMetadata(newMetadata);
             }
           })
