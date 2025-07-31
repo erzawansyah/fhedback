@@ -1,7 +1,7 @@
 "use client"
 
 import { useSurveyCreationContext } from "@/context/SurveyCreationContext"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useState, useRef } from "react"
 import { setMetadata } from "@/lib/utils/setMetadata"
 import { SurveyMetadataType } from "./formSchema"
 import { SurveyMetadataForm } from "./SurveyMetadataForm"
@@ -35,6 +35,14 @@ export const SurveyMetadataStep: React.FC = () => {
     // Local state for editing mode
     const [isEditing, setIsEditing] = useState(false)
     const [temporaryValue, setTemporaryValue] = useState<SurveyMetadataType | null>(null)
+
+    // Create stable reference to prevent dependency loops
+    const refreshAllStepsRef = useRef(refreshAllSteps)
+
+    // Update ref when refreshAllSteps changes
+    useEffect(() => {
+        refreshAllStepsRef.current = refreshAllSteps
+    });
 
     // Determine if form should be disabled
     const isCompleted = steps.step2
@@ -132,25 +140,27 @@ export const SurveyMetadataStep: React.FC = () => {
         if (receipt && status === "success" && contractAddress && !isEditing) {
             setMetadataCid()
             // Force refresh to ensure metadata is fetched and step3 shows up
-            setTimeout(() => {
-                refreshAllSteps()
+            const timeoutId = setTimeout(() => {
+                refreshAllStepsRef.current()
             }, 1000)
+            return () => clearTimeout(timeoutId)
         } else if (receipt && status === "success" && contractAddress && isEditing) {
             // For edit mode, also update the metadata CID but don't change step status
             setMetadataCid()
             setIsEditing(false)
             setTemporaryValue(null)
             // Force refresh to ensure metadata is updated
-            setTimeout(() => {
-                refreshAllSteps()
+            const timeoutId = setTimeout(() => {
+                refreshAllStepsRef.current()
             }, 1000)
+            return () => clearTimeout(timeoutId)
         } else {
             if (receipt) {
                 setIsEditing(false)
                 setTemporaryValue(null)
             }
         }
-    }, [status, receipt, contractAddress, setMetadataCid, isEditing, handleError, refreshAllSteps])
+    }, [status, receipt, contractAddress, setMetadataCid, isEditing])
 
 
     return (

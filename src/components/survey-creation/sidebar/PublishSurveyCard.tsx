@@ -28,7 +28,6 @@ const PublishSurveyCard = () => {
 
     // Effect to sync local state with config status
     useEffect(() => {
-        console.log("Config status changed:", config?.status, "Current publish status:", publishStatus)
         if (config?.status === "published" && publishStatus !== "idle") {
             // Reset local publish status when config shows published
             setPublishStatus("idle")

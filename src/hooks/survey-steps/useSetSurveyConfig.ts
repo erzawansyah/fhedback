@@ -141,8 +141,6 @@ export const useSetSurveyConfig = ({
 
         // Check for individual contract call failures
         for (let i = 0; i < configResult.length; i++) {
-          console.log(`Config fetch result at index ${i}:`, configResult[i]);
-
           if (configResult[i].status === "failure" && configResult[i].error) {
             onError({
               message: `Config fetch error at index ${i}: ${

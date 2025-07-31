@@ -36,14 +36,16 @@ export const SurveyMetadataForm: React.FC<SurveyMetadataFormProps> = ({
     temporaryValue
 }) => {
     const { config, metadata, steps, surveyAddress, isLoading } = useSurveyCreationContext()
-    const title = useMemo(() => metadata?.title || "", [metadata])
-    const description = useMemo(() => metadata?.description || "", [metadata])
-    const category = useMemo(() => metadata?.categories || "", [metadata])
+
+    // Memoize metadata values to prevent unnecessary re-computations
+    const title = useMemo(() => metadata?.title || "", [metadata?.title])
+    const description = useMemo(() => metadata?.description || "", [metadata?.description])
+    const category = useMemo(() => metadata?.categories || "", [metadata?.categories])
     const scaleLabels = useMemo(() => ({
         minLabel: metadata?.minLabel || "Strongly Disagree",
         maxLabel: metadata?.maxLabel || "Strongly Agree",
-    }), [metadata])
-    const tags = useMemo(() => metadata?.tags?.join(", ") || "", [metadata])
+    }), [metadata?.minLabel, metadata?.maxLabel])
+    const tags = useMemo(() => metadata?.tags?.join(", ") || "", [metadata?.tags])
 
     // Form configuration - sync with context data
     const form = useForm<SurveyMetadataType>({
@@ -67,12 +69,20 @@ export const SurveyMetadataForm: React.FC<SurveyMetadataFormProps> = ({
     // Use ref to track if form has been initialized to prevent loops
     const formInitialized = useRef(false);
     const lastMetadata = useRef<string>("");
+    const formRef = useRef(form);
+
+    // Update form ref when form changes
+    useEffect(() => {
+        formRef.current = form;
+    });
 
     // Build metadata signature to detect changes
     const metadataSignature = `${title}-${description}-${category}-${scaleLabels.minLabel}-${scaleLabels.maxLabel}-${tags}`;
 
     // Create stable reset function
     const resetFormWithMetadata = useCallback(() => {
+        const currentSignature = `${title}-${description}-${category}-${scaleLabels.minLabel}-${scaleLabels.maxLabel}-${tags}`;
+
         const metadataValues = {
             displayTitle: title,
             description: description,
@@ -84,10 +94,10 @@ export const SurveyMetadataForm: React.FC<SurveyMetadataFormProps> = ({
             tags: tags,
         };
 
-        form.reset(metadataValues);
-        lastMetadata.current = metadataSignature;
+        formRef.current.reset(metadataValues);
+        lastMetadata.current = currentSignature;
         formInitialized.current = true;
-    }, [title, description, category, scaleLabels.minLabel, scaleLabels.maxLabel, tags, form, metadataSignature]);
+    }, [title, description, category, scaleLabels.minLabel, scaleLabels.maxLabel, tags]);
 
     // Use useEffect to safely reset form (not during render)
     useEffect(() => {

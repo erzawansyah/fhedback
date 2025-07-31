@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { Address } from "viem";
 import { useReadContract } from "wagmi";
 import { getMetadataContent } from "@/lib/utils/getMetadataContent";
@@ -61,9 +61,29 @@ export const useSetSurveyMetadata = ({
     setMetadata(null);
   }, []);
 
+  // Memoize contract availability to prevent unnecessary re-renders
+  const hasValidContract = useMemo(() => {
+    return !!(isEnabled && address && contractConfigs.generalSurveyContract);
+  }, [isEnabled, address, contractConfigs.generalSurveyContract]);
+
   const abortControllerRef = useRef<AbortController | null>(null);
   const mountedRef = useRef(true);
   const processedCidRef = useRef<string | null>(null); // Track processed CID to prevent loops
+
+  // Create stable references to prevent dependency loops
+  const onErrorRef = useRef(onError);
+  const contractConfigsRef = useRef(contractConfigs);
+
+  // Update refs when props change
+  useEffect(() => {
+    onErrorRef.current = onError;
+    contractConfigsRef.current = contractConfigs;
+  });
+
+  // Ensure mounted ref is set to true on mount
+  useEffect(() => {
+    mountedRef.current = true;
+  }, []);
 
   // useReadContract to fetch metadata CID
   const {
@@ -77,14 +97,13 @@ export const useSetSurveyMetadata = ({
     functionName: "metadataCID",
     args: [],
     query: {
-      enabled:
-        isEnabled && !!address && !!contractConfigs.generalSurveyContract,
-      retry: 1, // Reduce retry attempts
-      retryDelay: 2000, // Increase retry delay
-      refetchOnMount: false, // Don't refetch on mount to prevent spam
-      refetchOnWindowFocus: false, // Don't refetch on window focus
-      staleTime: 60000, // Cache for 1 minute
-      refetchInterval: false, // Disable automatic refetching
+      enabled: hasValidContract,
+      // retry: 1, // Reduce retry attempts
+      // retryDelay: 2000, // Increase retry delay
+      // refetchOnMount: false, // Don't refetch on mount to prevent spam
+      // refetchOnWindowFocus: false, // Don't refetch on window focus
+      // staleTime: 60000, // Cache for 1 minute
+      // refetchInterval: false, // Disable automatic refetching
     },
   });
 
@@ -93,136 +112,146 @@ export const useSetSurveyMetadata = ({
     if (!address) {
       setMetadata(null);
       processedCidRef.current = null; // Reset processed CID when address changes
+    } else {
+      // Reset processed CID when address changes to allow fetching for new address
+      processedCidRef.current = null;
     }
   }, [address]);
 
-  // Handle metadata CID updates with abort controller for cleanup
+  // Force refetch when enabled state changes (e.g., when navigating to a page)
   useEffect(() => {
-    // Early returns for safety
+    if (
+      isEnabled &&
+      address &&
+      contractConfigsRef.current.generalSurveyContract
+    ) {
+      // Reset processed CID to allow fetching when component becomes enabled
+      processedCidRef.current = null;
+    }
+  }, [isEnabled, address]);
+
+  // Separate effect for metadata content fetching
+  useEffect(() => {
     if (
       !mountedRef.current ||
       !isEnabled ||
       !address ||
-      !contractConfigs.generalSurveyContract
+      !contractConfigsRef.current.generalSurveyContract ||
+      !surveyMetadataCidFetched ||
+      !surveyMetadataCid ||
+      typeof surveyMetadataCid !== "string" ||
+      surveyMetadataCid.length === 0
     ) {
       return;
     }
 
-    if (surveyMetadataCidError) {
+    const newCid = surveyMetadataCid as string;
+    const currentProcessedKey = `${address}-${newCid}`;
+
+    // Skip if already processed
+    if (processedCidRef.current === currentProcessedKey) {
+      return;
+    }
+
+    // Cancel previous request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    // Create new abort controller
+    abortControllerRef.current = new AbortController();
+
+    // Mark as being processed
+    processedCidRef.current = currentProcessedKey;
+
+    // Set loading state
+    setMetadata(
+      (prev) => ({ ...prev, metadataCid: null } as SurveyCreationMetadata)
+    );
+
+    // Fetch with delay
+    const timeoutId = setTimeout(() => {
+      if (
+        !mountedRef.current ||
+        processedCidRef.current !== currentProcessedKey
+      ) {
+        return;
+      }
+
+      getMetadataContent(newCid)
+        .then((data) => {
+          if (
+            mountedRef.current &&
+            processedCidRef.current === currentProcessedKey
+          ) {
+            const newMetadata: SurveyCreationMetadata = {
+              title: safeConvertData.toString(data.title),
+              description: safeConvertData.toString(data.description),
+              categories: safeConvertData.toString(data.categories),
+              minLabel: safeConvertData.toString(data.minLabel),
+              maxLabel: safeConvertData.toString(data.maxLabel),
+              tags: Array.isArray(data.tags) ? data.tags : [],
+              metadataCid: newCid,
+            };
+            setMetadata(newMetadata);
+          }
+        })
+        .catch((error) => {
+          if (mountedRef.current && error.name !== "AbortError") {
+            if (processedCidRef.current === currentProcessedKey) {
+              processedCidRef.current = null;
+            }
+            onErrorRef.current({
+              message: `Failed to fetch metadata content: ${error.message}`,
+              name: error.name,
+              code: error.code,
+              severity: "error",
+            });
+          }
+        });
+    }, 500); // Reduced delay
+
+    // Cleanup timeout on effect cleanup
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [isEnabled, address, surveyMetadataCidFetched, surveyMetadataCid]);
+
+  // Handle errors from contract read
+  useEffect(() => {
+    if (surveyMetadataCidError && isEnabled && address) {
       const errorMessage = `Failed to fetch metadata CID: ${surveyMetadataCidError.message}`;
-      // Only report error once per CID
-      if (processedCidRef.current !== `error:${errorMessage}`) {
-        processedCidRef.current = `error:${errorMessage}`;
-        onError({
+      const errorKey = `error:${address}-${errorMessage}`;
+
+      if (processedCidRef.current !== errorKey) {
+        processedCidRef.current = errorKey;
+        onErrorRef.current({
           message: errorMessage,
           name: surveyMetadataCidError.name,
           severity: "error",
         });
       }
-      return;
     }
-
-    if (surveyMetadataCidFetched && surveyMetadataCid) {
-      const newCid = surveyMetadataCid as string;
-
-      // Skip if we've already processed this CID
-      if (processedCidRef.current === newCid) {
-        return;
-      }
-
-      // Cancel previous request if exists
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-
-      // Create new abort controller
-      abortControllerRef.current = new AbortController();
-
-      // Mark this CID as being processed
-      processedCidRef.current = newCid;
-
-      // Set loading state by clearing metadataCid only
-      setMetadata(
-        (prev) => ({ ...prev, metadataCid: null } as SurveyCreationMetadata)
-      );
-
-      // Add delay to prevent rapid-fire requests
-      setTimeout(() => {
-        // Check if still mounted and CID is still current
-        if (!mountedRef.current || processedCidRef.current !== newCid) {
-          return;
-        }
-
-        // Fetch metadata content
-        getMetadataContent(newCid)
-          .then((data) => {
-            // Check if component is still mounted and CID is still current
-            if (mountedRef.current && processedCidRef.current === newCid) {
-              const newMetadata: SurveyCreationMetadata = {
-                title: safeConvertData.toString(data.title),
-                description: safeConvertData.toString(data.description),
-                categories: safeConvertData.toString(data.categories),
-                minLabel: safeConvertData.toString(data.minLabel),
-                maxLabel: safeConvertData.toString(data.maxLabel),
-                tags: Array.isArray(data.tags) ? data.tags : [],
-                metadataCid: newCid, // Set the CID that was fetched
-              };
-              setMetadata(newMetadata);
-            }
-          })
-          .catch((error) => {
-            // Only add error if not aborted and component is mounted
-            if (mountedRef.current && error.name !== "AbortError") {
-              // Reset processed CID on error so it can be retried manually
-              if (processedCidRef.current === newCid) {
-                processedCidRef.current = null;
-              }
-              console.error(
-                `Failed to fetch metadata for CID: ${newCid}`,
-                error
-              );
-              onError({
-                message: `Failed to fetch metadata content: ${error.message}`,
-                name: error.name,
-                code: error.code,
-                severity: "error",
-              });
-            }
-          });
-      }, 1000); // Increased delay to 1 second to prevent spam
-    }
-
-    // Cleanup function
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
-  }, [
-    isEnabled,
-    address,
-    contractConfigs.generalSurveyContract,
-    surveyMetadataCidFetched,
-    surveyMetadataCid,
-    surveyMetadataCidError,
-    onError,
-  ]);
+  }, [surveyMetadataCidError, isEnabled, address]);
 
   // Function to manually refresh metadata
   const refreshStep2 = useCallback(() => {
-    if (isEnabled && address && contractConfigs.generalSurveyContract) {
+    if (
+      isEnabled &&
+      address &&
+      contractConfigsRef.current.generalSurveyContract
+    ) {
       // Clear current metadata first to show loading state
       setMetadata(null);
       // Reset processed CID to allow re-processing
       processedCidRef.current = null;
+      // Cancel any ongoing request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
       refetchMetadataCid();
     }
-  }, [
-    isEnabled,
-    address,
-    contractConfigs.generalSurveyContract,
-    refetchMetadataCid,
-  ]);
+  }, [isEnabled, address, refetchMetadataCid]);
 
   // Cleanup on unmount
   useEffect(() => {
