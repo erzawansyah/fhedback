@@ -18,9 +18,9 @@ import { useSurveySteps } from "@/hooks/useSurveyCreation"
  * Handles adding questions to the survey
  */
 export const SurveyQuestionsStep: React.FC = () => {
-    const { steps, config, metadata, questions, setQuestionsStatus } = useSurveyCreationContext()
+    const { steps, config, metadata, questions, surveyAddress, setQuestionsStatus } = useSurveyCreationContext()
     const encrypted = config?.encrypted
-    const contractAddress = config?.address
+    const contractAddress = surveyAddress
 
     // Use consistent state management hook like SurveySettingsStep
     const {
@@ -63,7 +63,7 @@ export const SurveyQuestionsStep: React.FC = () => {
             if (!contractAddress) {
                 throw new Error("Contract address is not defined")
             }
-            const txHash = await submitQuestions(config.address as `0x${string}`, questionsData)
+            const txHash = await submitQuestions(contractAddress as `0x${string}`, questionsData)
 
             if (txHash) {
                 handleTxHash(txHash)

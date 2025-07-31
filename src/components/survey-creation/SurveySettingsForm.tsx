@@ -26,7 +26,7 @@ export const SurveySettingsForm: React.FC<SurveySettingsFormProps> = ({
     onSubmit
 }) => {
     // Form configuration with validation
-    const { config } = useSurveyCreationContext();
+    const { config, surveyAddress, isLoading } = useSurveyCreationContext();
     const title = config?.title || "";
     const totalQuestions = config?.totalQuestions || 5;
     const limitScale = config?.limitScale || 5;
@@ -55,10 +55,32 @@ export const SurveySettingsForm: React.FC<SurveySettingsFormProps> = ({
         })
     }, [title, totalQuestions, limitScale, respondentLimit, disableFHE, form])
 
+    // Determine if inputs should be disabled
+    const inputsDisabled = disabled || (!!surveyAddress && isLoading);
+
     return (
         <>
+            {/* Loading State */}
+            {surveyAddress && isLoading && !config && (
+                <div className="space-y-4">
+                    <div className="animate-pulse">
+                        <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                        <div className="h-10 bg-gray-200 rounded"></div>
+                    </div>
+                    <div className="animate-pulse">
+                        <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                        <div className="h-10 bg-gray-200 rounded"></div>
+                    </div>
+                    <div className="animate-pulse">
+                        <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                        <div className="h-10 bg-gray-200 rounded"></div>
+                    </div>
+                    <p className="text-sm text-gray-500 text-center">Loading survey configuration...</p>
+                </div>
+            )}
+
             {/* Survey Deployment Success Alert */}
-            {disabled && config && config.address && (
+            {disabled && surveyAddress && (
                 <Alert className="mb-6">
                     <Info className="h-4 w-4" />
                     <AlertTitle className="text-lg font-semibold">
@@ -67,7 +89,7 @@ export const SurveySettingsForm: React.FC<SurveySettingsFormProps> = ({
                     <AlertDescription className="text-sm">
                         Your survey has been created and deployed on-chain at address:
                         <code className="block bg-gray-100 p-1 rounded mt-1 text-xs break-all">
-                            {config.address}
+                            {surveyAddress}
                         </code>
                         You can now proceed to the next step to add metadata and configure further details.
                     </AlertDescription>
@@ -86,7 +108,7 @@ export const SurveySettingsForm: React.FC<SurveySettingsFormProps> = ({
                                 <FormControl>
                                     <Input
                                         placeholder="Enter survey title"
-                                        disabled={disabled}
+                                        disabled={inputsDisabled}
                                         {...field}
                                     />
                                 </FormControl>
@@ -112,7 +134,7 @@ export const SurveySettingsForm: React.FC<SurveySettingsFormProps> = ({
                                             max={20}
                                             {...field}
                                             onChange={(e) => field.onChange(Number(e.target.value))}
-                                            disabled={disabled}
+                                            disabled={inputsDisabled}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -135,7 +157,7 @@ export const SurveySettingsForm: React.FC<SurveySettingsFormProps> = ({
                                             max={10}
                                             {...field}
                                             onChange={(e) => field.onChange(Number(e.target.value))}
-                                            disabled={disabled}
+                                            disabled={inputsDisabled}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -158,7 +180,7 @@ export const SurveySettingsForm: React.FC<SurveySettingsFormProps> = ({
                                             max={1000}
                                             {...field}
                                             onChange={(e) => field.onChange(Number(e.target.value))}
-                                            disabled={disabled}
+                                            disabled={inputsDisabled}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -177,7 +199,7 @@ export const SurveySettingsForm: React.FC<SurveySettingsFormProps> = ({
                                     <Switch
                                         checked={field.value}
                                         onCheckedChange={field.onChange}
-                                        disabled={disabled}
+                                        disabled={inputsDisabled}
                                     />
                                 </FormControl>
                                 <div className="space-y-1 leading-none">

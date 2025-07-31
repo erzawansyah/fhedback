@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Address } from "viem";
 import { useReadContracts } from "wagmi";
-import useSyncedState from "@/hooks/useSyncedState";
 import {
   QUESTIONNAIRE_ABIS,
   QUESTIONNAIRE_FACTORY_ADDRESS,
@@ -10,6 +9,7 @@ import { SurveyCreationConfig, SurveyStatus } from "@/types/survey-creation";
 
 interface useSetSurveyConfigProps {
   isEnabled: boolean;
+  address: Address | null;
   onError: (error: {
     message: string;
     name?: string;
@@ -41,64 +41,42 @@ const safeConvertData = {
 
 export const useSetSurveyConfig = ({
   isEnabled,
+  address,
   onError,
 }: useSetSurveyConfigProps) => {
-  // Internal state management
-  const [config, setConfig] = useSyncedState<SurveyCreationConfig | null>(
-    "survey_creation.config",
-    null
-  );
+  // Internal state management - no localStorage, direct from contract
+  const [config, setConfig] = useState<SurveyCreationConfig | null>(null);
 
   // Helper function to update config
   const updateConfig = useCallback(
     (newConfig: Partial<SurveyCreationConfig>) => {
-      setConfig((prev) => ({
+      setConfig((prev: SurveyCreationConfig | null) => ({
         ...prev,
         ...newConfig,
-        address: prev?.address ?? null, // Preserve address
       }));
     },
-    [setConfig]
-  );
-
-  // Function to set survey address
-  const setSurveyAddress = useCallback(
-    (address: Address | null) => {
-      if (!address) {
-        throw new Error("Survey address cannot be null or empty");
-      }
-      setConfig((prev) => ({
-        ...prev,
-        address: address,
-      }));
-    },
-    [setConfig]
+    []
   );
 
   // Function to reset config
   const resetConfig = useCallback(() => {
     setConfig(null);
-  }, [setConfig]);
+  }, []);
 
   const abis = QUESTIONNAIRE_ABIS;
   const factoryAddress = QUESTIONNAIRE_FACTORY_ADDRESS;
 
-  // Memoized contract configurations
+  // Memoized contract configurations based on external address prop
   const contractConfigs = useMemo(() => {
     const factoryContract = {
       address: factoryAddress as Address,
       abi: abis.factory,
     } as const;
-
-    const generalSurveyContract = config?.address
-      ? ({
-          address: config.address as Address,
-          abi: abis.general,
-        } as const)
+    const generalSurveyContract = address
+      ? ({ address, abi: abis.general } as const)
       : null;
-
     return { factoryContract, generalSurveyContract };
-  }, [config?.address, abis.factory, abis.general, factoryAddress]);
+  }, [address, abis.factory, abis.general, factoryAddress]);
 
   // useReadContracts to fetch survey configuration
   const {
@@ -138,21 +116,26 @@ export const useSetSurveyConfig = ({
           {
             ...contractConfigs.factoryContract,
             functionName: "getQuestionnaireType",
-            args: [config?.address as Address],
+            args: [address as Address],
           },
         ]
       : [],
     query: {
       enabled:
-        isEnabled &&
-        !!config?.address &&
-        !!contractConfigs.generalSurveyContract,
+        isEnabled && !!address && !!contractConfigs.generalSurveyContract,
       retry: 2,
       retryDelay: 1000,
       refetchOnMount: true,
       staleTime: 0, // Always consider data stale to force refetch
     },
   });
+
+  // Clear config when address changes or is null
+  useEffect(() => {
+    if (!address) {
+      setConfig(null);
+    }
+  }, [address]);
 
   // Handle survey configuration updates
   useEffect(() => {
@@ -165,7 +148,7 @@ export const useSetSurveyConfig = ({
       return;
     }
 
-    if (isEnabled && config?.address && surveyConfigFetched && surveyConfig) {
+    if (isEnabled && address && surveyConfigFetched && surveyConfig) {
       try {
         const configResult = surveyConfig;
 
@@ -237,17 +220,17 @@ export const useSetSurveyConfig = ({
     updateConfig,
     onError,
     isEnabled,
-    config?.address,
+    address,
   ]);
 
   // Function to manually refresh survey config
   const refreshStep1 = useCallback(() => {
-    if (isEnabled && config?.address && contractConfigs.generalSurveyContract) {
+    if (isEnabled && address && contractConfigs.generalSurveyContract) {
       refetchSurveyConfig();
     }
   }, [
     isEnabled,
-    config?.address,
+    address,
     contractConfigs.generalSurveyContract,
     refetchSurveyConfig,
   ]);
@@ -259,7 +242,6 @@ export const useSetSurveyConfig = ({
     // State management methods
     setConfig,
     updateConfig,
-    setSurveyAddress,
     resetConfig,
 
     // Original functionality

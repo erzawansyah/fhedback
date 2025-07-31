@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useSurveyCreationContext } from "@/context/SurveyCreationContext"
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useRef, useCallback } from "react"
 import { surveyMetadataSchema, SurveyMetadataType } from "./formSchema"
 import { SurveyCreationStatus } from "@/types/survey-creation"
 
@@ -35,7 +35,7 @@ export const SurveyMetadataForm: React.FC<SurveyMetadataFormProps> = ({
     onCancelEdit,
     temporaryValue
 }) => {
-    const { config, metadata, steps } = useSurveyCreationContext()
+    const { config, metadata, steps, surveyAddress, isLoading } = useSurveyCreationContext()
     const title = useMemo(() => metadata?.title || "", [metadata])
     const description = useMemo(() => metadata?.description || "", [metadata])
     const category = useMemo(() => metadata?.categories || "", [metadata])
@@ -60,8 +60,19 @@ export const SurveyMetadataForm: React.FC<SurveyMetadataFormProps> = ({
         },
     })
 
-    // Centralized effect to sync form values with metadata changes
-    useEffect(() => {
+    // Determine if inputs should be disabled
+    const isMetadataLoading = !!surveyAddress && isLoading && !metadata;
+    const inputsDisabled = disabled || isMetadataLoading;
+
+    // Use ref to track if form has been initialized to prevent loops
+    const formInitialized = useRef(false);
+    const lastMetadata = useRef<string>("");
+
+    // Build metadata signature to detect changes
+    const metadataSignature = `${title}-${description}-${category}-${scaleLabels.minLabel}-${scaleLabels.maxLabel}-${tags}`;
+
+    // Create stable reset function
+    const resetFormWithMetadata = useCallback(() => {
         const metadataValues = {
             displayTitle: title,
             description: description,
@@ -71,25 +82,21 @@ export const SurveyMetadataForm: React.FC<SurveyMetadataFormProps> = ({
                 maxLabel: scaleLabels.maxLabel,
             },
             tags: tags,
+        };
+
+        form.reset(metadataValues);
+        lastMetadata.current = metadataSignature;
+        formInitialized.current = true;
+    }, [title, description, category, scaleLabels.minLabel, scaleLabels.maxLabel, tags, form, metadataSignature]);
+
+    // Use useEffect to safely reset form (not during render)
+    useEffect(() => {
+        if (!isEditing && metadataSignature !== lastMetadata.current) {
+            resetFormWithMetadata();
         }
+    }, [metadataSignature, isEditing, resetFormWithMetadata]);
 
-        // Check if form values differ from metadata values
-        const currentFormValues = form.getValues()
-        const hasChanges = (
-            currentFormValues.displayTitle !== metadataValues.displayTitle ||
-            currentFormValues.description !== metadataValues.description ||
-            currentFormValues.category !== metadataValues.category ||
-            currentFormValues.scaleLabels.minLabel !== metadataValues.scaleLabels.minLabel ||
-            currentFormValues.scaleLabels.maxLabel !== metadataValues.scaleLabels.maxLabel ||
-            currentFormValues.tags !== metadataValues.tags
-        )
-
-        if (hasChanges) {
-            form.reset(metadataValues)
-        }
-    }, [form, title, description, category, scaleLabels.minLabel, scaleLabels.maxLabel, tags, isEditing])
-
-    // Effect to handle cancel edit - ensure form is properly reset
+    // Effect to handle cancel edit mode
     useEffect(() => {
         if (!isEditing && temporaryValue) {
             // When exiting edit mode, the form will be synced by the main sync effect above
@@ -110,8 +117,23 @@ export const SurveyMetadataForm: React.FC<SurveyMetadataFormProps> = ({
 
     return (
         <>
+            {/* Loading State */}
+            {isMetadataLoading && (
+                <div className="space-y-4">
+                    <div className="animate-pulse">
+                        <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                        <div className="h-10 bg-gray-200 rounded"></div>
+                    </div>
+                    <div className="animate-pulse">
+                        <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                        <div className="h-24 bg-gray-200 rounded"></div>
+                    </div>
+                    <p className="text-sm text-gray-500 text-center">Loading metadata...</p>
+                </div>
+            )}
+
             {/* Show success message when completed */}
-            {isCompleted && !isEditing && (
+            {isCompleted && !isEditing && !isMetadataLoading && (
                 <div className="bg-green-50 border border-green-200 rounded-md p-3 mb-6">
                     <p className="text-sm text-green-800">
                         ✅ <strong>Metadata configured successfully!</strong>
@@ -132,7 +154,7 @@ export const SurveyMetadataForm: React.FC<SurveyMetadataFormProps> = ({
                                 <FormControl>
                                     <Input
                                         placeholder="Enter a clear, descriptive title for your survey"
-                                        disabled={disabled}
+                                        disabled={inputsDisabled}
                                         {...field}
                                     />
                                 </FormControl>
@@ -151,7 +173,7 @@ export const SurveyMetadataForm: React.FC<SurveyMetadataFormProps> = ({
                                 <FormControl>
                                     <Textarea
                                         placeholder="Provide additional context about your survey's purpose and goals"
-                                        disabled={disabled}
+                                        disabled={inputsDisabled}
                                         {...field}
                                     />
                                 </FormControl>
@@ -167,7 +189,7 @@ export const SurveyMetadataForm: React.FC<SurveyMetadataFormProps> = ({
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Category *</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value} disabled={disabled}>
+                                <Select onValueChange={field.onChange} value={field.value} disabled={inputsDisabled}>
                                     <FormControl>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select a category for your survey" aria-label={field.value}>
@@ -212,7 +234,7 @@ export const SurveyMetadataForm: React.FC<SurveyMetadataFormProps> = ({
                                         <FormControl>
                                             <Input
                                                 placeholder="e.g., Strongly Disagree"
-                                                disabled={disabled}
+                                                disabled={inputsDisabled}
                                                 {...field}
                                             />
                                         </FormControl>
@@ -233,7 +255,7 @@ export const SurveyMetadataForm: React.FC<SurveyMetadataFormProps> = ({
                                         <FormControl>
                                             <Input
                                                 placeholder="e.g., Strongly Agree"
-                                                disabled={disabled}
+                                                disabled={inputsDisabled}
                                                 {...field}
                                             />
                                         </FormControl>
@@ -253,7 +275,7 @@ export const SurveyMetadataForm: React.FC<SurveyMetadataFormProps> = ({
                                     <FormControl>
                                         <Input
                                             placeholder="Enter tags separated by commas (e.g., customer, feedback, satisfaction)"
-                                            disabled={disabled}
+                                            disabled={inputsDisabled}
                                             {...field}
                                         />
                                     </FormControl>

@@ -25,7 +25,7 @@ import { toast } from "sonner"
 import { useSurveyCreationContext } from "@/context/SurveyCreationContext"
 
 const SurveyUtilitiesCard = () => {
-    const { config, metadata, questions, refresh, refreshed, isLoading } = useSurveyCreationContext()
+    const { config, metadata, questions, surveyAddress, refresh, refreshed, isLoading } = useSurveyCreationContext()
     const [actionsOpen, setActionsOpen] = useState(true)
     const [insightsOpen, setInsightsOpen] = useState(false)
     const [overviewOpen, setOverviewOpen] = useState(false)
@@ -149,12 +149,12 @@ const SurveyUtilitiesCard = () => {
                                 <span className="text-xs">{refreshed ? "Refreshing..." : "Refresh Data"}</span>
                             </Button>
 
-                            {config?.address && (
+                            {surveyAddress && (
                                 <Button
                                     variant="neutral"
                                     size="sm"
                                     className="w-full justify-start h-auto p-2"
-                                    onClick={() => copyToClipboard(config.address!, "Contract Address")}
+                                    onClick={() => copyToClipboard(surveyAddress, "Contract Address")}
                                 >
                                     <Copy className="w-3 h-3 mr-2" />
                                     <span className="text-xs">Copy Address</span>
@@ -211,7 +211,7 @@ const SurveyUtilitiesCard = () => {
                     </Collapsible>
 
                     {/* Survey Overview */}
-                    {config && config.address && (
+                    {surveyAddress && (
                         <Collapsible open={overviewOpen} onOpenChange={setOverviewOpen}>
                             <SectionHeader
                                 icon={BarChart3}
@@ -224,7 +224,7 @@ const SurveyUtilitiesCard = () => {
                                     <div className="text-xs">
                                         <span className="font-semibold text-gray-600">Contract:</span>
                                         <code className="block text-xs bg-gray-100 dark:bg-gray-800 p-1 rounded mt-1 break-all font-mono">
-                                            {config.address}
+                                            {surveyAddress}
                                         </code>
                                     </div>
 
@@ -233,19 +233,19 @@ const SurveyUtilitiesCard = () => {
                                     <div className="grid grid-cols-2 gap-2 text-xs">
                                         <div>
                                             <span className="font-semibold text-gray-600">Questions:</span>
-                                            <div className="font-mono">{config.totalQuestions}</div>
+                                            <div className="font-mono">{config?.totalQuestions || 0}</div>
                                         </div>
                                         <div>
                                             <span className="font-semibold text-gray-600">Scale:</span>
-                                            <div className="font-mono">1-{config.limitScale}</div>
+                                            <div className="font-mono">1-{config?.limitScale || 5}</div>
                                         </div>
                                         <div>
                                             <span className="font-semibold text-gray-600">Respondents:</span>
-                                            <div className="font-mono">{config.respondentLimit}</div>
+                                            <div className="font-mono">{config?.respondentLimit || 0}</div>
                                         </div>
                                         <div>
                                             <span className="font-semibold text-gray-600">Privacy:</span>
-                                            <div className="font-mono">{config.encrypted ? "FHE" : "Public"}</div>
+                                            <div className="font-mono">{config?.encrypted ? "FHE" : "Public"}</div>
                                         </div>
                                     </div>
 
@@ -254,14 +254,14 @@ const SurveyUtilitiesCard = () => {
                                     <div className="text-xs">
                                         <span className="font-semibold text-gray-600">Status:</span>
                                         <Badge
-                                            variant={config.status === 'published' ? "default" : "neutral"}
+                                            variant={config?.status === 'published' ? "default" : "neutral"}
                                             className="ml-2 text-xs"
                                         >
-                                            {config.status || 'Unknown'}
+                                            {config?.status || 'Unknown'}
                                         </Badge>
                                     </div>
 
-                                    {config.title && (
+                                    {config?.title && (
                                         <div className="text-xs">
                                             <span className="font-semibold text-gray-600">Title:</span>
                                             <div className="text-gray-800 dark:text-gray-200 mt-1">{config.title}</div>

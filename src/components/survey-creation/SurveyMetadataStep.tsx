@@ -18,8 +18,8 @@ import { useSurveySteps } from "@/hooks/useSurveyCreation"
  */
 export const SurveyMetadataStep: React.FC = () => {
     // Get survey creation context
-    const { config, steps, setMetadataCid, metadata } = useSurveyCreationContext()
-    const contractAddress = config?.address as `0x${string}` | null
+    const { surveyAddress, steps, setMetadataCid, metadata, refreshAllSteps } = useSurveyCreationContext()
+    const contractAddress = surveyAddress as `0x${string}` | null
 
     // Use consistent state management hook like SurveySettingsStep
     const {
@@ -131,18 +131,26 @@ export const SurveyMetadataStep: React.FC = () => {
     useEffect(() => {
         if (receipt && status === "success" && contractAddress && !isEditing) {
             setMetadataCid()
+            // Force refresh to ensure metadata is fetched and step3 shows up
+            setTimeout(() => {
+                refreshAllSteps()
+            }, 1000)
         } else if (receipt && status === "success" && contractAddress && isEditing) {
             // For edit mode, also update the metadata CID but don't change step status
             setMetadataCid()
             setIsEditing(false)
             setTemporaryValue(null)
+            // Force refresh to ensure metadata is updated
+            setTimeout(() => {
+                refreshAllSteps()
+            }, 1000)
         } else {
             if (receipt) {
                 setIsEditing(false)
                 setTemporaryValue(null)
             }
         }
-    }, [status, receipt, contractAddress, setMetadataCid, isEditing, handleError])
+    }, [status, receipt, contractAddress, setMetadataCid, isEditing, handleError, refreshAllSteps])
 
 
     return (

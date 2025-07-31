@@ -1,14 +1,10 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Address } from "viem";
 import { useReadContract } from "wagmi";
-import useSyncedState from "@/hooks/useSyncedState";
-import {
-  SurveyCreationConfig,
-  SurveyCreationQuestions,
-} from "@/types/survey-creation";
+import { SurveyCreationQuestions } from "@/types/survey-creation";
 
 interface useSetSurveyQuestionsProps {
-  config: SurveyCreationConfig | null;
+  address: Address | null;
   isEnabled: boolean;
   contractConfigs: {
     generalSurveyContract: {
@@ -31,30 +27,28 @@ const safeConvertData = {
 };
 
 export const useSetSurveyQuestions = ({
-  config,
+  address,
   isEnabled,
   contractConfigs,
   onError,
 }: useSetSurveyQuestionsProps) => {
-  // Internal state management
-  const [questions, setQuestions] =
-    useSyncedState<SurveyCreationQuestions | null>(
-      "survey_creation.questions",
-      null
-    );
+  // Internal state management - no localStorage, direct from contract
+  const [questions, setQuestions] = useState<SurveyCreationQuestions | null>(
+    null
+  );
 
   // Helper function to update questions
   const updateQuestions = useCallback(
     (newQuestions: SurveyCreationQuestions) => {
       setQuestions(newQuestions);
     },
-    [setQuestions]
+    []
   );
 
   // Function to reset questions
   const resetQuestions = useCallback(() => {
     setQuestions(null);
-  }, [setQuestions]);
+  }, []);
 
   // useReadContract to fetch questions
   const {
@@ -69,15 +63,20 @@ export const useSetSurveyQuestions = ({
     args: [],
     query: {
       enabled:
-        isEnabled &&
-        !!config?.address &&
-        !!contractConfigs.generalSurveyContract,
+        isEnabled && !!address && !!contractConfigs.generalSurveyContract,
       retry: 2,
       retryDelay: 1000,
       refetchOnMount: true,
       staleTime: 0,
     },
   });
+
+  // Clear questions when address changes or is null
+  useEffect(() => {
+    if (!address) {
+      setQuestions(null);
+    }
+  }, [address]);
 
   // Handle questions updates with proper validation
   useEffect(() => {
@@ -141,12 +140,12 @@ export const useSetSurveyQuestions = ({
 
   // Function to manually refresh questions
   const refreshStep3 = useCallback(() => {
-    if (isEnabled && config?.address && contractConfigs.generalSurveyContract) {
+    if (isEnabled && address && contractConfigs.generalSurveyContract) {
       refetchQuestions();
     }
   }, [
     isEnabled,
-    config?.address,
+    address,
     contractConfigs.generalSurveyContract,
     refetchQuestions,
   ]);

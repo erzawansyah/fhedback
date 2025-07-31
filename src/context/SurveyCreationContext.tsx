@@ -10,6 +10,7 @@ interface SurveyCreationContextType {
     config: SurveyCreationConfig | null;
     metadata: SurveyCreationMetadata | null;
     questions: SurveyCreationQuestions | null;
+    surveyAddress: Address | null;
     setSurveyAddress: (address: Address | null) => void;
     setMetadataCid: () => void;
     setQuestionsStatus: () => void;
@@ -54,6 +55,11 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
     const [refreshed, setRefreshed] = useState(false);
     const [errors, setErrors] = useState<SurveyCreationError[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    // Separate state for survey address
+    const [surveyAddress, setSurveyAddressLS, removeSurveyAddress] = useSyncedState<Address | null>(
+        "survey_creation.address",
+        null
+    );
 
     // Synced state with localStorage
     const [steps, setSteps, removeSteps] = useSyncedState<SurveyCreationStep>("survey_creation.steps", defaultStep);
@@ -99,25 +105,26 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
     // Use hooks that now manage their own state
     const configHook = useSetSurveyConfig({
         isEnabled: steps.step1,
+        address: surveyAddress,
         onError: addError
     });
 
     const metadataHook = useSetSurveyMetadata({
-        config: configHook.config,
-        isEnabled: steps.step1, // Step2 enabled when step1 is complete
+        address: surveyAddress,
+        isEnabled: steps.step1, // Only enable when step1 is complete, let manual refresh handle updates
         contractConfigs: configHook.contractConfigs,
         onError: addError
     });
 
     const questionsHook = useSetSurveyQuestions({
-        config: configHook.config,
+        address: surveyAddress,
         isEnabled: steps.step3,
         contractConfigs: configHook.contractConfigs,
         onError: addError
     });
 
     // Extract state and methods for easier access
-    const { config, setSurveyAddress: setSurveyAddressFromHook, resetConfig } = configHook;
+    const { config, resetConfig } = configHook;
     const { metadata, resetMetadata } = metadataHook;
     const { questions, resetQuestions } = questionsHook;
 
@@ -146,6 +153,8 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
         // Reset steps
         setSteps(defaultStep);
         removeSteps();
+        // Reset address state
+        removeSurveyAddress();
 
         // Reset all survey data to null/default using hooks
         resetConfig();
@@ -158,7 +167,7 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
         // Clear error timeouts
         errorTimeoutRefs.current.forEach(timeoutId => clearTimeout(timeoutId));
         errorTimeoutRefs.current.clear();
-    }, [setSteps, removeSteps, resetConfig, resetMetadata, resetQuestions, resetErrors]);
+    }, [setSteps, removeSteps, resetConfig, resetMetadata, resetQuestions, resetErrors, removeSurveyAddress]);
 
     // function to refresh any survey data
     const refresh = useCallback(() => {
@@ -167,28 +176,20 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
 
     // Function to set survey address and update steps
     const setSurveyAddress = useCallback((address: Address | null) => {
+        // update separate address state
+        setSurveyAddressLS(address);
         if (!address) {
-            addError({
-                message: "Survey address cannot be null or empty",
-                severity: 'error'
-            });
+            addError({ message: "Survey address cannot be null or empty", severity: 'error' });
             return;
         }
-
-        try {
-            setSurveyAddressFromHook(address);
-            setSteps(prev => ({ ...prev, step1: true }));
-        } catch (error) {
-            addError({
-                message: error instanceof Error ? error.message : "Failed to set survey address",
-                severity: 'error'
-            });
-        }
-    }, [setSurveyAddressFromHook, setSteps, addError]);
+        // mark step1 complete
+        setSteps(prev => ({ ...prev, step1: true }));
+    }, [setSteps, addError, setSurveyAddressLS]);
 
     // Function to set metadata CID and update steps
     const setMetadataCid = useCallback(() => {
         setSteps(prev => ({ ...prev, step2: true }));
+        // Don't trigger immediate refresh - let natural flow handle it
     }, [setSteps]);
 
     // Function to set questions status and update steps
@@ -206,7 +207,7 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
         if (refreshed) {
             // Save necessary state before resetting
             const currentSteps = steps;
-            const currentAddress: Address | null | undefined = config?.address;
+            const currentAddress = surveyAddress;
             const currentMetadataCid: string | null | undefined = metadata?.metadataCid;
             setIsLoading(true);
             resetSteps();
@@ -224,7 +225,7 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
                 setIsLoading(false);
             }, 1000); // Simulate refresh delay
         }
-    }, [refreshed, steps, config?.address, metadata?.metadataCid, resetSteps, setSurveyAddress, setMetadataCid, setQuestionsStatus]);
+    }, [refreshed, steps, surveyAddress, metadata?.metadataCid, resetSteps, setSurveyAddress, setMetadataCid, setQuestionsStatus]);
 
     // Manual refresh functions
     const refreshSurveyStatus = useCallback(() => {
@@ -255,6 +256,7 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
         config,
         metadata,
         questions,
+        surveyAddress,
         setSurveyAddress,
         setMetadataCid,
         setQuestionsStatus,
@@ -272,6 +274,7 @@ export const SurveyCreationProvider = ({ children }: { children: ReactNode }) =>
         config,
         metadata,
         questions,
+        surveyAddress,
         setSurveyAddress,
         setMetadataCid,
         setQuestionsStatus,

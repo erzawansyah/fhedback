@@ -23,11 +23,11 @@ import { toast } from "sonner"
 import { useSurveyCreationContext } from "@/context/SurveyCreationContext"
 
 const TechnicalInfoCard = () => {
-    const { config, metadata } = useSurveyCreationContext()
+    const { config, metadata, surveyAddress } = useSurveyCreationContext()
     const [open, setOpen] = useState(false)
 
     // Only show if survey is deployed
-    if (!config?.address) {
+    if (!surveyAddress) {
         return null
     }
 
@@ -74,7 +74,7 @@ const TechnicalInfoCard = () => {
                     <div className="bg-gray-50 dark:bg-gray-900 p-2 rounded-lg">
                         <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">Contract:</span>
                         <code className="block text-xs font-mono text-gray-800 dark:text-gray-200 mt-1">
-                            {config.address.slice(0, 6)}...{config.address.slice(-4)}
+                            {surveyAddress.slice(0, 6)}...{surveyAddress.slice(-4)}
                         </code>
                     </div>
 
@@ -84,7 +84,7 @@ const TechnicalInfoCard = () => {
                             variant="neutral"
                             size="sm"
                             className="w-full"
-                            onClick={() => copyToClipboard(config.address!, "Contract Address")}
+                            onClick={() => copyToClipboard(surveyAddress, "Contract Address")}
                         >
                             <Copy className="w-3 h-3 mr-1" />
                             Copy Address
@@ -113,13 +113,13 @@ const TechnicalInfoCard = () => {
                                     <div>
                                         <span className="font-semibold text-gray-600 dark:text-gray-400">Contract Address:</span>
                                         <code className="block bg-gray-100 dark:bg-gray-800 p-3 rounded mt-1 break-all font-mono text-sm">
-                                            {config.address}
+                                            {surveyAddress}
                                         </code>
                                         <Button
                                             variant="neutral"
                                             size="sm"
                                             className="w-full mt-2"
-                                            onClick={() => copyToClipboard(config.address!, "Contract Address")}
+                                            onClick={() => copyToClipboard(surveyAddress, "Contract Address")}
                                         >
                                             <Copy className="w-3 h-3 mr-1" />
                                             Copy Address
@@ -157,7 +157,7 @@ const TechnicalInfoCard = () => {
                                                 <Button
                                                     variant="neutral"
                                                     size="sm"
-                                                    onClick={() => window.open(`https://explorer.zama.ai/address/${config.address}`, '_blank')}
+                                                    onClick={() => window.open(`https://explorer.zama.ai/address/${surveyAddress}`, '_blank')}
                                                 >
                                                     <ExternalLink className="w-3 h-3" />
                                                 </Button>
@@ -166,7 +166,7 @@ const TechnicalInfoCard = () => {
                                     </div>
 
                                     {/* FHE Information */}
-                                    {config.encrypted && (
+                                    {config?.encrypted && (
                                         <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 p-3 rounded">
                                             <div className="flex items-center gap-2 mb-2">
                                                 <Shield className="w-4 h-4 text-green-600" />
@@ -226,7 +226,7 @@ const TechnicalInfoCard = () => {
                                             variant="neutral"
                                             size="sm"
                                             className="w-full"
-                                            onClick={() => window.open(`https://explorer.zama.ai/address/${config.address}`, '_blank')}
+                                            onClick={() => window.open(`https://explorer.zama.ai/address/${surveyAddress}`, '_blank')}
                                         >
                                             <ExternalLink className="w-3 h-3 mr-1" />
                                             View on Zama Explorer

@@ -1,5 +1,3 @@
-import { Address } from "viem";
-
 export type SurveyCreationStatus =
   | "idle"
   | "loading"
@@ -22,7 +20,6 @@ export interface SurveyCreationStep {
 }
 
 export interface SurveyCreationConfig {
-  address: Address | null;
   status?: SurveyStatus;
   title?: string;
   limitScale?: number;
