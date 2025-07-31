@@ -40,7 +40,6 @@ export const SurveyExplorer = () => {
                 // For now, we'll just close the modal and show a message
                 // In a real app, you would navigate to the survey taking page
                 setSelectedSurvey(null)
-                console.log("Would redirect to:", result.redirectUrl)
 
                 // Mock: Update survey as answered
                 setSurveys(prev => prev.map(s =>

@@ -9,7 +9,7 @@ import { SurveySettingsForm } from "./SurveySettingsForm"
 import { toast } from "sonner"
 import { Settings } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useSurveySteps } from "@/hooks/use-survey-creation"
+import { useSurveySteps } from "@/hooks/useSurveyCreation"
 
 export const SurveySettingsStep: React.FC = () => {
     // Survey creation context

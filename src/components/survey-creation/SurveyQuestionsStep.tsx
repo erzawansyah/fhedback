@@ -9,7 +9,7 @@ import { HelpCircle } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
 import { submitQuestions } from "@/lib/utils/submitQuestions"
-import { useSurveySteps } from "@/hooks/use-survey-creation"
+import { useSurveySteps } from "@/hooks/useSurveyCreation"
 
 
 
@@ -82,7 +82,6 @@ export const SurveyQuestionsStep: React.FC = () => {
      */
     useEffect(() => {
         if (steps.step3 && status === "idle" && questions && questions.length > 0) {
-            console.log("Questions already submitted, setting status to success")
             handleStatus("success")
         }
     }, [questions, steps.step3, handleStatus, status])

@@ -46,8 +46,8 @@ const ProgressTrackerCard = () => {
                     <div
                         key={index}
                         className={`flex items-center gap-2 p-2 rounded-md transition-all duration-200 hover:scale-105 cursor-pointer ${step.completed
-                                ? 'bg-green-100 dark:bg-green-900 border border-green-200 dark:border-green-800'
-                                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750'
+                            ? 'bg-green-100 dark:bg-green-900 border border-green-200 dark:border-green-800'
+                            : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750'
                             }`}
                         title={step.description}
                     >
@@ -58,14 +58,14 @@ const ProgressTrackerCard = () => {
                         )}
                         <div className="min-w-0 flex-1">
                             <span className={`text-xs block font-medium leading-tight ${step.completed
-                                    ? 'text-green-700 dark:text-green-300'
-                                    : 'text-gray-600 dark:text-gray-400'
+                                ? 'text-green-700 dark:text-green-300'
+                                : 'text-gray-600 dark:text-gray-400'
                                 }`}>
                                 {step.name}
                             </span>
                             <span className={`text-xs ${step.completed
-                                    ? 'text-green-600 dark:text-green-400'
-                                    : 'text-gray-500 dark:text-gray-500'
+                                ? 'text-green-600 dark:text-green-400'
+                                : 'text-gray-500 dark:text-gray-500'
                                 }`}>
                                 {step.completed ? '✓ Done' : 'Pending'}
                             </span>

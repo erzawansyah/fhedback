@@ -3,8 +3,6 @@ import React from "react"
 import {
     PublishSurveyCard,
     BestPracticesCard,
-    QuickActionsCard,
-    SurveyUtilitiesCard,
     TechnicalInfoCard
 } from "@/components/survey-creation/sidebar"
 
@@ -16,12 +14,6 @@ const NewSurveySidebar = () => {
 
             {/* Best Practices - Shows when steps are not all completed */}
             <BestPracticesCard />
-
-            {/* Quick Actions */}
-            <QuickActionsCard />
-
-            {/* Survey Utilities */}
-            <SurveyUtilitiesCard />
 
             {/* Technical Information - Only shows when survey is deployed */}
             <TechnicalInfoCard />

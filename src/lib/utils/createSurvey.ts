@@ -1,4 +1,4 @@
-import { SurveySettingsData } from "@/components/survey-creation";
+import { SurveySettingsType } from "@/components/survey-creation";
 import { wagmiConfig } from "@/lib/wagmi/config";
 import { writeContract } from "@wagmi/core";
 import { Address } from "viem";
@@ -10,7 +10,7 @@ import {
 const abis = QUESTIONNAIRE_ABIS;
 const factoryAddress = QUESTIONNAIRE_FACTORY_ADDRESS;
 
-export const createSurvey = async (data: SurveySettingsData) => {
+export const createSurvey = async (data: SurveySettingsType) => {
   const { title, limitScale, totalQuestions, respondentLimit, disableFHE } =
     data;
   const surveyType = disableFHE ? 0 : 1; // 0 for non-FHE, 1 for FHE

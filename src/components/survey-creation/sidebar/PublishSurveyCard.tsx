@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Loader, Rocket, CheckCircle, Eye, Share2, ExternalLink } from "lucide-react"
 import { toast } from "sonner"
 import { publishSurvey } from "@/lib/utils/publishSurvey"
-import { useSurveySteps } from "@/hooks/use-survey-creation"
+import { useSurveySteps } from "@/hooks/useSurveyCreation"
 import { useSurveyCreationContext } from "@/context/SurveyCreationContext"
 
 const PublishSurveyCard = () => {
-    const { config, steps, refresh } = useSurveyCreationContext()
+    const { config, steps } = useSurveyCreationContext()
     const [isPublishing, setIsPublishing] = useState(false)
     const {
         handleError,
@@ -31,14 +31,18 @@ const PublishSurveyCard = () => {
             await navigator.clipboard.writeText(text)
             toast.success(`${label} copied to clipboard!`)
         } catch {
-            toast.error(`Failed to copy ${label}`)
+            handleError("Failed to copy to clipboard")
         }
     }
 
     // Handle survey publication
     const handlePublishSurvey = async () => {
         if (!config?.address || !account.address) {
-            toast.error("Survey address or wallet not available")
+            handleError("Survey address or wallet not available")
+            return
+        }
+        if (config?.encrypted === undefined || config?.encrypted === null) {
+            handleError("Survey type is not set")
             return
         }
 
@@ -55,13 +59,10 @@ const PublishSurveyCard = () => {
 
             if (txHash) {
                 handleTxHash(txHash as `0x${string}`)
-                toast.success("Survey published successfully!")
-                // Refresh to get updated status
-                setTimeout(() => refresh(), 2000)
+                toast.success("Transaction submitted successfully! Waiting for confirmation...")
             }
         } catch (error) {
             handleError(error instanceof Error ? error.message : "Failed to publish survey")
-            toast.error("Failed to publish survey")
         } finally {
             setIsPublishing(false)
         }

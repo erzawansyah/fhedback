@@ -19,6 +19,7 @@ const CreatorPage = () => {
     }, [])
 
     // Mock creator data
+    // TODO: Replace with actual data, fetching logic. Use custom hooks for this data
     const creatorData = {
         name: "Survey Creator",
         totalSurveys: 8,
