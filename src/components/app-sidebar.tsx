@@ -20,6 +20,7 @@ const sidebarMenuItems = [
         items: [
             { label: "Dashboard", icon: Home, href: "/" },
             { label: "Explore", icon: Search, href: "/explore" },
+
         ],
     },
     {

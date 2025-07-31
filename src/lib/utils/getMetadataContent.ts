@@ -1,5 +1,10 @@
+const metadataCache = new Map<string, Record<string, unknown>>();
+
 export const getMetadataContent = async (cid: string) => {
-  console.log(`Fetching metadata from API for CID: ${cid}`);
+  if (metadataCache.has(cid)) {
+    return metadataCache.get(cid);
+  }
+
   try {
     const response = await fetch(`/api/metadata?cid=${cid}`, {
       method: "GET",
@@ -13,6 +18,7 @@ export const getMetadataContent = async (cid: string) => {
     }
 
     const data = await response.json();
+    metadataCache.set(cid, data);
     return data;
   } catch (error) {
     console.error("Error fetching metadata:", error);

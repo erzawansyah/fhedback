@@ -95,7 +95,7 @@ export async function POST(
   }
 }
 
-interface GetMetadataReturnValue {
+export interface GetMetadataReturnValue {
   title: string;
   description: string;
   categories: string;
@@ -104,7 +104,7 @@ interface GetMetadataReturnValue {
   tags: string[];
 }
 
-type GetMetadataResponse = NextResponse<
+export type GetMetadataResponse = NextResponse<
   GetMetadataReturnValue | NextResponseError
 >;
 

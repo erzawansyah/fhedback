@@ -1,6 +1,5 @@
 export { SurveyExplorer } from "./SurveyExplorer";
-export { SurveyList, type PublishedSurvey } from "./SurveyList";
-export { SurveyDetailModal } from "./SurveyDetailModal";
+export { SurveyCard } from "./SurveyCard";
 export {
   fetchPublishedSurveys,
   startSurvey,
