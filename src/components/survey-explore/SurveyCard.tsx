@@ -9,6 +9,7 @@ import { QUESTIONNAIRE_ABIS as abis } from "@/lib/contracts"
 import { useReadContracts } from "wagmi"
 import { useEffect, useMemo, useState } from "react"
 import { getMetadataContent } from "@/lib/utils/getMetadataContent"
+import Link from "next/link"
 
 // Survey data interface
 interface SurveyData {
@@ -116,7 +117,7 @@ const SurveyCardSkeleton = () => (
     </Card>
 )
 
-export const SurveyCard = ({ address: contractAddress, type, onClick, owner, createdAt }: SurveyCardProps) => {
+export const SurveyCard = ({ address: contractAddress, type, owner, createdAt }: SurveyCardProps) => {
     const [survey, setSurvey] = useState<SurveyData>(createDefaultSurvey())
     const [isDataLoaded, setIsDataLoaded] = useState(false)
 
@@ -301,16 +302,17 @@ export const SurveyCard = ({ address: contractAddress, type, onClick, owner, cre
 
                         {/* Action button */}
                         <Button
-                            className="text-xs px-3 py-1 h-auto font-base"
                             variant={survey.hasAnswered ? "neutral" : "default"}
                             disabled={survey.respondentCount >= survey.maxRespondents}
-                            onClick={onClick}
+                            asChild={survey.hasAnswered ? false : true}
                         >
                             {survey.hasAnswered
                                 ? "View"
                                 : survey.respondentCount >= survey.maxRespondents
                                     ? "Full"
-                                    : "Take"
+                                    : <Link href={`/view/${contractAddress}`} className="w-full h-full">
+                                        Take Survey
+                                    </Link>
                             }
                         </Button>
                     </div>
