@@ -57,7 +57,7 @@ const SurveySubmissionPage = () => {
                     category: "Business",
                     tags: ["customer service", "satisfaction", "feedback", "improvement", "UX"],
                     owner: "0x1234567890abcdef1234567890abcdef12345678",
-                    maxScale: 5,
+                    maxScale: 10,
                     minLabel: "Strongly Disagree",
                     maxLabel: "Strongly Agree",
                     questions: [
@@ -136,24 +136,10 @@ const SurveySubmissionPage = () => {
     }
 
     const submitSurvey = async () => {
-        if (!surveyData || !canSubmit()) return
-
-        setIsSubmitting(true)
-        try {
-            await new Promise(resolve => setTimeout(resolve, 2000))
-
-            console.log("Submitting survey responses:", {
-                surveyAddress: address,
-                responses: responses.filter(r => r.rating !== null)
-            })
-
-            setIsCompleted(true)
-        } catch (error) {
-            console.error("Survey submission error:", error)
-            setError("Failed to submit survey. Please try again.")
-        } finally {
-            setIsSubmitting(false)
-        }
+        console.log("Submitting survey responses:", responses)
+        await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate network delay
+        setIsSubmitting(false)
+        setIsCompleted(true)
     }
 
     if (isLoading) {
