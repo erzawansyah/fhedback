@@ -1,6 +1,8 @@
 import { SubmitCard, SurveyDetailsCard } from "@/components/survey-view"
+import { Address } from "viem"
 
 interface SurveySidebarProps {
+    address: Address
     surveyData: {
         title: string
         category: string
@@ -24,6 +26,8 @@ interface SurveySidebarProps {
 const SurveySidebar = ({ surveyData, progress, canSubmit, onSubmit, isSubmitting }: SurveySidebarProps) => {
     return (
         <div className="sticky top-24 space-y-6 h-fit">
+
+
             {/* Submit Card - First priority */}
             <SubmitCard
                 progress={progress}

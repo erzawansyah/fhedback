@@ -4,30 +4,16 @@ import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { ArrowLeft, FileText } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { LikertScale, SurveyCompletion } from "@/components/survey-view"
+import { LikertScale } from "@/components/survey-view"
 import PageTitle from "@/components/layout/page-title"
 import SurveySidebar from "./sidebar"
-
-interface SurveyData {
-    id: string
-    title: string
-    description: string
-    category: string
-    tags: string[]
-    owner: string
-    maxScale: number
-    minLabel: string
-    maxLabel: string
-    questions: string[]
-    estimatedTime: number
-    reward: number
-    currentResponses: number
-    maxResponses: number
-    isActive: boolean
-}
+import { useSurveySubmission } from "@/hooks"
+import { Address } from "viem"
+import { EncryptedStatusCard } from "@/components/survey-view/EncryptedStatusCard"
+import { signAndVerify } from "@/lib/utils/signMessage"
+import { toast } from "sonner"
 
 interface SurveyResponse {
     questionIndex: number
@@ -37,79 +23,26 @@ interface SurveyResponse {
 const SurveySubmissionPage = () => {
     const params = useParams()
     const router = useRouter()
-    const address = params.address as string
+    const address = params.address as Address
 
-    const [isLoading, setIsLoading] = useState(true)
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [surveyData, setSurveyData] = useState<SurveyData | null>(null)
     const [responses, setResponses] = useState<SurveyResponse[]>([])
-    const [isCompleted, setIsCompleted] = useState(false)
-    const [error, setError] = useState<string | null>(null)
 
-    // Mock function to fetch survey data from contract address
-    const fetchSurveyData = async (contractAddress: string): Promise<SurveyData> => {
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                const mockSurvey: SurveyData = {
-                    id: contractAddress,
-                    title: "Customer Satisfaction Survey",
-                    description: "Help us improve our services by sharing your experience and feedback about our platform. Your responses will help us understand what works well and what needs improvement.",
-                    category: "Business",
-                    tags: ["customer service", "satisfaction", "feedback", "improvement", "UX"],
-                    owner: "0x1234567890abcdef1234567890abcdef12345678",
-                    maxScale: 10,
-                    minLabel: "Strongly Disagree",
-                    maxLabel: "Strongly Agree",
-                    questions: [
-                        "I find the platform easy to navigate and use",
-                        "The user interface is intuitive and well-designed",
-                        "The platform loads quickly and responds well",
-                        "Customer support is helpful and responsive",
-                        "I would recommend this platform to others",
-                        "The features meet my needs effectively",
-                        "The platform provides good value for money",
-                        "I am satisfied with my overall experience"
-                    ],
-                    estimatedTime: 3,
-                    reward: 15,
-                    currentResponses: 45,
-                    maxResponses: 100,
-                    isActive: true
-                }
+    // Use the custom hook to fetch survey data
+    const { surveyData, isLoading, error } = useSurveySubmission(address)
 
-                if (contractAddress === "invalid") {
-                    reject(new Error("Survey not found"))
-                } else {
-                    resolve(mockSurvey)
-                }
-            }, 1000)
-        })
-    }
+
 
     useEffect(() => {
-        const loadSurvey = async () => {
-            try {
-                setIsLoading(true)
-                const data = await fetchSurveyData(address)
-                setSurveyData(data)
-
-                // Initialize responses array
-                const initialResponses: SurveyResponse[] = data.questions.map((_, index) => ({
-                    questionIndex: index,
-                    rating: null
-                }))
-                setResponses(initialResponses)
-            } catch (err) {
-                setError(err instanceof Error ? err.message : "Failed to load survey")
-            } finally {
-                setIsLoading(false)
-            }
+        if (surveyData) {
+            // Initialize responses array when survey data is loaded
+            const initialResponses: SurveyResponse[] = surveyData.questions.map((_, index) => ({
+                questionIndex: index,
+                rating: null
+            }))
+            setResponses(initialResponses)
         }
-
-        if (address) {
-            loadSurvey()
-        }
-    }, [address])
+    }, [surveyData])
 
     const updateResponse = (questionIndex: number, rating: number) => {
         setResponses(prev =>
@@ -136,15 +69,27 @@ const SurveySubmissionPage = () => {
     }
 
     const submitSurvey = async () => {
+        setIsSubmitting(true)
+        const { isVerified } = await signAndVerify(address)
+        if (!isVerified) {
+            toast.error("Signature verification failed. Please try again.")
+            setIsSubmitting(false)
+            return
+        }
+
+        // Prepare the responses for submission
+        
+
+
+
         console.log("Submitting survey responses:", responses)
-        await new Promise(resolve => setTimeout(resolve, 1000)) // Simulate network delay
+        await new Promise(resolve => setTimeout(resolve, 3000)) // Simulate network delay
         setIsSubmitting(false)
-        setIsCompleted(true)
     }
 
     if (isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <div className="min-h-dvh flex items-center justify-center">
                 <div className="text-center space-y-4">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
                     <p className="text-gray-600 text-lg">Loading survey...</p>
@@ -153,31 +98,13 @@ const SurveySubmissionPage = () => {
         )
     }
 
-    if (error) {
+    if (error.length > 0) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <Card className="w-full max-w-md shadow-lg">
-                    <CardHeader>
-                        <CardTitle className="text-red-600 text-center">Survey Not Found</CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-center space-y-4">
-                        <p className="text-gray-600">{error}</p>
-                        <Button onClick={() => router.push("/explore")} variant="neutral" className="w-full">
-                            <ArrowLeft className="w-4 h-4 mr-2" />
-                            Back to Explore
-                        </Button>
-                    </CardContent>
-                </Card>
-            </div>
-        )
-    }
-
-    if (isCompleted) {
-        return (
-            <SurveyCompletion
-                reward={surveyData?.reward || 0}
-                onContinue={() => router.push("/explore")}
-            />
+            <>
+                {error.map((err, index) => (
+                    <p className="bg-danger p-2 mb-3" key={index}>{err}</p>
+                ))}
+            </>
         )
     }
 
@@ -194,9 +121,12 @@ const SurveySubmissionPage = () => {
                 actionText="Back to Explore"
             />
 
+
+
             <div className="grid grid-cols-4 gap-6 min-h-92">
                 <div className="col-span-4 lg:col-span-3 space-y-6">
                     {/* Questions Card */}
+                    <EncryptedStatusCard address={address} />
                     <Card className="bg-main">
                         <CardContent className="flex items-center justify-between text-xl">
                             Survey Questions
@@ -223,6 +153,7 @@ const SurveySubmissionPage = () => {
 
                 <div className="col-span-4 lg:col-span-1">
                     <SurveySidebar
+                        address={address}
                         surveyData={surveyData}
                         progress={getCompletionPercentage()}
                         canSubmit={canSubmit()}

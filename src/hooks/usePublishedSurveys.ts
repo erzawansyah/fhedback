@@ -34,6 +34,10 @@ export const usePublishedSurveys = (): UsePublishedSurveysResult => {
       refetchOnMount: false,
       refetchOnReconnect: false,
       refetchOnWindowFocus: false,
+      staleTime: 3 * 60 * 1000, // 3 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
+      retry: 2,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
   });
 
@@ -46,6 +50,13 @@ export const usePublishedSurveys = (): UsePublishedSurveysResult => {
     })),
     query: {
       enabled: addresses.length > 0,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+      refetchOnWindowFocus: false,
+      staleTime: 2 * 60 * 1000, // 2 minutes
+      gcTime: 5 * 60 * 1000, // 5 minutes
+      retry: 2,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
   });
 
@@ -58,6 +69,13 @@ export const usePublishedSurveys = (): UsePublishedSurveysResult => {
     })),
     query: {
       enabled: addresses.length > 0 && filtered.length > 0,
+      refetchOnMount: false,
+      refetchOnReconnect: false,
+      refetchOnWindowFocus: false,
+      staleTime: 2 * 60 * 1000, // 2 minutes
+      gcTime: 5 * 60 * 1000, // 5 minutes
+      retry: 2,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     },
   });
 

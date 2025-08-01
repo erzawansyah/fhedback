@@ -1,6 +1,6 @@
 "use client"
 
-import { Clock, Users, Star, Eye } from "lucide-react"
+import { Clock, Users, Star, Eye, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -121,6 +121,10 @@ export const SurveyCard = ({ address: contractAddress, type, owner, createdAt }:
     const [survey, setSurvey] = useState<SurveyData>(createDefaultSurvey())
     const [isDataLoaded, setIsDataLoaded] = useState(false)
 
+    useEffect(() => {
+        console.log("SurveyCard mounted with address:", contractAddress, "type:", type)
+    }, [contractAddress, type])
+
     // Contract configuration
     const contracts = useMemo(() => ({
         address: contractAddress,
@@ -139,7 +143,12 @@ export const SurveyCard = ({ address: contractAddress, type, owner, createdAt }:
         query: {
             enabled: !!contractAddress,
             refetchOnMount: false,
-            refetchOnWindowFocus: false
+            refetchOnWindowFocus: false,
+            refetchOnReconnect: false,
+            staleTime: 2 * 60 * 1000, // 2 minutes
+            gcTime: 5 * 60 * 1000, // 5 minutes
+            retry: 2,
+            retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
         }
     })
 
@@ -204,7 +213,10 @@ export const SurveyCard = ({ address: contractAddress, type, owner, createdAt }:
 
     // Main card render
     return (
-        <Card className="border border-border bg-background transition-all duration-200 hover:shadow-shadow cursor-pointer group">
+        <Card className={`border transition-all duration-200 hover:shadow-shadow cursor-pointer group ${type === 1
+            ? 'border-blue-200 bg-gradient-to-br from-blue-50/30 to-background dark:border-blue-700 dark:from-blue-950/20'
+            : 'border-border bg-background'
+            }`}>
             <div className="p-4">
                 {/* Header row - Category, Status, and Time */}
                 <div className="flex items-center justify-between mb-3">
@@ -212,6 +224,12 @@ export const SurveyCard = ({ address: contractAddress, type, owner, createdAt }:
                         <Badge variant="neutral" className="text-xs font-base bg-muted text-foreground">
                             {survey.category}
                         </Badge>
+                        {type === 1 && (
+                            <Badge variant="default" className="text-xs font-base bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:border-blue-700">
+                                <Shield className="w-3 h-3 mr-1" />
+                                FHE Powered
+                            </Badge>
+                        )}
                         {survey.hasAnswered && (
                             <Badge variant="default" className="text-xs font-base bg-accent text-main-foreground">
                                 Completed
@@ -228,7 +246,8 @@ export const SurveyCard = ({ address: contractAddress, type, owner, createdAt }:
 
                 {/* Title and description */}
                 <div className="mb-3">
-                    <h3 className="font-heading text-base group-hover:text-accent transition-colors line-clamp-1 mb-1">
+                    <h3 className={`font-heading text-base transition-colors line-clamp-1 mb-1 ${type === 1 ? 'group-hover:text-blue-600 dark:group-hover:text-blue-400' : 'group-hover:text-accent'
+                        }`}>
                         {survey.title}
                     </h3>
                     <p className="text-sm text-subtle-foreground line-clamp-2">
@@ -257,7 +276,8 @@ export const SurveyCard = ({ address: contractAddress, type, owner, createdAt }:
                 <div className="mb-3">
                     <div className="w-full bg-muted rounded-base h-1.5">
                         <div
-                            className="bg-accent h-1.5 rounded-base transition-all duration-300"
+                            className={`h-1.5 rounded-base transition-all duration-300 ${type === 1 ? 'bg-blue-500' : 'bg-accent'
+                                }`}
                             style={{
                                 width: `${getProgressPercentage(survey.respondentCount, survey.maxRespondents)}%`
                             }}
