@@ -3,8 +3,14 @@
 import { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Sun, Moon } from "lucide-react";
+import { cn } from "@/lib/shadcn/utils";
 
-export const ThemeSwitcher = () => {
+interface ThemeSwitcherProps {
+    className?: string;
+    showLabels?: boolean;
+}
+
+export const ThemeSwitcher = ({ className, showLabels = false }: ThemeSwitcherProps) => {
     const [isDark, setIsDark] = useState(false);
 
     useEffect(() => {
@@ -25,22 +31,27 @@ export const ThemeSwitcher = () => {
     };
 
     return (
-        <div className="flex items-center space-x-2">
-            {
-                isDark ? (
-                    <Moon className="h-5 w-5 text-gray-500" />
+        <div
+            className={cn("flex items-center gap-2", className)}
+            data-slot="theme-switcher"
+        >
+            <div className="flex items-center gap-2">
+                {isDark ? (
+                    <Moon className="h-4 w-4 text-foreground" />
                 ) : (
-                    <Sun className="h-5 w-5 text-yellow-500" />
-                )
-            }
-            <Switch checked={isDark} onCheckedChange={toggleTheme} />
-            {
-                isDark ? (
-                    <p className="text-sm">Dark mode</p>
-                ) : (
-                    <p className="text-sm">Light mode</p>
-                )
-            }
+                    <Sun className="h-4 w-4 text-foreground" />
+                )}
+                <Switch
+                    checked={isDark}
+                    onCheckedChange={toggleTheme}
+                    aria-label="Toggle theme"
+                />
+                {showLabels && (
+                    <p className="text-sm font-mono text-foreground">
+                        {isDark ? "Dark mode" : "Light mode"}
+                    </p>
+                )}
+            </div>
         </div>
     );
 };

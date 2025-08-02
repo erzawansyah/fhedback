@@ -1,9 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🔒 Fhedback
 
-## Getting Started
+**Confidential Surveys on Zama FHEVM**
 
-First, run the development server:
+Fhedback is a privacy-first survey platform built on Zama's Fully Homomorphic Encryption (FHE) technology. Create and respond to surveys with complete anonymity and data protection.
 
+## ✨ Features
+
+- 🛡️ **Complete Privacy**: All responses are encrypted using FHE technology
+- 🎯 **Anonymous Feedback**: No personal data collection, only statistical insights
+- 🔗 **Web3 Integration**: Connect with your wallet to create and manage surveys
+- 📊 **Real-time Analytics**: View aggregated results without compromising individual privacy
+- 🎨 **Modern UI**: Clean, responsive design with dark/light mode support
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+ 
+- npm, yarn, pnpm, or bun
+- A Web3 wallet (MetaMask, WalletConnect, etc.)
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/erzawansyah/fhedback.git
+cd fhedback
+```
+
+2. Install dependencies:
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
+```
+
+3. Set up environment variables:
+```bash
+cp .env.example .env.local
+# Edit .env.local with your configuration
+```
+
+4. Run the development server:
 ```bash
 npm run dev
 # or
@@ -14,23 +54,73 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🏗️ Tech Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Frontend**: Next.js 15, React, TypeScript
+- **Styling**: Tailwind CSS, shadcn/ui components
+- **Blockchain**: Zama FHEVM, Wagmi, RainbowKit
+- **Encryption**: Fully Homomorphic Encryption (FHE)
+- **State Management**: React Context, Custom Hooks
 
-## Learn More
+## 📁 Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/                    # Next.js app router pages
+├── components/            # Reusable UI components
+│   ├── ui/               # Base UI components
+│   ├── survey-creation/  # Survey creation components
+│   ├── survey-explore/   # Survey browsing components
+│   └── survey-view/      # Survey response components
+├── context/              # React context providers
+├── hooks/                # Custom React hooks
+├── lib/                  # Utility libraries
+│   ├── contracts/        # Smart contract ABIs
+│   ├── fhe-relayer/     # FHE encryption utilities
+│   └── wagmi/           # Web3 configuration
+└── types/               # TypeScript type definitions
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🔧 Development
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Available Scripts
 
-## Deploy on Vercel
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm run type-check` - Run TypeScript compiler
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Contributing
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 🌐 Deployment
+
+The easiest way to deploy Fhedback is using [Vercel](https://vercel.com):
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/erzawansyah/fhedback)
+
+Alternatively, you can deploy to any platform that supports Next.js applications.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🤝 Support
+
+- 📧 Email: [your-email@example.com]
+- 🐛 Issues: [GitHub Issues](https://github.com/erzawansyah/fhedback/issues)
+- 💬 Discussions: [GitHub Discussions](https://github.com/erzawansyah/fhedback/discussions)
+
+## 🙏 Acknowledgments
+
+- [Zama](https://zama.ai/) for FHE technology
+- [Next.js](https://nextjs.org/) team for the amazing framework
+- [shadcn/ui](https://ui.shadcn.com/) for beautiful UI components

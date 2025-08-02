@@ -1,27 +1,43 @@
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { cn } from "@/lib/shadcn/utils";
 
 interface PageSectionProps {
     title?: string;
     description?: string;
     children: React.ReactNode;
     className?: string;
+    variant?: "default" | "highlighted";
 }
 
 const PageSection: React.FC<PageSectionProps> = ({
     title,
     description,
     children,
-    className
+    className,
+    variant = "default"
 }) => {
+    const cardClassName = variant === "highlighted" ? "bg-main" : undefined;
+
     return (
-        <Card className={className}>
+        <Card
+            className={cn(cardClassName, className)}
+            data-slot="page-section"
+        >
+            {(title || description) && (
+                <CardHeader>
+                    {title && (
+                        <CardTitle>
+                            <h4 className="text-xl font-heading">{title}</h4>
+                        </CardTitle>
+                    )}
+                    {description && (
+                        <CardDescription>
+                            <p className="font-mono text-foreground/70">{description}</p>
+                        </CardDescription>
+                    )}
+                </CardHeader>
+            )}
             <CardContent>
-                {title && (
-                    <div className="space-y-2 mb-4">
-                        <h4 className="text-xl font-bold">{title}</h4>
-                        {description && <p className="text-subtle">{description}</p>}
-                    </div>
-                )}
                 {children}
             </CardContent>
         </Card>

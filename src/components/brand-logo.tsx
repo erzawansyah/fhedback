@@ -2,8 +2,13 @@
 import Image from "next/image";
 import { FC, useEffect, useState } from "react";
 import { useSidebar } from "./ui/sidebar";
+import { cn } from "@/lib/shadcn/utils";
 
-export const BrandLogo: FC = () => {
+interface BrandLogoProps {
+    className?: string;
+}
+
+export const BrandLogo: FC<BrandLogoProps> = ({ className }) => {
     const { state } = useSidebar();
     const [showText, setShowText] = useState(false);
 
@@ -20,17 +25,21 @@ export const BrandLogo: FC = () => {
     }, [state]);
 
     return (
-        <div className="w-full flex items-center">
+        <div
+            className={cn("w-full flex items-center", className)}
+            data-slot="brand-logo"
+        >
             <Image
                 src="/fhedback-logo.png"
                 alt="Fhedback Logo"
                 width={48}
                 height={48}
+                className="shrink-0"
             />
             {state === "expanded" && showText && (
-                <div className="ml-2">
-                    <h2 className="text-2xl uppercase">FHEdback</h2>
-                    <p className="text-gray-700 dark:text-gray-300">Confidential Survey</p>
+                <div className="ml-2 min-w-0">
+                    <h2 className="text-2xl font-heading text-foreground uppercase">FHEdback</h2>
+                    <p className="text-sm font-mono text-foreground/70">Confidential Survey</p>
                 </div>
             )}
         </div>

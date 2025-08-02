@@ -1,191 +1,252 @@
 "use client"
-import React, { useState } from "react"
+
+import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import {
-    AlertTriangle,
-    CheckSquare,
-    FileText,
-    Users,
-    Lock,
     Lightbulb,
+    CheckCircle,
+    Target,
+    Users,
     Clock,
-    Shield,
-    Zap,
     ChevronDown,
-    ChevronRight
+    ChevronRight,
+    AlertCircle
 } from "lucide-react"
+import { cn } from "@/lib/shadcn/utils"
 import { useSurveyCreationContext } from "@/context/SurveyCreationContext"
 
-const BestPracticesCard = () => {
-    const { steps } = useSurveyCreationContext()
-    const [criticalOpen, setCriticalOpen] = useState(true)
-    const [importantOpen, setImportantOpen] = useState(false)
-    const [tipsOpen, setTipsOpen] = useState(false)
+// Types for better modularity
+interface BestPractice {
+    id: string
+    title: string
+    description: string
+    icon: React.ElementType
+    priority: 'high' | 'medium' | 'low'
+    category: 'design' | 'content' | 'technical' | 'engagement'
+}
 
-    // Only show when not all steps are completed
-    const allStepsCompleted = steps.step1 && steps.step2 && steps.step3
+interface SectionProps {
+    title: string
+    icon: React.ElementType
+    isOpen: boolean
+    onToggle: () => void
+    children: React.ReactNode
+}
 
-    if (allStepsCompleted) {
-        return null
-    }
+// Modular Section Component
+const PracticeSection: React.FC<SectionProps> = ({ title, icon: Icon, isOpen, onToggle, children }) => (
+    <Collapsible open={isOpen} onOpenChange={onToggle}>
+        <CollapsibleTrigger
+            onClick={onToggle}
+            className={cn(
+                "flex items-center justify-between w-full p-2 rounded-base",
+                "hover:bg-secondary-background transition-colors",
+                "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-border"
+            )}
+        >
+            <div className="flex items-center gap-2">
+                <Icon className="w-4 h-4 text-foreground" />
+                <h4 className="text-sm font-mono text-foreground">{title}</h4>
+            </div>
+            {isOpen ? (
+                <ChevronDown className="w-4 h-4 text-foreground" />
+            ) : (
+                <ChevronRight className="w-4 h-4 text-foreground" />
+            )}
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-2">
+            {children}
+        </CollapsibleContent>
+    </Collapsible>
+)
 
-    const practices = {
-        critical: [
-            {
-                icon: FileText,
-                title: "Prepare Content in Advance",
-                description: "Have all survey questions, descriptions, and metadata ready before deployment"
-            },
-            {
-                icon: Lock,
-                title: "Survey Immutability",
-                description: "Once deployed and published, survey content cannot be modified"
-            }
-        ],
-        important: [
-            {
-                icon: Users,
-                title: "Target Audience",
-                description: "Define your respondent limit based on your target audience size"
-            },
-            {
-                icon: Shield,
-                title: "Privacy Considerations",
-                description: "Choose FHE encryption for sensitive data or public surveys for transparency"
-            }
-        ],
-        helpful: [
-            {
-                icon: Clock,
-                title: "Question Length",
-                description: "Keep questions concise (5-15 words) for better completion rates"
-            },
-            {
-                icon: CheckSquare,
-                title: "Scale Labels",
-                description: "Use clear min/max labels to help respondents understand the rating scale"
-            },
-            {
-                icon: Zap,
-                title: "Test Before Publishing",
-                description: "Review all settings and preview your survey before final publication"
-            }
-        ]
+// Modular Practice Item Component
+const PracticeItem: React.FC<{ practice: BestPractice }> = ({ practice }) => {
+    const { icon: Icon, title, description, priority } = practice
+
+    const getPriorityColor = (priority: BestPractice['priority']) => {
+        switch (priority) {
+            case 'high': return 'text-danger bg-danger/10'
+            case 'medium': return 'text-warning bg-warning/10'
+            case 'low': return 'text-success bg-success/10'
+            default: return 'text-foreground bg-secondary-background'
+        }
     }
 
     return (
-        <Card className="border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950">
+        <div className={cn(
+            "p-3 rounded-base border-2 border-border bg-background",
+            "space-y-2"
+        )}>
+            <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-2 flex-1">
+                    <Icon className="w-4 h-4 text-main flex-shrink-0" />
+                    <h5 className="text-sm font-mono text-foreground">{title}</h5>
+                </div>
+                <Badge
+                    variant="neutral"
+                    className={cn("text-xs", getPriorityColor(priority))}
+                >
+                    {priority}
+                </Badge>
+            </div>
+            <p className="text-xs font-mono text-foreground/80 pl-6">
+                {description}
+            </p>
+        </div>
+    )
+}
+
+// Main BestPracticesCard Component
+const BestPracticesCard: React.FC = () => {
+    const { steps, config, questions } = useSurveyCreationContext()
+
+    // State for collapsible sections
+    const [designOpen, setDesignOpen] = React.useState(true)
+    const [contentOpen, setContentOpen] = React.useState(false)
+    const [engagementOpen, setEngagementOpen] = React.useState(false)
+
+    // Best practices data
+    const bestPractices: BestPractice[] = [
+        {
+            id: 'clear-title',
+            title: 'Clear & Descriptive Title',
+            description: 'Use a title that clearly explains the survey purpose to increase response rates.',
+            icon: Target,
+            priority: 'high',
+            category: 'design'
+        },
+        {
+            id: 'appropriate-length',
+            title: 'Optimal Length',
+            description: 'Keep surveys between 5-10 questions for better completion rates.',
+            icon: Clock,
+            priority: 'high',
+            category: 'design'
+        },
+        {
+            id: 'clear-questions',
+            title: 'Clear Questions',
+            description: 'Write questions that are easy to understand and avoid jargon.',
+            icon: CheckCircle,
+            priority: 'high',
+            category: 'content'
+        },
+        {
+            id: 'consistent-scale',
+            title: 'Consistent Scale',
+            description: 'Use the same rating scale (1-5, 1-7, etc.) throughout your survey.',
+            icon: Target,
+            priority: 'medium',
+            category: 'content'
+        },
+        {
+            id: 'target-audience',
+            title: 'Know Your Audience',
+            description: 'Tailor your questions and language to your target demographic.',
+            icon: Users,
+            priority: 'medium',
+            category: 'engagement'
+        },
+        {
+            id: 'test-before-launch',
+            title: 'Test Before Publishing',
+            description: 'Review all questions and test the survey flow before going live.',
+            icon: CheckCircle,
+            priority: 'high',
+            category: 'engagement'
+        }
+    ]
+
+    // Filter practices by category
+    const designPractices = bestPractices.filter(p => p.category === 'design')
+    const contentPractices = bestPractices.filter(p => p.category === 'content')
+    const engagementPractices = bestPractices.filter(p => p.category === 'engagement')
+
+    // Show card only when not all steps are completed
+    const shouldShow = !steps.step1 || !steps.step2 || !steps.step3
+
+    if (!shouldShow) return null
+
+    return (
+        <Card className="bg-background border-2 border-border shadow-shadow">
             <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-amber-800 dark:text-amber-200 text-sm">
-                    <Lightbulb className="w-4 h-4" />
+                <CardTitle className="flex items-center gap-2 text-foreground font-mono">
+                    <Lightbulb className="w-5 h-5 text-main" />
                     Best Practices
                 </CardTitle>
             </CardHeader>
-            <CardContent className="pt-0 space-y-2">
-                <div className="space-y-2">
-                    {/* Critical Practices - Compact version */}
-                    <Collapsible open={criticalOpen} onOpenChange={setCriticalOpen}>
-                        <CollapsibleTrigger className="flex items-center justify-between w-full p-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-md hover:bg-red-100 dark:hover:bg-red-900 transition-colors">
-                            <div className="flex items-center gap-2">
-                                <AlertTriangle className="w-3 h-3 text-red-600" />
-                                <Badge variant="default" className="text-xs bg-red-100 text-red-800 border-red-300 px-1 py-0">
-                                    Critical
-                                </Badge>
-                            </div>
-                            {criticalOpen ?
-                                <ChevronDown className="w-3 h-3 text-red-600" /> :
-                                <ChevronRight className="w-3 h-3 text-red-600" />
-                            }
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="space-y-1 mt-1">
-                            {practices.critical.map((practice, index) => (
-                                <div key={index} className="flex items-start gap-2 p-2 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-md">
-                                    <practice.icon className="w-3 h-3 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
-                                    <div>
-                                        <p className="text-xs font-medium text-red-800 dark:text-red-200">
-                                            {practice.title}
-                                        </p>
-                                        <p className="text-xs text-red-700 dark:text-red-300 leading-tight">
-                                            {practice.description}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </CollapsibleContent>
-                    </Collapsible>
+            <CardContent className="pt-0 space-y-4">
+                {/* Current Progress Indicator */}
+                <div className={cn(
+                    "p-3 rounded-base border-2 border-border bg-main/10",
+                    "flex items-center gap-2"
+                )}>
+                    <AlertCircle className="w-4 h-4 text-main flex-shrink-0" />
+                    <div className="text-xs font-mono text-foreground">
+                        <span className="font-bold">Tip:</span> Following these practices can improve response rates by up to 40%
+                    </div>
+                </div>
 
-                    {/* Important Practices - Compact version */}
-                    <Collapsible open={importantOpen} onOpenChange={setImportantOpen}>
-                        <CollapsibleTrigger className="flex items-center justify-between w-full p-2 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-md hover:bg-amber-100 dark:hover:bg-amber-900 transition-colors">
-                            <div className="flex items-center gap-2">
-                                <AlertTriangle className="w-3 h-3 text-amber-600" />
-                                <Badge variant="default" className="text-xs bg-amber-100 text-amber-800 border-amber-300 px-1 py-0">
-                                    Important
-                                </Badge>
-                            </div>
-                            {importantOpen ?
-                                <ChevronDown className="w-3 h-3 text-amber-600" /> :
-                                <ChevronRight className="w-3 h-3 text-amber-600" />
-                            }
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="space-y-1 mt-1">
-                            {practices.important.map((practice, index) => (
-                                <div key={index} className="flex items-start gap-2 p-2 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-md">
-                                    <practice.icon className="w-3 h-3 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                                    <div>
-                                        <p className="text-xs font-medium text-amber-800 dark:text-amber-200">
-                                            {practice.title}
-                                        </p>
-                                        <p className="text-xs text-amber-700 dark:text-amber-300 leading-tight">
-                                            {practice.description}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </CollapsibleContent>
-                    </Collapsible>
+                <Separator className="bg-border" />
 
-                    {/* Helpful Tips - Compact version */}
-                    <Collapsible open={tipsOpen} onOpenChange={setTipsOpen}>
-                        <CollapsibleTrigger className="flex items-center justify-between w-full p-2 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors">
-                            <div className="flex items-center gap-2">
-                                <Lightbulb className="w-3 h-3 text-blue-600" />
-                                <Badge variant="neutral" className="text-xs px-1 py-0">
-                                    Tips
-                                </Badge>
-                            </div>
-                            {tipsOpen ?
-                                <ChevronDown className="w-3 h-3 text-blue-600" /> :
-                                <ChevronRight className="w-3 h-3 text-blue-600" />
-                            }
-                        </CollapsibleTrigger>
-                        <CollapsibleContent className="space-y-1 mt-1">
-                            {practices.helpful.map((practice, index) => (
-                                <div key={index} className="flex items-start gap-2 p-2 hover:bg-blue-100 dark:hover:bg-blue-900 border border-blue-200 dark:border-blue-800 rounded-md transition-colors">
-                                    <practice.icon className="w-3 h-3 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                                    <div>
-                                        <p className="text-xs font-medium text-blue-800 dark:text-blue-200">
-                                            {practice.title}
-                                        </p>
-                                        <p className="text-xs text-blue-700 dark:text-blue-300 leading-tight">
-                                            {practice.description}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </CollapsibleContent>
-                    </Collapsible>
+                {/* Design Practices */}
+                <PracticeSection
+                    title="Survey Design"
+                    icon={Target}
+                    isOpen={designOpen}
+                    onToggle={() => setDesignOpen(!designOpen)}
+                >
+                    <div className="space-y-3">
+                        {designPractices.map(practice => (
+                            <PracticeItem key={practice.id} practice={practice} />
+                        ))}
+                    </div>
+                </PracticeSection>
 
-                    {/* Quick Reminder - Compact version */}
-                    <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950 border border-purple-200 dark:border-purple-800 p-2 rounded-md">
-                        <p className="text-xs font-medium text-purple-800 dark:text-purple-200 mb-0.5">
-                            💡 Remember
-                        </p>
-                        <p className="text-xs text-purple-700 dark:text-purple-300 leading-tight">
-                            Blockchain surveys are immutable by design. Take time to review everything before publishing.
-                        </p>
+                {/* Content Practices */}
+                <PracticeSection
+                    title="Content Quality"
+                    icon={CheckCircle}
+                    isOpen={contentOpen}
+                    onToggle={() => setContentOpen(!contentOpen)}
+                >
+                    <div className="space-y-3">
+                        {contentPractices.map(practice => (
+                            <PracticeItem key={practice.id} practice={practice} />
+                        ))}
+                    </div>
+                </PracticeSection>
+
+                {/* Engagement Practices */}
+                <PracticeSection
+                    title="User Engagement"
+                    icon={Users}
+                    isOpen={engagementOpen}
+                    onToggle={() => setEngagementOpen(!engagementOpen)}
+                >
+                    <div className="space-y-3">
+                        {engagementPractices.map(practice => (
+                            <PracticeItem key={practice.id} practice={practice} />
+                        ))}
+                    </div>
+                </PracticeSection>
+
+                {/* Quick Stats */}
+                <div className={cn(
+                    "p-3 rounded-base bg-secondary-background border-2 border-border",
+                    "grid grid-cols-2 gap-3 text-xs font-mono"
+                )}>
+                    <div className="text-center">
+                        <div className="text-main font-bold text-sm">{questions?.length || 0}/10</div>
+                        <div className="text-foreground/70">Questions</div>
+                    </div>
+                    <div className="text-center">
+                        <div className="text-main font-bold text-sm">{config?.limitScale || 5}</div>
+                        <div className="text-foreground/70">Scale Range</div>
                     </div>
                 </div>
             </CardContent>

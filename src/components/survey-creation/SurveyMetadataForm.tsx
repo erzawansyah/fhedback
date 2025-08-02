@@ -9,10 +9,27 @@ import { SurveyCreationStatus } from "@/types/survey-creation"
 
 import { Wallet, Loader, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form } from "@/components/ui/form"
+import {
+    TextField,
+    TextareaField,
+    SelectField,
+    FormSection,
+    FormGrid,
+    StatusAlert,
+    LoadingState
+} from "./shared"
+
+// Category options for better maintainability
+const CATEGORY_OPTIONS = [
+    { value: "market-research", label: "Market Research" },
+    { value: "customer-feedback", label: "Customer Feedback" },
+    { value: "employee-satisfaction", label: "Employee Satisfaction" },
+    { value: "product-development", label: "Product Development" },
+    { value: "academic-research", label: "Academic Research" },
+    { value: "social-research", label: "Social Research" },
+    { value: "other", label: "Other" }
+]
 
 interface SurveyMetadataFormProps {
     disabled: boolean
@@ -117,187 +134,106 @@ export const SurveyMetadataForm: React.FC<SurveyMetadataFormProps> = ({
     // Don't render if dependencies not met
     if (!steps.step1) {
         return (
-            <div className="text-center py-8">
-                <p className="text-sm text-gray-600">
-                    Please complete Step 1 (Survey Settings) before adding metadata.
-                </p>
-            </div>
+            <StatusAlert
+                type="info"
+                title="Prerequisites Required"
+                description="Please complete Step 1 (Survey Settings) before adding metadata."
+            />
         )
+    }
+
+    // Loading state
+    if (isMetadataLoading) {
+        return <LoadingState message="Loading metadata..." />
     }
 
     return (
         <>
-            {/* Loading State */}
-            {isMetadataLoading && (
-                <div className="space-y-4">
-                    <div className="animate-pulse">
-                        <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-                        <div className="h-10 bg-gray-200 rounded"></div>
-                    </div>
-                    <div className="animate-pulse">
-                        <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-                        <div className="h-24 bg-gray-200 rounded"></div>
-                    </div>
-                    <p className="text-sm text-gray-500 text-center">Loading metadata...</p>
-                </div>
-            )}
-
-            {/* Show success message when completed */}
-            {isCompleted && !isEditing && !isMetadataLoading && (
-                <div className="bg-green-50 border border-green-200 rounded-md p-3 mb-6">
-                    <p className="text-sm text-green-800">
-                        ✅ <strong>Metadata configured successfully!</strong>
-                        {metadata?.title && ` Title: "${metadata.title}"`}
-                    </p>
-                </div>
+            {/* Success message when completed */}
+            {isCompleted && !isEditing && (
+                <StatusAlert
+                    type="success"
+                    title="Metadata Configured Successfully!"
+                    description={`${metadata?.title ? `Title: "${metadata.title}"` : 'Your survey metadata has been set up.'}`}
+                    className="mb-6"
+                />
             )}
 
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    {/* Display Title Field */}
-                    <FormField
-                        control={form.control}
-                        name="displayTitle"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Display Title *</FormLabel>
-                                <FormControl>
-                                    <Input
-                                        placeholder="Enter a clear, descriptive title for your survey"
-                                        disabled={inputsDisabled}
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                    {/* Basic Information Section */}
+                    <FormSection
+                        title="Basic Information"
+                        description="Provide essential details about your survey"
+                    >
+                        <TextField
+                            control={form.control}
+                            name="displayTitle"
+                            label="Display Title *"
+                            placeholder="Enter a clear, descriptive title for your survey"
+                            disabled={inputsDisabled}
+                        />
 
-                    {/* Description Field */}
-                    <FormField
-                        control={form.control}
-                        name="description"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Description</FormLabel>
-                                <FormControl>
-                                    <Textarea
-                                        placeholder="Provide additional context about your survey's purpose and goals"
-                                        disabled={inputsDisabled}
-                                        {...field}
-                                    />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                        <TextareaField
+                            control={form.control}
+                            name="description"
+                            label="Description"
+                            placeholder="Provide additional context about your survey's purpose and goals"
+                            disabled={inputsDisabled}
+                            rows={3}
+                        />
 
-                    {/* Category Selection */}
-                    <FormField
-                        control={form.control}
-                        name="category"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Category *</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value} disabled={inputsDisabled}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select a category for your survey" aria-label={field.value}>
-                                                {field.value.split("-").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ") || "Select a category"}
-                                            </SelectValue>
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        <SelectItem value="market-research">Market Research</SelectItem>
-                                        <SelectItem value="customer-feedback">Customer Feedback</SelectItem>
-                                        <SelectItem value="employee-satisfaction">Employee Satisfaction</SelectItem>
-                                        <SelectItem value="product-development">Product Development</SelectItem>
-                                        <SelectItem value="academic-research">Academic Research</SelectItem>
-                                        <SelectItem value="social-research">Social Research</SelectItem>
-                                        <SelectItem value="other">Other</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                        <SelectField
+                            control={form.control}
+                            name="category"
+                            label="Category *"
+                            placeholder="Select a category for your survey"
+                            options={CATEGORY_OPTIONS}
+                            disabled={inputsDisabled}
+                        />
+                    </FormSection>
 
-                    {/* Scale Labels Section */}
-                    <div className="space-y-4">
-                        <div>
-                            <h4 className="font-medium mb-2">
-                                Scale Labels (1 to {config?.limitScale || 5})
-                            </h4>
-                            <p className="text-sm text-gray-600 mb-4">
-                                Define what the minimum and maximum values mean in your rating scale.
-                            </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Min Label */}
-                            <FormField
+                    {/* Scale Configuration Section */}
+                    <FormSection
+                        title={`Scale Labels (1 to ${config?.limitScale || 5})`}
+                        description="Define what the minimum and maximum values mean in your rating scale"
+                    >
+                        <FormGrid columns={2}>
+                            <TextField
                                 control={form.control}
-                                name="scaleLabels.minLabel"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Label for &quot;1&quot;</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                placeholder="e.g., Strongly Disagree"
-                                                disabled={inputsDisabled}
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
+                                name={"scaleLabels.minLabel" as keyof SurveyMetadataType}
+                                label={`Label for "1"`}
+                                placeholder="e.g., Strongly Disagree"
+                                disabled={inputsDisabled}
                             />
 
-                            {/* Max Label */}
-                            <FormField
+                            <TextField
                                 control={form.control}
-                                name="scaleLabels.maxLabel"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>
-                                            Label for &quot;{config?.limitScale || 5}&quot;
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                placeholder="e.g., Strongly Agree"
-                                                disabled={inputsDisabled}
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
+                                name={"scaleLabels.maxLabel" as keyof SurveyMetadataType}
+                                label={`Label for "${config?.limitScale || 5}"`}
+                                placeholder="e.g., Strongly Agree"
+                                disabled={inputsDisabled}
                             />
-                        </div>
+                        </FormGrid>
+                    </FormSection>
 
-                        {/* Tags Field */}
-                        <FormField
+                    {/* Additional Information Section */}
+                    <FormSection
+                        title="Additional Information"
+                        description="Add tags to help categorize and organize your survey"
+                    >
+                        <TextField
                             control={form.control}
                             name="tags"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Tags</FormLabel>
-                                    <FormControl>
-                                        <Input
-                                            placeholder="Enter tags separated by commas (e.g., customer, feedback, satisfaction)"
-                                            disabled={inputsDisabled}
-                                            {...field}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
+                            label="Tags"
+                            placeholder="Enter tags separated by commas (e.g., customer, feedback, satisfaction)"
+                            disabled={inputsDisabled}
                         />
-                    </div>
+                    </FormSection>
 
-                    {/* Form Submission Buttons */}
-                    {steps.step3 ? null : (
-                        <div className="flex justify-end">
+                    {/* Form Action Buttons */}
+                    {!steps.step3 && (
+                        <div className="flex justify-end pt-4">
                             {isCompleted && !isEditing ? (
                                 // Show edit button when metadata exists and not in editing mode
                                 <Button
@@ -317,26 +253,27 @@ export const SurveyMetadataForm: React.FC<SurveyMetadataFormProps> = ({
                                             type="button"
                                             variant="neutral"
                                             onClick={onCancelEdit}
-                                            disabled={status === "loading" || status === "signing" || status === "verifying"}
+                                            disabled={disabled}
                                         >
                                             Cancel
                                         </Button>
                                     )}
                                     <Button
                                         type="submit"
-                                        disabled={disabled || status === "loading" || status === "signing" || status === "verifying"}
+                                        variant="default"
+                                        disabled={disabled}
                                         className="flex items-center gap-2"
                                     >
-                                        {(status === "loading" || status === "signing" || status === "verifying") ? (
+                                        {status === "loading" ? (
                                             <Loader className="w-4 h-4 animate-spin" />
                                         ) : (
                                             <Wallet className="w-4 h-4" />
                                         )}
-                                        {status === "loading" ? "Saving..." :
+                                        {status === "loading" ? "Saving Metadata..." :
                                             status === "signing" ? "Signing..." :
                                                 status === "verifying" ? "Verifying..." :
-                                                    isEditing ? "Update Metadata" :
-                                                        "Save Metadata"
+                                                    status === "error" ? "Error Saving Metadata" :
+                                                        isEditing ? "Update Metadata" : "Save Metadata"
                                         }
                                     </Button>
                                 </div>

@@ -1,8 +1,10 @@
 "use client"
-import React, { useState } from "react"
+
+import * as React from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
 import {
     Dialog,
     DialogContent,
@@ -12,230 +14,248 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog"
 import {
-    Copy,
     Shield,
     ExternalLink,
     Network,
     Database,
-    Info
+    Info,
+    Users,
+    Scale
 } from "lucide-react"
-import { toast } from "sonner"
+import { cn } from "@/lib/shadcn/utils"
 import { useSurveyCreationContext } from "@/context/SurveyCreationContext"
+import { ContractAddress, StatusBadge } from "../shared"
 
-const TechnicalInfoCard = () => {
+// Types for better modularity
+interface TechnicalSpec {
+    label: string
+    value: string | number
+    icon: React.ElementType
+    description?: string
+}
+
+// Modular Info Row Component
+const InfoRow: React.FC<{
+    label: string
+    children: React.ReactNode
+    className?: string
+}> = ({ label, children, className }) => (
+    <div className={cn("flex items-center justify-between", className)}>
+        <span className="text-xs font-mono text-foreground/70">{label}:</span>
+        <div className="flex items-center gap-1">
+            {children}
+        </div>
+    </div>
+)
+
+// Modular Technical Spec Component
+const TechSpec: React.FC<TechnicalSpec> = ({ label, value, icon: Icon, description }) => (
+    <div className={cn(
+        "p-3 rounded-base bg-secondary-background border-2 border-border",
+        "flex items-center justify-between gap-3"
+    )}>
+        <div className="flex items-center gap-2">
+            <Icon className="w-4 h-4 text-main" />
+            <div>
+                <span className="text-sm font-mono text-foreground">{label}</span>
+                {description && (
+                    <p className="text-xs font-mono text-foreground/60">{description}</p>
+                )}
+            </div>
+        </div>
+        <Badge variant="neutral" className="font-mono text-xs">
+            {value}
+        </Badge>
+    </div>
+)
+
+const TechnicalInfoCard: React.FC = () => {
     const { config, metadata, surveyAddress } = useSurveyCreationContext()
-    const [open, setOpen] = useState(false)
+    const [detailsOpen, setDetailsOpen] = React.useState(false)
 
     // Only show if survey is deployed
     if (!surveyAddress) {
         return null
     }
 
-    // Copy to clipboard utility
-    const copyToClipboard = async (text: string, label: string) => {
-        try {
-            await navigator.clipboard.writeText(text)
-            toast.success(`${label} copied to clipboard!`)
-        } catch {
-            toast.error(`Failed to copy ${label}`)
-        }
+    // Open explorer
+    const openExplorer = () => {
+        // This would need to be configured for the specific blockchain
+        window.open(`https://explorer.zama.ai/address/${surveyAddress}`, '_blank')
     }
 
+    // Technical specifications data
+    const techSpecs: TechnicalSpec[] = [
+        {
+            label: "Network",
+            value: "Zama Testnet",
+            icon: Network,
+            description: "FHE-enabled blockchain"
+        },
+        {
+            label: "Encryption",
+            value: config?.encrypted ? "FHE Enabled" : "Standard",
+            icon: Shield,
+            description: "Fully Homomorphic Encryption"
+        },
+        {
+            label: "Questions",
+            value: config?.totalQuestions || 0,
+            icon: Scale,
+            description: "Total survey questions"
+        },
+        {
+            label: "Scale Range",
+            value: `1-${config?.limitScale || 5}`,
+            icon: Scale,
+            description: "Rating scale range"
+        },
+        {
+            label: "Max Responses",
+            value: config?.respondentLimit || 0,
+            icon: Users,
+            description: "Maximum respondents"
+        }
+    ]
+
     return (
-        <Card>
+        <Card className="bg-background border-2 border-border shadow-shadow">
             <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2">
-                    <Database className="w-4 h-4" />
+                <CardTitle className="flex items-center gap-2 text-foreground font-mono">
+                    <Database className="w-5 h-5 text-main" />
                     Technical Details
                 </CardTitle>
             </CardHeader>
-            <CardContent className="pt-0 space-y-2">
+            <CardContent className="pt-0 space-y-4">
+                {/* Quick Overview */}
                 <div className="space-y-2">
-                    {/* Quick Info - Compact */}
-                    <div className="space-y-1">
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs text-muted-foreground">Network:</span>
-                            <Badge variant="neutral" className="text-xs px-1 py-0">
-                                <Network className="w-3 h-3 mr-1" />
-                                Zama Testnet
-                            </Badge>
-                        </div>
+                    <InfoRow label="Network">
+                        <StatusBadge status="success">Zama Testnet</StatusBadge>
+                    </InfoRow>
 
-                        <div className="flex items-center justify-between">
-                            <span className="text-xs text-muted-foreground">Encryption:</span>
-                            <Badge variant="neutral" className="text-xs">
-                                <Shield className="w-3 h-3 mr-1" />
-                                FHE
-                            </Badge>
-                        </div>
-                    </div>
-
-                    {/* Compact Address Display */}
-                    <div className="bg-gray-50 dark:bg-gray-900 p-2 rounded-lg">
-                        <span className="text-xs font-semibold text-gray-600 dark:text-gray-400">Contract:</span>
-                        <code className="block text-xs font-mono text-gray-800 dark:text-gray-200 mt-1">
-                            {surveyAddress.slice(0, 6)}...{surveyAddress.slice(-4)}
-                        </code>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="space-y-2">
-                        <Button
-                            variant="neutral"
-                            size="sm"
-                            className="w-full"
-                            onClick={() => copyToClipboard(surveyAddress, "Contract Address")}
+                    <InfoRow label="Encryption">
+                        <StatusBadge
+                            status={config?.encrypted ? "success" : "warning"}
                         >
-                            <Copy className="w-3 h-3 mr-1" />
-                            Copy Address
-                        </Button>
+                            {config?.encrypted ? "FHE" : "Standard"}
+                        </StatusBadge>
+                    </InfoRow>
+                </div>
 
-                        <Dialog open={open} onOpenChange={setOpen}>
-                            <DialogTrigger asChild>
-                                <Button variant="neutral" size="sm" className="w-full">
-                                    <Info className="w-3 h-3 mr-1" />
-                                    View Details
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-2xl">
-                                <DialogHeader>
-                                    <DialogTitle className="flex items-center gap-2">
-                                        <Database className="w-5 h-5" />
-                                        Technical Details
-                                    </DialogTitle>
-                                    <DialogDescription>
-                                        Complete technical information about your survey contract
-                                    </DialogDescription>
-                                </DialogHeader>
+                <Separator className="bg-border" />
 
-                                <div className="space-y-4 max-h-96 overflow-y-auto">
-                                    {/* Contract Address */}
-                                    <div>
-                                        <span className="font-semibold text-gray-600 dark:text-gray-400">Contract Address:</span>
-                                        <code className="block bg-gray-100 dark:bg-gray-800 p-3 rounded mt-1 break-all font-mono text-sm">
-                                            {surveyAddress}
-                                        </code>
-                                        <Button
-                                            variant="neutral"
-                                            size="sm"
-                                            className="w-full mt-2"
-                                            onClick={() => copyToClipboard(surveyAddress, "Contract Address")}
-                                        >
-                                            <Copy className="w-3 h-3 mr-1" />
-                                            Copy Address
-                                        </Button>
-                                    </div>
+                {/* Contract Address */}
+                <ContractAddress
+                    address={surveyAddress}
+                    showCopy={true}
+                    showExplorer={false}
+                />
 
-                                    {/* Network Information */}
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-sm text-muted-foreground">Network:</span>
-                                                <Badge variant="neutral" className="text-xs">
-                                                    <Network className="w-3 h-3 mr-1" />
-                                                    Zama Testnet
-                                                </Badge>
-                                            </div>
+                {/* Action Buttons */}
+                <div className="space-y-2">
+                    <Button
+                        variant="neutral"
+                        size="sm"
+                        className="w-full"
+                        onClick={openExplorer}
+                    >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        View on Explorer
+                    </Button>
 
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-sm text-muted-foreground">Encryption:</span>
-                                                <Badge variant="neutral" className="text-xs">
-                                                    <Shield className="w-3 h-3 mr-1" />
-                                                    FHE
-                                                </Badge>
-                                            </div>
-                                        </div>
+                    <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="reverse" size="sm" className="w-full">
+                                <Info className="w-4 h-4 mr-2" />
+                                View Full Details
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl bg-background border-2 border-border">
+                            <DialogHeader>
+                                <DialogTitle className="text-foreground font-mono">
+                                    Survey Technical Specifications
+                                </DialogTitle>
+                                <DialogDescription className="text-foreground/70 font-mono">
+                                    Complete technical details and configuration for your survey
+                                </DialogDescription>
+                            </DialogHeader>
 
-                                        <div className="space-y-2">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-sm text-muted-foreground">Chain ID:</span>
-                                                <Badge variant="neutral" className="text-xs">8009</Badge>
-                                            </div>
+                            <div className="space-y-4">
+                                {/* Contract Information */}
+                                <div className="space-y-3">
+                                    <h4 className="text-sm font-mono text-foreground font-bold">
+                                        Contract Information
+                                    </h4>
+                                    <ContractAddress
+                                        address={surveyAddress}
+                                        showCopy={true}
+                                        showExplorer={true}
+                                    />
+                                </div>
 
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-sm text-muted-foreground">Block Explorer:</span>
-                                                <Button
-                                                    variant="neutral"
-                                                    size="sm"
-                                                    onClick={() => window.open(`https://explorer.zama.ai/address/${surveyAddress}`, '_blank')}
-                                                >
-                                                    <ExternalLink className="w-3 h-3" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <Separator className="bg-border" />
 
-                                    {/* FHE Information */}
-                                    {config?.encrypted && (
-                                        <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 p-3 rounded">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <Shield className="w-4 h-4 text-green-600" />
-                                                <span className="font-medium text-green-800 dark:text-green-200">
-                                                    FHE Encryption Active
-                                                </span>
-                                            </div>
-                                            <p className="text-sm text-green-700 dark:text-green-300">
-                                                This survey uses Fully Homomorphic Encryption (FHE) for maximum privacy protection.
-                                                Survey responses are encrypted and can only be processed in their encrypted form.
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    {/* Metadata CID */}
-                                    {metadata?.metadataCid && (
-                                        <div>
-                                            <span className="font-semibold text-gray-600 dark:text-gray-400">Metadata CID:</span>
-                                            <code className="block bg-gray-100 dark:bg-gray-800 p-3 rounded mt-1 break-all font-mono text-sm">
-                                                {metadata.metadataCid}
-                                            </code>
-                                            <div className="flex gap-2 mt-2">
-                                                <Button
-                                                    variant="neutral"
-                                                    size="sm"
-                                                    className="flex-1"
-                                                    onClick={() => copyToClipboard(metadata.metadataCid!, "Metadata CID")}
-                                                >
-                                                    <Copy className="w-3 h-3 mr-1" />
-                                                    Copy CID
-                                                </Button>
-                                                <Button
-                                                    variant="neutral"
-                                                    size="sm"
-                                                    className="flex-1"
-                                                    onClick={() => window.open(`https://ipfs.io/ipfs/${metadata.metadataCid}`, '_blank')}
-                                                >
-                                                    <ExternalLink className="w-3 h-3 mr-1" />
-                                                    View IPFS
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Contract Verification */}
-                                    <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 p-3 rounded">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <Shield className="w-4 h-4 text-blue-600" />
-                                            <span className="font-medium text-blue-800 dark:text-blue-200">
-                                                Contract Verified
-                                            </span>
-                                        </div>
-                                        <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
-                                            This smart contract has been verified on the blockchain for transparency and security.
-                                        </p>
-                                        <Button
-                                            variant="neutral"
-                                            size="sm"
-                                            className="w-full"
-                                            onClick={() => window.open(`https://explorer.zama.ai/address/${surveyAddress}`, '_blank')}
-                                        >
-                                            <ExternalLink className="w-3 h-3 mr-1" />
-                                            View on Zama Explorer
-                                        </Button>
+                                {/* Technical Specifications */}
+                                <div className="space-y-3">
+                                    <h4 className="text-sm font-mono text-foreground font-bold">
+                                        Specifications
+                                    </h4>
+                                    <div className="grid gap-3">
+                                        {techSpecs.map((spec, index) => (
+                                            <TechSpec key={index} {...spec} />
+                                        ))}
                                     </div>
                                 </div>
-                            </DialogContent>
-                        </Dialog>
-                    </div>
+
+                                {/* Survey Metadata */}
+                                {metadata && (
+                                    <>
+                                        <Separator className="bg-border" />
+                                        <div className="space-y-3">
+                                            <h4 className="text-sm font-mono text-foreground font-bold">
+                                                Survey Information
+                                            </h4>
+                                            <div className={cn(
+                                                "p-3 rounded-base bg-secondary-background border-2 border-border",
+                                                "space-y-2"
+                                            )}>
+                                                <InfoRow label="Title">
+                                                    <span className="text-sm font-mono text-foreground">
+                                                        {metadata.title || 'Untitled Survey'}
+                                                    </span>
+                                                </InfoRow>
+                                                {metadata.categories && (
+                                                    <InfoRow label="Category">
+                                                        <Badge variant="neutral" className="font-mono text-xs">
+                                                            {metadata.categories.split("-").map((word) =>
+                                                                word.charAt(0).toUpperCase() + word.slice(1)
+                                                            ).join(" ")}
+                                                        </Badge>
+                                                    </InfoRow>
+                                                )}
+                                                {metadata.tags && metadata.tags.length > 0 && (
+                                                    <InfoRow label="Tags">
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {metadata.tags.slice(0, 3).map((tag, index) => (
+                                                                <Badge key={index} variant="neutral" className="font-mono text-xs">
+                                                                    {tag}
+                                                                </Badge>
+                                                            ))}
+                                                            {metadata.tags.length > 3 && (
+                                                                <Badge variant="neutral" className="font-mono text-xs">
+                                                                    +{metadata.tags.length - 3}
+                                                                </Badge>
+                                                            )}
+                                                        </div>
+                                                    </InfoRow>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </DialogContent>
+                    </Dialog>
                 </div>
             </CardContent>
         </Card>

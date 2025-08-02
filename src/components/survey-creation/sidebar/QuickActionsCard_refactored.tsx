@@ -5,38 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import {
-    BookOpen,
     ExternalLink,
-    FileText,
-    Users,
-    BarChart3,
     HelpCircle,
-    Target,
-    MessageSquare,
-    Github,
-    Video,
-    Download,
     ChevronDown,
-    ChevronRight
+    ChevronRight,
+    BookOpen,
+    FileText,
+    BarChart3
 } from "lucide-react"
 import { cn } from "@/lib/shadcn/utils"
-
-// Types for better modularity
-interface QuickAction {
-    icon: React.ElementType
-    label: string
-    description: string
-    href: string
-    external: boolean
-}
-
-interface ActionSectionProps {
-    title: string
-    icon: React.ElementType
-    isOpen: boolean
-    onToggle: () => void
-    actions: QuickAction[]
-}
+import { QuickAction, ActionSectionProps } from "../types"
+import { QUICK_ACTIONS } from "../utils/data"
 
 // Modular Action Button Component
 const ActionButton: React.FC<{ action: QuickAction }> = ({ action }) => (
@@ -93,12 +72,12 @@ const SectionHeader: React.FC<{
 )
 
 // Modular Action Section Component
-const ActionSection: React.FC<ActionSectionProps> = ({ 
-    title, 
-    icon, 
-    isOpen, 
-    onToggle, 
-    actions 
+const ActionSection: React.FC<ActionSectionProps> = ({
+    title,
+    icon,
+    isOpen,
+    onToggle,
+    actions
 }) => (
     <Collapsible open={isOpen} onOpenChange={onToggle}>
         <SectionHeader
@@ -122,81 +101,6 @@ const QuickActionsCard: React.FC = () => {
     const [supportOpen, setSupportOpen] = React.useState(false)
     const [toolsOpen, setToolsOpen] = React.useState(false)
 
-    // Actions data organized by category
-    const actions = {
-        learn: [
-            {
-                icon: BookOpen,
-                label: "Documentation",
-                description: "Complete guide for creating surveys",
-                href: "/docs",
-                external: true
-            },
-            {
-                icon: Video,
-                label: "Video Tutorials",
-                description: "Step-by-step video guides",
-                href: "https://youtube.com/@fhedback-tutorials",
-                external: true
-            },
-            {
-                icon: Target,
-                label: "Best Practices",
-                description: "Tips for effective surveys",
-                href: "/docs/best-practices",
-                external: true
-            }
-        ],
-        resources: [
-            {
-                icon: FileText,
-                label: "Blog",
-                description: "Latest updates and case studies",
-                href: "/blog",
-                external: true
-            },
-            {
-                icon: Download,
-                label: "Templates",
-                description: "Pre-made survey templates",
-                href: "/templates",
-                external: true
-            }
-        ],
-        support: [
-            {
-                icon: MessageSquare,
-                label: "Community",
-                description: "Join our Discord community",
-                href: "https://discord.gg/fhedback",
-                external: true
-            },
-            {
-                icon: Github,
-                label: "GitHub",
-                description: "Source code and issues",
-                href: "https://github.com/fhedback/platform",
-                external: true
-            }
-        ],
-        tools: [
-            {
-                icon: BarChart3,
-                label: "Analytics Dashboard",
-                description: "View all your survey analytics",
-                href: "/creator/analytics",
-                external: true
-            },
-            {
-                icon: Users,
-                label: "Survey Explorer",
-                description: "Browse public surveys",
-                href: "/explore",
-                external: true
-            }
-        ]
-    }
-
     return (
         <Card className="bg-background border-2 border-border shadow-shadow">
             <CardHeader className="pb-3">
@@ -212,7 +116,7 @@ const QuickActionsCard: React.FC = () => {
                     icon={BookOpen}
                     isOpen={learningOpen}
                     onToggle={() => setLearningOpen(!learningOpen)}
-                    actions={actions.learn}
+                    actions={QUICK_ACTIONS.learn}
                 />
 
                 {/* Resources Section */}
@@ -221,7 +125,7 @@ const QuickActionsCard: React.FC = () => {
                     icon={FileText}
                     isOpen={resourcesOpen}
                     onToggle={() => setResourcesOpen(!resourcesOpen)}
-                    actions={actions.resources}
+                    actions={QUICK_ACTIONS.resources}
                 />
 
                 {/* Support Section */}
@@ -230,7 +134,7 @@ const QuickActionsCard: React.FC = () => {
                     icon={HelpCircle}
                     isOpen={supportOpen}
                     onToggle={() => setSupportOpen(!supportOpen)}
-                    actions={actions.support}
+                    actions={QUICK_ACTIONS.support}
                 />
 
                 {/* Tools Section */}
@@ -239,7 +143,7 @@ const QuickActionsCard: React.FC = () => {
                     icon={BarChart3}
                     isOpen={toolsOpen}
                     onToggle={() => setToolsOpen(!toolsOpen)}
-                    actions={actions.tools}
+                    actions={QUICK_ACTIONS.tools}
                 />
 
                 {/* Featured Action - Always visible */}
