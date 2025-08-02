@@ -1,0 +1,72 @@
+@import "./lib/app.css";
+
+:root {
+  --subtle: oklch(28.094% 0.00003 271.152 / 0.894);
+
+  --accent: oklch(75.23% 0.18 310);
+  --muted: oklch(91.2% 0.01 250);
+  --muted-foreground: oklch(39.2% 0.01 250);
+  --subtle-foreground: oklch(51% 0.01 240);
+
+  --success: #00d696;
+  --warning: #ffbf00;
+  --danger: #ff7a05;
+  --info: #0099ff;
+}
+
+.dark {
+  --subtle: oklch(93.403% 0.00011 271.152 / 0.894);
+
+  --accent: oklch(80% 0.12 310);
+  --muted: oklch(32% 0.01 250);
+  --muted-foreground: oklch(80% 0.01 250);
+  --subtle-foreground: oklch(90% 0.01 240);
+
+  --success: #00bd84;
+  --warning: #e5ac00;
+  --danger: #eb6d00;
+  --info: #008ae5;
+}
+
+@theme inline {
+  --color-subtle: var(--subtle);
+  --color-accent: var(--accent);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+}
+
+@layer base {
+  p,
+  span,
+  div,
+  a,
+  button,
+  input,
+  textarea {
+    @apply font-mono;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-sans;
+  }
+}
+
+/* Survey Explorer Utility Classes */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
