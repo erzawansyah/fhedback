@@ -9,8 +9,8 @@
     "forceConsistentCasingInFileNames": true,
     "lib": [
       "es2022"
-    ], // get error cause (ErrorOptions)
-    "module": "es2022",
+    ],
+    "module": "commonjs",
     "moduleResolution": "node",
     "noImplicitAny": true,
     "removeComments": true,
@@ -23,7 +23,7 @@
     ],
     "sourceMap": true,
     "strict": true,
-    "target": "es2022" // get error cause (ErrorOptions)
+    "target": "es2022"
   },
   "exclude": [
     "node_modules"
@@ -36,6 +36,7 @@
     "tasks/**/*",
     "test/**/*",
     "deploy/**/*",
+    "scripts/**/*",
     "types/"
   ]
 }

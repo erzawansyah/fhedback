@@ -2,7 +2,7 @@ import "@fhevm/hardhat-plugin";
 import "@nomicfoundation/hardhat-chai-matchers";
 import "@nomicfoundation/hardhat-ethers";
 import "@nomicfoundation/hardhat-verify";
-import "@typechain/hardhat";
+// import "@typechain/hardhat";
 import "hardhat-deploy";
 import "hardhat-gas-reporter";
 import type { HardhatUserConfig } from "hardhat/config";
@@ -100,10 +100,6 @@ const config: HardhatUserConfig = {
       },
       evmVersion: "cancun",
     },
-  },
-  typechain: {
-    outDir: "types",
-    target: "ethers-v6",
   },
 };
 
