@@ -10,189 +10,88 @@ import {ConfidentialSurvey_Stats} from "./modules/ConfidentialSurvey_Stats.sol";
  * @dev Enables creation and management of privacy-preserving surveys using Zama's FHE (Fully Homomorphic Encryption).
  * @author M.E.W (github: erzawansyah)
  */
-contract ConfidentialSurvey is SepoliaConfig, ConfidentialSurvey_Stats {
+contract ConfidentialSurvey is ConfidentialSurvey_Stats {
     // ------------------------------------------------------------------------
-    // Constants
+    // Constants & Types
     // ------------------------------------------------------------------------
-    uint256 private constant MAX_RESPONDENTS = 1000; // Maximum number of respondents per survey
+    uint256 private constant MAX_RESPONDENTS = 1000;
+
+    enum SurveyStatus {
+        Created,
+        Active,
+        Closed,
+        Trashed
+    }
+
+    struct SurveyDetails {
+        string title;
+        string metadataCID;
+        string questionsCID;
+        uint256 totalQuestions;
+        uint256 createdAt;
+        address owner;
+        uint256 respondentLimit;
+        SurveyStatus status;
+    }
 
     // ------------------------------------------------------------------------
-    // Event Definitions
+    // Events
     // ------------------------------------------------------------------------
-
-    /**
-     * @dev Emitted when a new survey is created.
-     * @param owner Address of the survey creator.
-     * @param title Title of the survey.
-     */
     event SurveyCreated(address indexed owner, string title);
-
-    /**
-     * @dev Emitted when survey metadata is updated.
-     * @param metadataCID IPFS CID or similar for survey metadata.
-     */
     event SurveyMetadataUpdated(string metadataCID);
-
-    /**
-     * @dev Emitted when a question is added to the survey.
-     * @param totalQuestions Total number of questions after addition.
-     */
     event SurveyQuestionsUpdated(uint256 totalQuestions);
-
-    /**
-     * @dev Emitted when owner set survey status to Published
-     */
     event SurveyPublished();
-
-    /**
-     * @dev Emitted when the survey is closed.
-     */
     event SurveyClosed(uint256 totalRespondents);
-
-    /**
-     * @dev Emitted when the survey is deleted or trashed.
-     */
     event SurveyDeleted();
 
     // ------------------------------------------------------------------------
-    // Enumerations
+    // Storage
     // ------------------------------------------------------------------------
-    /**
-     * @dev Represents the status of a survey.
-     */
-    enum SurveyStatus {
-        Initialized, // Survey is initialized but not yet configured
-        Draft, // Survey is being drafted
-        Active, // Survey is open for responses
-        Closed, // Survey is closed for responses
-        Trashed // Survey is deleted or trashed
-    }
-
-    // ------------------------------------------------------------------------
-    // Structs
-    // ------------------------------------------------------------------------
-    /**
-     * @dev Stores metadata and configuration for a survey.
-     */
-    struct SurveyDetails {
-        string title; // Title of the survey
-        string metadataCID; // IPFS CID or similar for survey metadata
-        string questionsCID; // IPFS CID or similar for questions metadata
-        uint256 totalQuestions; // Total number of questions in the survey
-        uint256 createdAt; // Timestamp when the survey was created
-        address owner; // Address of the survey creator
-        uint256 respondentLimit; // Maximum number of respondents allowed
-        SurveyStatus status; // Current status of the survey
-    }
-
-    // ------------------------------------------------------------------------
-    // Public State Variables
-    // ------------------------------------------------------------------------
-
-    // Survey metadata and configuration
     SurveyDetails public survey;
 
-    // Total number of respondents who have submitted responses
     uint256 public totalRespondents;
-
-    // ------------------------------------------------------------------------
-    // Internal State Variables
-    // ------------------------------------------------------------------------
-
-    // Mapping to track if an address has responded
-    /// @dev Used to track if a respondent has already submitted their responses
     mapping(address => bool) internal hasResponded;
-
-    // List of respondents who have submitted responses
-    /// @dev Used to gather all respondents' addresses for statistics and management
     address[] internal respondents;
-
-    // Mapping to store encrypted responses: respondent address => (question index => encrypted answer)
     mapping(address => mapping(uint256 => euint8)) internal responses;
-
-    // ------------------------------------------------------------------------
-    // TODO: Add any state variables needed to manage rewards, penalties, expiration, etc.
-    // ------------------------------------------------------------------------
 
     // ------------------------------------------------------------------------
     // Modifiers
     // ------------------------------------------------------------------------
-    /**
-     * @dev Ensures the caller is the survey owner.
-     */
     modifier onlyOwner() {
-        require(msg.sender == survey.owner, "Not the survey owner");
+        require(msg.sender == survey.owner, "Not owner");
         _;
     }
-
-    /**
-     * @dev Ensures the survey is in the Active state.
-     */
     modifier onlyActiveSurvey() {
-        require(survey.status == SurveyStatus.Active, "Survey is not active");
+        require(survey.status == SurveyStatus.Active, "Not active");
         _;
     }
-
-    /**
-     * @dev Ensures the survey is in the Closed state.
-     */
     modifier onlyClosedSurvey() {
-        require(survey.status == SurveyStatus.Closed, "Survey is not closed");
+        require(survey.status == SurveyStatus.Closed, "Not closed");
         _;
     }
-
-    /**
-     * @dev Ensures the survey is not trashed.
-     */
     modifier notTrashed() {
-        require(survey.status != SurveyStatus.Trashed, "Survey is trashed");
+        require(survey.status != SurveyStatus.Trashed, "Trashed");
         _;
     }
-
-    /**
-     * @dev Ensures the survey is not published.
-     */
     modifier notActive() {
-        require(survey.status != SurveyStatus.Active, "Survey is active");
+        require(survey.status != SurveyStatus.Active, "Already active");
         _;
     }
-
-    /**
-     * @dev Ensures the survey is in the Initialized or Draft state.
-     */
     modifier canEditOrDelete() {
         require(
-            survey.status == SurveyStatus.Initialized ||
-                survey.status == SurveyStatus.Draft,
-            "Cannot edit or delete in current status"
+            survey.status == SurveyStatus.Created,
+            "Immutable in current status"
         );
         _;
     }
-
-    /**
-     * @dev Ensures user has not responded yet.
-     */
     modifier notResponded() {
-        require(
-            !hasResponded[msg.sender],
-            "Respondent has already submitted responses"
-        );
+        require(!hasResponded[msg.sender], "Already responded");
         _;
     }
 
     // ------------------------------------------------------------------------
     // Constructor
     // ------------------------------------------------------------------------
-
-    /**
-     * @dev Initializes the contract with default values.
-     * @param _owner Address of the survey creator (should be the deployer).
-     * @param _title Title of the survey.
-     * @param _metadataCID IPFS CID or similar for survey metadata.
-     * @param _questionsCID IPFS CID or similar for questions metadata.
-     * @param _totalQuestions Total number of questions in the survey.
-     * @param _respondentLimit Maximum number of respondents allowed.
-     */
     constructor(
         address _owner,
         string memory _title,
@@ -206,40 +105,32 @@ contract ConfidentialSurvey is SepoliaConfig, ConfidentialSurvey_Stats {
             "Invalid respondent limit"
         );
 
-        survey.title = _title;
-        survey.metadataCID = _metadataCID;
-        survey.questionsCID = _questionsCID;
-        survey.totalQuestions = _totalQuestions;
-        survey.createdAt = block.timestamp;
-        survey.owner = _owner;
-        survey.respondentLimit = _respondentLimit;
-        survey.status = SurveyStatus.Initialized;
+        survey = SurveyDetails({
+            title: _title,
+            metadataCID: _metadataCID,
+            questionsCID: _questionsCID,
+            totalQuestions: _totalQuestions,
+            createdAt: block.timestamp,
+            owner: _owner,
+            respondentLimit: _respondentLimit,
+            status: SurveyStatus.Created
+        });
 
         emit SurveyCreated(_owner, _title);
     }
 
     // ------------------------------------------------------------------------
-    // Public Functions (Non FHE)
+    // Management (non‑FHE)
     // ------------------------------------------------------------------------
-
-    /**
-     * @dev Owner can update the survey metadata when status is Initialized or Draft.
-     * @param _metadataCID New IPFS CID or similar for survey metadata.
-     */
     function updateSurveyMetadata(
-        string memory _metadataCID
+        string calldata _metadataCID
     ) external onlyOwner notTrashed canEditOrDelete {
         survey.metadataCID = _metadataCID;
         emit SurveyMetadataUpdated(_metadataCID);
     }
 
-    /**
-     * @dev Owner can add questions to the survey when status is Initialized or Draft.
-     * @param _questionsCID New IPFS CID or similar for questions metadata.
-     * @param _totalQuestions Total number of questions after addition.
-     */
     function updateQuestions(
-        string memory _questionsCID,
+        string calldata _questionsCID,
         uint256 _totalQuestions
     ) external onlyOwner notTrashed canEditOrDelete {
         survey.questionsCID = _questionsCID;
@@ -248,96 +139,87 @@ contract ConfidentialSurvey is SepoliaConfig, ConfidentialSurvey_Stats {
     }
 
     /**
-     * @dev Owner can publish the survey, changing its status to Active.
+     * @notice Publish the survey and initialise stats for every question.
+     * @param _questionIndexes Sorted list of question indexes (0‑based).
+     * @param _maxScores       Max score for each question (same length).
      */
     function publishSurvey(
-        uint256[] memory _questionIndexes,
-        uint8[] memory _maxScores
+        uint256[] calldata _questionIndexes,
+        uint8[] calldata _maxScores
     ) external onlyOwner notTrashed notActive {
         require(
             _questionIndexes.length == _maxScores.length,
-            "Mismatched question indexes and max scores"
+            "Length mismatch"
         );
         require(
             _questionIndexes.length == survey.totalQuestions,
-            "Invalid number of questions"
+            "Wrong question count"
         );
 
         for (uint256 i = 0; i < _questionIndexes.length; i++) {
-            uint256 questionIndex = _questionIndexes[i];
-            uint8 maxScore = _maxScores[i];
+            uint256 qIdx = _questionIndexes[i];
+            uint8 mScore = _maxScores[i];
 
-            require(
-                questionIndex < survey.totalQuestions,
-                "Invalid question index"
-            );
-            require(maxScore > 0, "Invalid max score");
+            require(qIdx < survey.totalQuestions, "Bad index");
+            require(mScore > 0, "Bad max score");
 
-            // Initialize question statistics
-            initializeQuestionStatistics(questionIndex, maxScore);
+            _initializeQuestionStatistics(qIdx, mScore);
         }
 
         survey.status = SurveyStatus.Active;
         emit SurveyPublished();
     }
 
-    /**
-     * @dev Owner can close the survey, changing its status to Closed.
-     */
     function closeSurvey() external onlyOwner onlyActiveSurvey {
         survey.status = SurveyStatus.Closed;
         emit SurveyClosed(totalRespondents);
     }
 
-    /**
-     * @dev Owner can delete or trash the survey, changing its status to Trashed.
-     */
-    function deleteSurvey() external onlyOwner canEditOrDelete {
+    function deleteSurvey() external onlyOwner notActive {
         survey.status = SurveyStatus.Trashed;
         emit SurveyDeleted();
     }
 
     // ------------------------------------------------------------------------
-    // FHE Functions (Privacy-Preserving)
+    // Respondent interaction (FHE)
     // ------------------------------------------------------------------------
-
-    /**
-     * @dev Respondents can submit their responses to the survey.
-     * @param _encryptedResponses Array of encrypted responses for each question.
-     * @param _inputProof FHE input proof for the encrypted responses.
-     */
     function submitResponses(
         externalEuint8[] calldata _encryptedResponses,
         bytes calldata _inputProof
     ) external onlyActiveSurvey notResponded {
         require(
             _encryptedResponses.length == survey.totalQuestions,
-            "Invalid number of responses"
+            "Wrong responses length"
         );
         require(
             totalRespondents < survey.respondentLimit,
             "Respondent limit reached"
         );
 
+        _initializeRespondentStatistics(msg.sender);
+
         for (uint256 i = 0; i < _encryptedResponses.length; i++) {
-            euint8 _response = FHE.fromExternal(
+            // Decode ciphertext → euint8
+            euint8 response = FHE.fromExternal(
                 _encryptedResponses[i],
                 _inputProof
             );
-            FHE.allowThis(_response);
+            FHE.allowThis(response); // give contract ACL for further ops
+            FHE.allow(response, msg.sender); // give respondent ACL to decrypt value
 
-            // Update the question statistics
-            updateQuestionStatistics(i, _response);
-            responses[msg.sender][i] = _response;
+            // Persist & update stats
+            responses[msg.sender][i] = response;
+            _updateQuestionStatistics(i, response);
+            _updateRespondentStatistics(msg.sender, response);
         }
 
-        // Mark the respondent as having submitted responses
+        // mark respondent
         hasResponded[msg.sender] = true;
         respondents.push(msg.sender);
-        totalRespondents++;
+        totalRespondents += 1;
 
+        // auto‑close when full
         if (totalRespondents >= survey.respondentLimit) {
-            // Automatically close the survey if respondent limit is reached
             survey.status = SurveyStatus.Closed;
             emit SurveyClosed(totalRespondents);
         }

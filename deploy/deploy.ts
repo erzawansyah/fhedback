@@ -5,32 +5,33 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployer } = await hre.getNamedAccounts();
   const { deploy } = hre.deployments;
 
-  console.log("=== Deploying Questionnaire Contracts ===");
+  console.log("=== Deploying ConfidentialSurvey Contract ===");
   console.log("Deployer address:", deployer);
 
-  // Deploy QuestionnaireFactory contract
-  console.log("\n1. Deploying QuestionnaireFactory...");
-  const deployedQuestionnaireFactory = await deploy("QuestionnaireFactory", {
+  // Deploy ConfidentialSurvey contract
+  console.log("\n1. Deploying ConfidentialSurvey...");
+  const deployedConfidentialSurvey = await deploy("ConfidentialSurvey", {
     from: deployer,
+    args: [
+      deployer, // _owner
+      "Test Survey", // _title
+      "QmTestMetadataCID", // _metadataCID
+      "QmTestQuestionsCID", // _questionsCID
+      5, // _totalQuestions
+      100, // _respondentLimit
+    ],
     log: true,
     waitConfirmations: 1,
   });
 
   console.log(
-    `✅ QuestionnaireFactory deployed at: ${deployedQuestionnaireFactory.address}`,
+    `✅ ConfidentialSurvey deployed at: ${deployedConfidentialSurvey.address}`,
   );
-
-  // The individual Questionnaire and FHEQuestionnaire contracts will be deployed
-  // through the factory when users create questionnaires, so we don't need to deploy them directly.
 
   console.log("\n=== Deployment Summary ===");
-  console.log(`QuestionnaireFactory: ${deployedQuestionnaireFactory.address}`);
-  console.log(
-    "\nNote: Individual Questionnaire and FHEQuestionnaire contracts will be deployed",
-  );
-  console.log("through the factory when users create new questionnaires.");
+  console.log(`ConfidentialSurvey: ${deployedConfidentialSurvey.address}`);
 };
 
 export default func;
-func.id = "deploy_questionnaire_contracts_new"; // id required to prevent reexecution
-func.tags = ["QuestionnaireFactory", "Questionnaire"];
+func.id = "deploy_confidential_survey"; // id required to prevent reexecution
+func.tags = ["ConfidentialSurvey"];
