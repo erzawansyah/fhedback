@@ -83,7 +83,8 @@
     "test": "hardhat test",
     "build:ts": "tsc --project tsconfig.json",
     "typechain": "cross-env TS_NODE_TRANSPILE_ONLY=true ts-node scripts/generate-types.ts",
-    "typechain:clean": "rimraf ./types && npm run typechain"
+    "typechain:clean": "rimraf ./types && npm run typechain",
+    "retest": "npm run compile && npm run test"
   },
   "prettier": {
     "endOfLine": "auto"

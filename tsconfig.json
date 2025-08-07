@@ -38,5 +38,5 @@
     "deploy/**/*",
     "scripts/**/*",
     "types/"
-  ]
+, ".bak/TestContract.ts"  ]
 }

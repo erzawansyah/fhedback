@@ -2,281 +2,131 @@
 pragma solidity ^0.8.24;
 
 import "@fhevm/solidity/lib/FHE.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import {SepoliaConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
-import {ConfidentialSurvey_Stats} from "./modules/ConfidentialSurvey_Stats.sol";
+import {ConfidentialSurvey_Base} from "./modules/ConfidentialSurvey_Base.sol";
 
 /**
+ * @custom:since 0.1.0
  * @title ConfidentialSurvey
  * @dev A privacy-preserving survey system using Fully Homomorphic Encryption (FHE).
  *      Allows surveys to be conducted with encrypted responses, enabling statistical analysis
- *      without revealing individual responses. Inherits ConfidentialSurvey_Stats for
- *      statistical bookkeeping and uses ReentrancyGuard for security.
+ *      without revealing individual responses.
  * @author M.E.W (github: erzawansyah)
  * @notice This contract enables creation of confidential surveys where responses remain
  *         encrypted throughout the entire process, only revealing aggregated statistics
  *         to the survey owner after the survey is closed.
  */
-contract ConfidentialSurvey is ConfidentialSurvey_Stats, ReentrancyGuard {
+contract ConfidentialSurvey is
+    Initializable,
+    ConfidentialSurvey_Base,
+    ReentrancyGuard
+{
     // -------------------------------------
-    // Constants
-    // -------------------------------------
-    /// @dev Maximum number of respondents allowed per survey (gas optimization limit)
-    uint256 private constant MAX_RESPONDENTS = 1000;
-
-    // -------------------------------------
-    // Enums & Structs
+    // Survey Management (Survey Creation, Metadata, Questions, Publishing)
     // -------------------------------------
     /**
-     * @dev Survey lifecycle states
-     * @param Created Initial state when survey is created but not yet published
-     * @param Active Survey is live and accepting responses
-     * @param Closed Survey has been closed, no more responses accepted
-     * @param Trashed Survey has been deleted/trashed
-     */
-    enum SurveyStatus {
-        Created,
-        Active,
-        Closed,
-        Trashed
-    }
-
-    /**
-     * @dev Complete survey metadata and configuration
-     * @param title Human-readable title of the survey
-     * @param metadataCID IPFS CID containing survey metadata
-     * @param questionsCID IPFS CID containing survey questions
-     * @param totalQuestions Number of questions in the survey
-     * @param createdAt Timestamp when survey was created
-     * @param owner Address of the survey creator/owner
-     * @param respondentLimit Maximum number of allowed respondents
-     * @param status Current status of the survey
-     */
-    struct SurveyDetails {
-        string title;
-        string metadataCID;
-        string questionsCID;
-        uint256 totalQuestions;
-        uint256 createdAt;
-        address owner;
-        uint256 respondentLimit;
-        SurveyStatus status;
-    }
-
-    // -------------------------------------
-    // Events
-    // -------------------------------------
-    /**
-     * @dev Emitted when a new survey is created
-     * @param owner Address of the survey creator
-     * @param title Title of the created survey
-     */
-    event SurveyCreated(address indexed owner, string title);
-
-    /**
-     * @dev Emitted when survey metadata is updated
-     * @param cid New IPFS CID for the metadata
-     */
-    event SurveyMetadataUpdated(string cid);
-
-    /**
-     * @dev Emitted when survey questions are updated
-     * @param totalQuestions New total number of questions
-     */
-    event SurveyQuestionsUpdated(uint256 totalQuestions);
-
-    /**
-     * @dev Emitted when survey is published and becomes active
-     */
-    event SurveyPublished();
-
-    /**
-     * @dev Emitted when survey is closed
-     * @param totalRespondents Final number of respondents who participated
-     */
-    event SurveyClosed(uint256 totalRespondents);
-
-    /**
-     * @dev Emitted when survey is deleted/trashed
-     */
-    event SurveyDeleted();
-
-    // -------------------------------------
-    // Storage
-    // -------------------------------------
-    /// @notice Complete survey configuration and metadata
-    SurveyDetails public survey;
-
-    /// @notice Current number of users who have submitted responses
-    uint256 public totalRespondents;
-
-    /// @dev Tracks whether each address has already responded to prevent duplicate submissions
-    mapping(address => bool) internal hasResponded;
-
-    /// @dev Array of all respondent addresses for enumeration (limited to MAX_RESPONDENTS for gas efficiency)
-    address[] internal respondents; // small (≤1000) –‑ enumeration acceptable
-
-    /// @dev Encrypted responses: respondent address => question index => encrypted answer
-    mapping(address => mapping(uint256 => euint8)) internal responses; // respondent ⇒ (qIdx ⇒ answer)
-
-    // -------------------------------------
-    // Modifiers
-    // -------------------------------------
-    /**
-     * @dev Restricts function access to survey owner only
-     */
-    modifier onlyOwner() {
-        require(msg.sender == survey.owner, "not owner");
-        _;
-    }
-
-    /**
-     * @dev Restricts function access to when survey is active
-     */
-    modifier onlyActive() {
-        require(survey.status == SurveyStatus.Active, "not active");
-        _;
-    }
-
-    /**
-     * @dev Restricts function access to when survey is closed
-     */
-    modifier onlyClosed() {
-        require(survey.status == SurveyStatus.Closed, "not closed");
-        _;
-    }
-
-    /**
-     * @dev Restricts function access when survey is not trashed
-     */
-    modifier notTrashed() {
-        require(survey.status != SurveyStatus.Trashed, "trashed");
-        _;
-    }
-
-    /**
-     * @dev Restricts function access when survey is not active
-     */
-    modifier notActive() {
-        require(survey.status != SurveyStatus.Active, "already active");
-        _;
-    }
-
-    /**
-     * @dev Restricts function access to when survey can be edited (Created state only)
-     */
-    modifier canEditOrDelete() {
-        require(survey.status == SurveyStatus.Created, "immutable state");
-        _;
-    }
-
-    /**
-     * @dev Restricts function access to users who haven't responded yet
-     */
-    modifier notResponded() {
-        require(!hasResponded[msg.sender], "already responded");
-        _;
-    }
-
-    // -------------------------------------
-    // Constructor
-    // -------------------------------------
-    /**
+     * @custom:since 0.1.0
      * @dev Creates a new confidential survey with specified parameters
      * @param _owner Address that will own and manage the survey
-     * @param _title Human-readable title for the survey
-     * @param _metadataCID IPFS CID containing survey metadata
-     * @param _questionsCID IPFS CID containing survey questions
+     * @param _symbol Symbol for the survey (Required. Max 10 characters)
+     * @param _metadataCID IPFS CID containing survey metadata. TODO: Define metadata json schema and validation
+     * @param _questionsCID IPFS CID containing survey questions. TODO: Define questions json schema and validation
      * @param _totalQuestions Total number of questions in the survey
      * @param _respondentLimit Maximum number of respondents allowed (1-1000)
-     * @notice Survey starts in Created state and must be published to accept responses
+     * @notice Survey starts in Created state and must be published to accept responses.
+     * @notice metadataCID and questionsCID can be empty strings if not available at creation.
      * @notice Emits SurveyCreated event upon successful creation
      */
-    constructor(
+    function initialize(
         address _owner,
-        string memory _title,
+        string memory _symbol,
         string memory _metadataCID,
         string memory _questionsCID,
         uint256 _totalQuestions,
         uint256 _respondentLimit
-    ) {
+    ) external initializer {
         require(
-            _respondentLimit > 0 && _respondentLimit <= MAX_RESPONDENTS,
+            _respondentLimit >= MIN_RESPONDENTS &&
+                _respondentLimit <= MAX_RESPONDENTS,
             "bad respondentLimit"
-        );
-        require(_totalQuestions > 0, "totalQuestions = 0");
+        ); // Ensure respondent limit is within safe bounds
+        require(
+            bytes(_symbol).length > 0 && bytes(_symbol).length <= 10,
+            "symbol length invalid"
+        ); // Symbol must be between 1 and 10 characters
 
         survey = SurveyDetails({
-            title: _title,
+            owner: _owner,
+            symbol: _symbol,
             metadataCID: _metadataCID,
             questionsCID: _questionsCID,
             totalQuestions: _totalQuestions,
             createdAt: block.timestamp,
-            owner: _owner,
             respondentLimit: _respondentLimit,
             status: SurveyStatus.Created
         });
 
-        emit SurveyCreated(_owner, _title);
+        emit SurveyCreated(_owner, _symbol, _metadataCID);
     }
 
-    // -------------------------------------
-    // Management (public)
-    // -------------------------------------
     /**
+     * @custom:since 0.1.0
      * @dev Updates the survey metadata IPFS CID
-     * @param _cid New IPFS CID for the survey metadata
+     * @param _cid New IPFS CID for the survey metadata. Needs to be validated against schema.
      * @notice Only available during Created state before survey is published
      * @notice Emits SurveyMetadataUpdated event
      */
     function updateSurveyMetadata(
         string calldata _cid
     ) external onlyOwner notTrashed canEditOrDelete {
+        require(bytes(_cid).length > 0, "metadataCID cannot be empty");
         survey.metadataCID = _cid;
         emit SurveyMetadataUpdated(_cid);
     }
 
     /**
+     * @custom:since 0.1.0
      * @dev Updates the survey questions and total question count
-     * @param _cid New IPFS CID for the survey questions
+     * @param _cid New IPFS CID for the survey questions. Needs to be validated against schema.
      * @param _totalQuestions New total number of questions
      * @notice Only available during Created state before survey is published
      * @notice Emits SurveyQuestionsUpdated event
+     * @notice Total questions must be between 1 and MAX_QUESTIONS (30)
      */
     function updateQuestions(
         string calldata _cid,
         uint256 _totalQuestions
     ) external onlyOwner notTrashed canEditOrDelete {
-        require(_totalQuestions > 0, "totalQuestions = 0");
+        require(bytes(_cid).length > 0, "questionsCID cannot be empty");
+        require(
+            _totalQuestions > 0 && _totalQuestions <= MAX_QUESTIONS,
+            "totalQuestions out of range"
+        );
         survey.questionsCID = _cid;
         survey.totalQuestions = _totalQuestions;
         emit SurveyQuestionsUpdated(_totalQuestions);
     }
 
     /**
-     * @notice Publishes the survey and initializes encrypted statistics per question
-     * @dev Owner must provide the max score for each question. The value is
+     * @custom:since 0.1.0
+     * @dev Owner must provide the max score for each question. Currently, the value is
      *      limited by `MAX_SCORE_PER_QUESTION` to keep gas usage bounded.
-     * @param _questionIdx Array of question indices (must match totalQuestions)
      * @param _maxScores Array of maximum scores for each question (2-10)
+     * @notice Publishes the survey and initializes encrypted statistics per question
      * @notice Changes survey status to Active and emits SurveyPublished event
      * @notice Once published, survey questions and metadata become immutable
      */
     function publishSurvey(
-        uint256[] calldata _questionIdx,
         uint8[] calldata _maxScores
-    ) external onlyOwner notTrashed notActive {
-        require(_questionIdx.length == _maxScores.length, "length mismatch");
-        require(_questionIdx.length == survey.totalQuestions, "wrong count");
+    ) external onlyOwner notTrashed notActive metadataAndQuestionsSet {
+        require(survey.totalQuestions == _maxScores.length, "length mismatch");
 
-        for (uint256 i = 0; i < _questionIdx.length; ++i) {
-            uint256 q = _questionIdx[i];
+        for (uint256 i = 0; i < survey.totalQuestions; ++i) {
             uint8 m = _maxScores[i];
-
-            require(q < survey.totalQuestions, "bad index");
+            require(i < survey.totalQuestions, "bad index");
             require(m > 1 && m <= MAX_SCORE_PER_QUESTION, "maxScore invalid");
-
-            _initializeQuestionStatistics(q, m);
+            _initializeQuestionStatistics(i, m);
         }
 
         survey.status = SurveyStatus.Active;
@@ -284,33 +134,36 @@ contract ConfidentialSurvey is ConfidentialSurvey_Stats, ReentrancyGuard {
     }
 
     /**
+     * @custom:since 0.1.0
      * @dev Closes the survey, preventing any new responses
      * @notice Only available when survey is active
      * @notice Emits SurveyClosed event with final respondent count
      */
-    function closeSurvey() external onlyOwner onlyActive {
+    function closeSurvey() external onlyOwner onlyActive minReached {
         survey.status = SurveyStatus.Closed;
         emit SurveyClosed(totalRespondents);
     }
 
     /**
+     * @custom:since 0.1.0
      * @dev Permanently deletes/trashes the survey
      * @notice Only available when survey is not active
      * @notice This action is irreversible
      * @notice Emits SurveyDeleted event
      */
-    function deleteSurvey() external onlyOwner notActive {
+    function deleteSurvey() external onlyOwner notActive notTrashed {
         survey.status = SurveyStatus.Trashed;
         emit SurveyDeleted();
     }
 
     // -------------------------------------
-    // Respondent Interaction
+    // Respondent Capabilities
     // -------------------------------------
     /**
+     * @custom:since 0.1.0
      * @dev Submits encrypted responses to the survey
      * @param _encryptedResponses Array of encrypted response handles, one per question
-     * @param _proofs Array of ZK-proofs validating each encrypted response
+     * @param _proofs ZK-proofs validating each encrypted response
      * @notice Responses must be provided for all questions in the survey
      * @notice Each response must include a valid ZK-proof of well-formedness
      * @notice Users can only respond once and must do so while survey is active
@@ -319,18 +172,16 @@ contract ConfidentialSurvey is ConfidentialSurvey_Stats, ReentrancyGuard {
      */
     function submitResponses(
         externalEuint8[] calldata _encryptedResponses,
-        bytes[] calldata _proofs
+        bytes calldata _proofs
     ) external onlyActive notResponded nonReentrant {
         uint256 nQ = survey.totalQuestions;
         require(_encryptedResponses.length == nQ, "wrong responses len");
-        require(_proofs.length == nQ, "wrong proofs len");
         require(totalRespondents < survey.respondentLimit, "respondent cap");
 
         _initializeRespondentStatistics(msg.sender);
 
         for (uint256 i = 0; i < nQ; ++i) {
-            // Cast encrypted input → euint8 (with per‑ciphertext proof)
-            euint8 resp = FHE.fromExternal(_encryptedResponses[i], _proofs[i]);
+            euint8 resp = FHE.fromExternal(_encryptedResponses[i], _proofs);
             FHE.allowThis(resp);
             FHE.allow(resp, msg.sender); // respondent can decrypt their answer
 
@@ -338,12 +189,13 @@ contract ConfidentialSurvey is ConfidentialSurvey_Stats, ReentrancyGuard {
             _updateQuestionStatistics(i, resp);
             _updateRespondentStatistics(msg.sender, resp);
         }
-
+        grantRespondentDecrypt(msg.sender); // allow respondent to decrypt their own stats
         hasResponded[msg.sender] = true;
         respondents.push(msg.sender);
         unchecked {
             ++totalRespondents;
         }
+        emit ResponsesSubmitted();
 
         if (totalRespondents >= survey.respondentLimit) {
             survey.status = SurveyStatus.Closed;
@@ -352,9 +204,11 @@ contract ConfidentialSurvey is ConfidentialSurvey_Stats, ReentrancyGuard {
     }
 
     // -------------------------------------
-    // Owner-Side Helpers
+    // Owner Capabilities
     // -------------------------------------
+
     /**
+     * @custom:since 0.1.0
      * @notice Grants the survey owner permission to decrypt aggregated statistics for a question
      * @dev Only available after the survey is closed to preserve privacy during data collection
      * @param _qIdx Index of the question to grant decryption access for
@@ -374,5 +228,172 @@ contract ConfidentialSurvey is ConfidentialSurvey_Stats, ReentrancyGuard {
         for (uint8 i = 1; i <= m; ++i) {
             FHE.allow(qs.frequency[i], msg.sender);
         }
+    }
+
+    // -------------------------------------
+    // Statistics Functions
+    // -------------------------------------
+    /**
+     * @custom:since 0.1.0
+     * @dev Initializes encrypted statistics for a specific question
+     * @param _questionIndex Index of the question to initialize
+     * @param _max Maximum allowed score for this question (1-10)
+     * @notice Sets up encrypted counters and frequency mappings for statistical tracking
+     * @notice Grants permanent ACL permissions to the contract for all encrypted fields
+     */
+    function _initializeQuestionStatistics(
+        uint256 _questionIndex,
+        uint8 _max
+    ) internal {
+        require(
+            _max > 1 && _max <= MAX_SCORE_PER_QUESTION,
+            "maxScore out of range"
+        );
+        QuestionStats storage qs = questionStatistics[_questionIndex];
+
+        qs.total = FHE.asEuint64(0);
+        qs.sumSquares = FHE.asEuint64(0);
+        qs.minScore = FHE.asEuint8(_max); // initialise min with max so first input wins
+        qs.maxScore = FHE.asEuint8(_max);
+
+        // Grant contract permanent ACL on all encrypted fields.
+        FHE.allowThis(qs.total);
+        FHE.allowThis(qs.sumSquares);
+        FHE.allowThis(qs.minScore);
+        FHE.allowThis(qs.maxScore);
+
+        for (uint8 i = 1; i <= _max; ++i) {
+            qs.frequency[i] = FHE.asEuint64(0);
+            FHE.allowThis(qs.frequency[i]);
+        }
+
+        maxScores[_questionIndex] = _max;
+    }
+
+    /**
+     * @custom:since 0.1.0
+     * @dev Updates encrypted statistics when a new response is submitted for a question
+     * @param _qIdx Index of the question being answered
+     * @param _resp Encrypted response value (euint8)
+     * @notice Updates total, sum of squares, min/max, and frequency distribution
+     * @notice All operations are performed on encrypted data to maintain privacy
+     */
+    function _updateQuestionStatistics(uint256 _qIdx, euint8 _resp) internal {
+        QuestionStats storage qs = questionStatistics[_qIdx];
+        uint8 maxPlain = maxScores[_qIdx];
+        euint64 resp64 = FHE.asEuint64(_resp); // safe encrypted cast (8 → 64‑bit)
+        FHE.allowThis(resp64); // allow contract to read this value
+
+        qs.total = FHE.add(qs.total, resp64);
+        FHE.allowThis(qs.total); // allow contract to read new value
+        qs.sumSquares = FHE.add(qs.sumSquares, FHE.mul(resp64, resp64));
+        FHE.allowThis(qs.sumSquares); // allow contract to read new value
+
+        qs.minScore = FHE.select(
+            FHE.lt(_resp, qs.minScore),
+            _resp,
+            qs.minScore
+        );
+        FHE.allowThis(qs.minScore); // allow contract to read new value
+
+        qs.maxScore = FHE.select(
+            FHE.gt(_resp, qs.maxScore),
+            _resp,
+            qs.maxScore
+        );
+        FHE.allowThis(qs.maxScore); // allow contract to read new value
+
+        // update histogram bucket
+        for (uint8 i = 1; i <= maxPlain; ++i) {
+            ebool isMatch = FHE.eq(_resp, FHE.asEuint8(i));
+            euint64 inc = FHE.select(
+                isMatch,
+                FHE.asEuint64(1),
+                FHE.asEuint64(0)
+            );
+            qs.frequency[i] = FHE.add(qs.frequency[i], inc);
+            FHE.allowThis(qs.frequency[i]); // allow contract to read new value
+        }
+    }
+
+    /**
+     * @custom:since 0.1.0
+     * @dev Initializes encrypted statistics for a new respondent
+     * @param _addr Address of the respondent
+     * @notice Sets up encrypted counters with initial values and grants ACL permissions
+     * @notice minScore is initialized to 255 (max uint8) so first response wins
+     */
+    function _initializeRespondentStatistics(address _addr) internal {
+        RespondentStats storage rs = respondentStatistics[_addr];
+
+        rs.total = FHE.asEuint64(0);
+        rs.sumSquares = FHE.asEuint64(0);
+        rs.minScore = FHE.asEuint8(255);
+        rs.maxScore = FHE.asEuint8(0);
+
+        // Grant contract permanent ACL on all encrypted fields.
+        FHE.allowThis(rs.total);
+        FHE.allowThis(rs.sumSquares);
+        FHE.allowThis(rs.minScore);
+        FHE.allowThis(rs.maxScore);
+    }
+
+    /**
+     * @custom:since 0.1.0
+     * @dev Updates encrypted statistics for a respondent when they submit a new answer
+     * @param _addr Address of the respondent
+     * @param _resp Encrypted response value (euint8)
+     * @notice Updates the respondent's total, sum of squares, and min/max scores
+     * @notice All operations maintain encryption to preserve respondent privacy
+     */
+    function _updateRespondentStatistics(address _addr, euint8 _resp) internal {
+        RespondentStats storage rs = respondentStatistics[_addr];
+        euint64 resp64 = FHE.asEuint64(_resp);
+        FHE.allowThis(resp64); // allow contract to read this value
+
+        rs.total = FHE.add(rs.total, resp64);
+        rs.sumSquares = FHE.add(rs.sumSquares, FHE.mul(resp64, resp64));
+        rs.minScore = FHE.select(
+            FHE.lt(_resp, rs.minScore),
+            _resp,
+            rs.minScore
+        );
+        rs.maxScore = FHE.select(
+            FHE.gt(_resp, rs.maxScore),
+            _resp,
+            rs.maxScore
+        );
+
+        FHE.allowThis(rs.total); // allow contract to read new value
+        FHE.allowThis(rs.sumSquares); // allow contract to read new value
+        FHE.allowThis(rs.minScore); // allow contract to read new value
+        FHE.allowThis(rs.maxScore); // allow contract to read new value
+    }
+
+    /**
+     * @custom:since 0.1.0
+     * @dev Giving access to respondent's encrypted statistics
+     * @param _addr Address of the respondent
+     * @notice Allows the respondent to decrypt their own statistics
+     */
+    function grantRespondentDecrypt(address _addr) internal onlyOwner {
+        FHE.allow(respondentStatistics[_addr].total, _addr);
+        FHE.allow(respondentStatistics[_addr].sumSquares, _addr);
+        FHE.allow(respondentStatistics[_addr].minScore, _addr);
+        FHE.allow(respondentStatistics[_addr].maxScore, _addr);
+    }
+
+    // -------------------------------------
+    // Getters
+    // -------------------------------------
+
+    /**
+     * @custom:since 0.1.0
+     * @dev Returns the survey details including metadata and configuration
+     * @return SurveyDetails struct containing all survey metadata
+     * notice This function is used to retrieve survey information
+     */
+    function getSurveyDetails() external view returns (SurveyDetails memory) {
+        return survey;
     }
 }
