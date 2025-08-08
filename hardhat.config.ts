@@ -8,6 +8,7 @@ import "hardhat-gas-reporter";
 import type { HardhatUserConfig } from "hardhat/config";
 import { vars } from "hardhat/config";
 import "solidity-coverage";
+import "hardhat-tracer";
 
 import "./tasks/accounts";
 
@@ -49,8 +50,9 @@ const config: HardhatUserConfig = {
   },
   gasReporter: {
     currency: "USD",
-    enabled: process.env.REPORT_GAS ? true : false,
+    enabled: true,
     excludeContracts: [],
+    coinmarketcap: process.env.COINMARKETCAP_API_KEY || "",
   },
   networks: {
     hardhat: {
@@ -100,6 +102,10 @@ const config: HardhatUserConfig = {
       },
       evmVersion: "cancun",
     },
+  },
+  tracer: {
+    enabled: true, // bisa off saat CI
+    gasCost: true, // tampilkan gas per call
   },
 };
 
