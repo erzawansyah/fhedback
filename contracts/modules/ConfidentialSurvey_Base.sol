@@ -22,7 +22,7 @@ abstract contract ConfidentialSurvey_Base is ConfidentialSurvey_Storage {
 
     /// @custom:since 0.1.0
     /// @dev Maximum question count for a survey (gas optimization limit)
-    uint256 internal constant MAX_QUESTIONS = 30; // gas‑safe upper bound
+    uint256 internal constant MAX_QUESTIONS = 15; // gas‑safe upper bound
 
     // -------------------------------------
     // Events

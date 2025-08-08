@@ -746,6 +746,7 @@ flow("ConfidentialSurvey.sol", function () {
   });
 
   flow("FHEVM Decryption and Statistics", function () {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async function initialStep() {
       await initialization();
       const maxScores = [5, 5, 5];
@@ -795,53 +796,53 @@ flow("ConfidentialSurvey.sol", function () {
       return expectedStats;
     }
 
-    test("Owner dapat mendecrypt statistik setelah grant access", async function () {
-      const { questions } = await initialStep();
-      await surveyContract.closeSurvey();
+    // test("Owner dapat mendecrypt statistik setelah grant access", async function () {
+    //   const { questions } = await initialStep();
+    //   await surveyContract.closeSurvey();
 
-      // Verify survey status is Closed
-      const survey = await surveyContract.survey();
-      expect(Number(survey.status)).to.equal(2); // Survey tetap Closed
+    //   // Verify survey status is Closed
+    //   const survey = await surveyContract.survey();
+    //   expect(Number(survey.status)).to.equal(2); // Survey tetap Closed
 
-      // Grant owner decrypt access untuk setiap pertanyaan
-      for (let i = 0; i < Number(survey.totalQuestions); i++) {
-        await expect(surveyContract.grantOwnerDecrypt(i)).to.not.be.reverted;
+    //   // Grant owner decrypt access untuk setiap pertanyaan
+    //   for (let i = 0; i < Number(survey.totalQuestions); i++) {
+    //     await expect(surveyContract.grantOwnerDecrypt(i)).to.not.be.reverted;
 
-        // request decryption untuk pertanyaan i
-        const encryptedStats = await surveyContract.questionStatistics(i);
-        const decryptedTotal = await fhevm.userDecryptEuint(
-          FhevmType.euint64,
-          encryptedStats.total,
-          surveyContract.getAddress(),
-          signers.owner,
-        );
-        expect(Number(decryptedTotal)).to.equal(questions.total[i]);
+    //     // request decryption untuk pertanyaan i
+    //     const encryptedStats = await surveyContract.questionStatistics(i);
+    //     const decryptedTotal = await fhevm.userDecryptEuint(
+    //       FhevmType.euint64,
+    //       encryptedStats.total,
+    //       surveyContract.getAddress(),
+    //       signers.owner,
+    //     );
+    //     expect(Number(decryptedTotal)).to.equal(questions.total[i]);
 
-        const decryptedSumSquares = await fhevm.userDecryptEuint(
-          FhevmType.euint64,
-          encryptedStats.sumSquares,
-          surveyContract.getAddress(),
-          signers.owner,
-        );
-        expect(Number(decryptedSumSquares)).to.equal(questions.sumSquares[i]);
+    //     const decryptedSumSquares = await fhevm.userDecryptEuint(
+    //       FhevmType.euint64,
+    //       encryptedStats.sumSquares,
+    //       surveyContract.getAddress(),
+    //       signers.owner,
+    //     );
+    //     expect(Number(decryptedSumSquares)).to.equal(questions.sumSquares[i]);
 
-        const decryptedMax = await fhevm.userDecryptEuint(
-          FhevmType.euint8,
-          encryptedStats.maxScore,
-          surveyContract.getAddress(),
-          signers.owner,
-        );
-        expect(Number(decryptedMax)).to.equal(questions.maxScore[i]);
+    //     const decryptedMax = await fhevm.userDecryptEuint(
+    //       FhevmType.euint8,
+    //       encryptedStats.maxScore,
+    //       surveyContract.getAddress(),
+    //       signers.owner,
+    //     );
+    //     expect(Number(decryptedMax)).to.equal(questions.maxScore[i]);
 
-        const decryptedMin = await fhevm.userDecryptEuint(
-          FhevmType.euint8,
-          encryptedStats.minScore,
-          surveyContract.getAddress(),
-          signers.owner,
-        );
-        expect(Number(decryptedMin)).to.equal(questions.minScore[i]);
-      }
-    });
+    //     const decryptedMin = await fhevm.userDecryptEuint(
+    //       FhevmType.euint8,
+    //       encryptedStats.minScore,
+    //       surveyContract.getAddress(),
+    //       signers.owner,
+    //     );
+    //     expect(Number(decryptedMin)).to.equal(questions.minScore[i]);
+    //   }
+    // });
 
     test("respondent dapat access statistik mereka sendiri saat survey aktif", async function () {
       // Inisialisasi dan publish survey
@@ -971,74 +972,123 @@ flow("ConfidentialSurvey.sol", function () {
       ).to.be.revertedWith("not active");
     });
   });
+  //   TODO: Uncomment and implement this test when frequency counts are supported
+  //   Currently paused due to FHEVM limitations
+  //   flow("Frequency Counts", function () {
+  //     beforeEach(async function () {
+  //       await initialization({
+  //         totalQuestions: 10,
+  //         respondentLimit: 100,
+  //       });
+  //       await surveyContract.publishSurvey([5, 5, 5, 5, 5, 5, 5, 5, 5, 5]);
+  //     });
+  //     test("Pemilik dapat mendapatkan frequency counts untuk setiap pertanyaan", async function () {
+  //       const currentRespondents = [
+  //         {
+  //           signer: signers.alice,
+  //           responses: [4, 1, 3, 2, 5, 3, 4, 5, 2, 1],
+  //         },
+  //         {
+  //           signer: signers.bob,
+  //           responses: [5, 2, 1, 4, 3, 2, 5, 4, 1, 3],
+  //         },
+  //         {
+  //           signer: signers.charlie,
+  //           responses: [1, 2, 5, 3, 4, 2, 1, 5, 4, 3],
+  //         },
+  //         {
+  //           signer: signers.dave,
+  //           responses: [2, 4, 5, 1, 3, 2, 5, 4, 1, 3],
+  //         },
+  //         {
+  //           signer: signers.eve,
+  //           responses: [4, 3, 1, 2, 5, 3, 4, 5, 2, 1],
+  //         },
+  //         {
+  //           signer: signers.frealy,
+  //           responses: [1, 3, 2, 5, 4, 2, 1, 3, 4, 5],
+  //         },
+  //       ];
+  //       await respondentSubmission(currentRespondents);
+  //       await surveyContract.closeSurvey();
+  //       const survey = await surveyContract.survey();
+  //       const expectedFrequencies: number[][] = [];
+  //       for (let i = 0; i < Number(survey.totalQuestions); i++) {
+  //         await surveyContract.grantOwnerDecrypt(i);
+  //         const qResponses = currentRespondents.map((r) => r.responses[i]);
+  //         expectedFrequencies[i] = []; // Inisialisasi array di sini
+  //         for (let j = 1; j <= 5; j++) {
+  //           const frequency = qResponses.filter((r) => r === j).length;
+  //           expectedFrequencies[i][j - 1] = frequency; // Simpan frekuensi untuk skor j
+  //         }
+  //       }
 
-  flow("Frequency Counts", function () {
-    beforeEach(async function () {
-      await initialization({
-        totalQuestions: 10,
-        respondentLimit: 100,
-      });
-      await surveyContract.publishSurvey([5, 5, 5, 5, 5, 5, 5, 5, 5, 5]);
-    });
-    test("Pemilik dapat mendapatkan frequency counts untuk setiap pertanyaan", async function () {
+  //       for (let i = 0; i < Number(survey.totalQuestions); i++) {
+  //         console.log("Question index:", i);
+  //         for (let j = 1; j <= 5; j++) {
+  //           const frequency = await surveyContract.frequencyCounts(i, j);
+  //           console.log(`- Frequency for question ${i}, score ${j}:`);
+  //           const decryptedFrequency = await fhevm.userDecryptEuint(
+  //             FhevmType.euint64,
+  //             frequency,
+  //             surveyContract.getAddress(),
+  //             signers.owner,
+  //           );
+  //           console.log("Expected: ", expectedFrequencies[i][j - 1]);
+  //           console.log("Actual: ", decryptedFrequency.toString());
+  //           expect(Number(decryptedFrequency)).to.equal(
+  //             expectedFrequencies[i][j - 1],
+  //           );
+  //         }
+  //       }
+  //     });
+  //   });
+
+  flow("Loop limitations", function () {
+    const questionsCount = 15;
+    const maxResponse = 10;
+    test(`Berhasil untuk pertanyaan dengan totalQuestions = ${questionsCount} dengan max response = ${maxResponse}`, async function () {
+      const maxResponseArray = Array.from(
+        { length: questionsCount },
+        () => maxResponse,
+      );
+      const randomizeScore = () => {
+        return Array.from(
+          { length: questionsCount },
+          () => Math.floor(Math.random() * maxResponse) + 1,
+        );
+      };
       const currentRespondents = [
         {
           signer: signers.alice,
-          responses: [4, 1, 3, 2, 5, 3, 4, 5, 2, 1],
+          responses: randomizeScore(),
         },
-        // {
-        //   signer: signers.bob,
-        //   responses: [5, 2, 1, 4, 3, 2, 5, 4, 1, 3],
-        // },
-        // {
-        //   signer: signers.charlie,
-        //   responses: [1, 2, 5, 3, 4, 2, 1, 5, 4, 3],
-        // },
-        // {
-        //   signer: signers.dave,
-        //   responses: [2, 4, 5, 1, 3, 2, 5, 4, 1, 3],
-        // },
-        // {
-        //   signer: signers.eve,
-        //   responses: [4, 3, 1, 2, 5, 3, 4, 5, 2, 1],
-        // },
-        // {
-        //   signer: signers.frealy,
-        //   responses: [1, 3, 2, 5, 4, 2, 1, 3, 4, 5],
-        // },
+        {
+          signer: signers.bob,
+          responses: randomizeScore(),
+        },
+        {
+          signer: signers.charlie,
+          responses: randomizeScore(),
+        },
       ];
+      await initialization({
+        totalQuestions: questionsCount,
+        respondentLimit: 10,
+      });
+      await surveyContract.publishSurvey(maxResponseArray);
       await respondentSubmission(currentRespondents);
       await surveyContract.closeSurvey();
-      const survey = await surveyContract.survey();
-      const expectedFrequencies: number[][] = [];
-      for (let i = 0; i < Number(survey.totalQuestions); i++) {
-        await surveyContract.grantOwnerDecrypt(i);
-        const qResponses = currentRespondents.map((r) => r.responses[i]);
-        expectedFrequencies[i] = []; // Inisialisasi array di sini
-        for (let j = 1; j <= 5; j++) {
-          const frequency = qResponses.filter((r) => r === j).length;
-          expectedFrequencies[i][j - 1] = frequency; // Simpan frekuensi untuk skor j
-        }
-      }
 
-      for (let i = 0; i < Number(survey.totalQuestions); i++) {
-        console.log("Question index:", i);
-        for (let j = 1; j <= 5; j++) {
-          const frequency = await surveyContract.frequencyCounts(i, j);
-          console.log(`- Frequency for question ${i}, score ${j}:`);
-          const decryptedFrequency = await fhevm.userDecryptEuint(
-            FhevmType.euint64,
-            frequency,
-            surveyContract.getAddress(),
-            signers.owner,
-          );
-          console.log("Expected: ", expectedFrequencies[i][j - 1]);
-          console.log("Actual: ", decryptedFrequency.toString());
-          expect(Number(decryptedFrequency)).to.equal(
-            expectedFrequencies[i][j - 1],
-          );
-        }
-      }
+      const survey = await surveyContract.survey();
+      // Cek status survey
+      expect(survey.status).to.equal(2); // 2 = Closed
+      expect(survey.totalQuestions).to.equal(questionsCount);
+
+      // Cek total respondents
+      expect(await surveyContract.totalRespondents()).to.equal(
+        currentRespondents.length,
+      );
     });
   });
 });

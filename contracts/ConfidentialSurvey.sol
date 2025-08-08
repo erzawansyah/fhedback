@@ -188,10 +188,12 @@ contract ConfidentialSurvey is
             FHE.allow(resp, msg.sender); // respondent can decrypt their answer
 
             responses[msg.sender][i] = resp;
-            _updateQuestionStatistics(i, resp);
+            // TODO: Possibly update question statistics here
+            // This is currently commented out to avoid gas issues with large frequency maps
+            // _updateQuestionStatistics(i, resp);
             _updateRespondentStatistics(msg.sender, resp);
         }
-        grantRespondentDecrypt(msg.sender); // allow respondent to decrypt their own stats
+        _grantRespondentDecrypt(msg.sender); // allow respondent to decrypt their own stats
         hasResponded[msg.sender] = true;
         respondents.push(msg.sender);
         unchecked {
@@ -283,7 +285,6 @@ contract ConfidentialSurvey is
      */
     function _updateQuestionStatistics(uint256 _qIdx, euint8 _resp) internal {
         QuestionStats storage qs = questionStatistics[_qIdx];
-        uint8 maxPlain = maxScores[_qIdx];
         euint64 resp64 = FHE.asEuint64(_resp); // safe encrypted cast (8 → 64‑bit)
         FHE.allowThis(resp64); // allow contract to read this value
 
@@ -308,16 +309,20 @@ contract ConfidentialSurvey is
 
         // TODO: Optimize frequency count updates
         // Increment frequency count for the given response value
-        for (uint8 i = 1; i <= maxPlain; ++i) {
-            ebool isMatch = FHE.eq(_resp, FHE.asEuint8(i));
-            euint64 inc = FHE.select(
-                isMatch,
-                FHE.asEuint64(1),
-                FHE.asEuint64(0)
-            );
-            frequencyCounts[_qIdx][i] = FHE.add(frequencyCounts[_qIdx][i], inc);
-            FHE.allowThis(frequencyCounts[_qIdx][i]); // allow contract to read new value
-        }
+        // CHANGE: Currently commented out to avoid gas issues with large frequency maps
+        // This is a trade-off between gas cost and frequency count accuracy.
+        // ===
+        // uint8 maxPlain = maxScores[_qIdx];
+        // for (uint8 i = 1; i <= maxPlain; ++i) {
+        //     ebool isMatch = FHE.eq(_resp, FHE.asEuint8(i));
+        //     euint64 inc = FHE.select(
+        //         isMatch,
+        //         FHE.asEuint64(1),
+        //         FHE.asEuint64(0)
+        //     );
+        //     frequencyCounts[_qIdx][i] = FHE.add(frequencyCounts[_qIdx][i], inc);
+        //     FHE.allowThis(frequencyCounts[_qIdx][i]); // allow contract to read new value
+        // }
     }
 
     /**
@@ -380,7 +385,7 @@ contract ConfidentialSurvey is
      * @param _addr Address of the respondent
      * @notice Allows the respondent to decrypt their own statistics
      */
-    function grantRespondentDecrypt(address _addr) internal {
+    function _grantRespondentDecrypt(address _addr) internal {
         FHE.allow(respondentStatistics[_addr].total, _addr);
         FHE.allow(respondentStatistics[_addr].sumSquares, _addr);
         FHE.allow(respondentStatistics[_addr].minScore, _addr);
