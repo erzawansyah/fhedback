@@ -55,6 +55,10 @@ contract ConfidentialSurvey is
             bytes(_symbol).length > 0 && bytes(_symbol).length <= 10,
             "symbol length invalid"
         ); // Symbol must be between 1 and 10 characters
+        require(
+            _totalQuestions > 0 && _totalQuestions <= MAX_QUESTIONS,
+            "totalQuestions out of range"
+        );
 
         survey = SurveyDetails({
             owner: _owner,
@@ -124,8 +128,6 @@ contract ConfidentialSurvey is
 
         for (uint256 i = 0; i < survey.totalQuestions; ++i) {
             uint8 m = _maxScores[i];
-            require(i < survey.totalQuestions, "bad index");
-            require(m > 1 && m <= MAX_SCORE_PER_QUESTION, "maxScore invalid");
             _initializeQuestionStatistics(i, m);
         }
 
@@ -173,7 +175,7 @@ contract ConfidentialSurvey is
     function submitResponses(
         externalEuint8[] calldata _encryptedResponses,
         bytes calldata _proofs
-    ) external onlyActive notResponded nonReentrant {
+    ) external onlyActive notResponded notOwner nonReentrant {
         uint256 nQ = survey.totalQuestions;
         require(_encryptedResponses.length == nQ, "wrong responses len");
         require(totalRespondents < survey.respondentLimit, "respondent cap");
@@ -226,7 +228,7 @@ contract ConfidentialSurvey is
         FHE.allow(qs.maxScore, msg.sender);
         uint8 m = maxScores[_qIdx];
         for (uint8 i = 1; i <= m; ++i) {
-            FHE.allow(qs.frequency[i], msg.sender);
+            FHE.allow(frequencyCounts[_qIdx][i], msg.sender);
         }
     }
 
@@ -245,6 +247,7 @@ contract ConfidentialSurvey is
         uint256 _questionIndex,
         uint8 _max
     ) internal {
+        require(_questionIndex < survey.totalQuestions, "bad index");
         require(
             _max > 1 && _max <= MAX_SCORE_PER_QUESTION,
             "maxScore out of range"
@@ -263,8 +266,8 @@ contract ConfidentialSurvey is
         FHE.allowThis(qs.maxScore);
 
         for (uint8 i = 1; i <= _max; ++i) {
-            qs.frequency[i] = FHE.asEuint64(0);
-            FHE.allowThis(qs.frequency[i]);
+            frequencyCounts[_questionIndex][i] = FHE.asEuint64(0);
+            FHE.allowThis(frequencyCounts[_questionIndex][i]);
         }
 
         maxScores[_questionIndex] = _max;
@@ -303,7 +306,8 @@ contract ConfidentialSurvey is
         );
         FHE.allowThis(qs.maxScore); // allow contract to read new value
 
-        // update histogram bucket
+        // TODO: Optimize frequency count updates
+        // Increment frequency count for the given response value
         for (uint8 i = 1; i <= maxPlain; ++i) {
             ebool isMatch = FHE.eq(_resp, FHE.asEuint8(i));
             euint64 inc = FHE.select(
@@ -311,8 +315,8 @@ contract ConfidentialSurvey is
                 FHE.asEuint64(1),
                 FHE.asEuint64(0)
             );
-            qs.frequency[i] = FHE.add(qs.frequency[i], inc);
-            FHE.allowThis(qs.frequency[i]); // allow contract to read new value
+            frequencyCounts[_qIdx][i] = FHE.add(frequencyCounts[_qIdx][i], inc);
+            FHE.allowThis(frequencyCounts[_qIdx][i]); // allow contract to read new value
         }
     }
 
@@ -376,7 +380,7 @@ contract ConfidentialSurvey is
      * @param _addr Address of the respondent
      * @notice Allows the respondent to decrypt their own statistics
      */
-    function grantRespondentDecrypt(address _addr) internal onlyOwner {
+    function grantRespondentDecrypt(address _addr) internal {
         FHE.allow(respondentStatistics[_addr].total, _addr);
         FHE.allow(respondentStatistics[_addr].sumSquares, _addr);
         FHE.allow(respondentStatistics[_addr].minScore, _addr);
@@ -386,14 +390,5 @@ contract ConfidentialSurvey is
     // -------------------------------------
     // Getters
     // -------------------------------------
-
-    /**
-     * @custom:since 0.1.0
-     * @dev Returns the survey details including metadata and configuration
-     * @return SurveyDetails struct containing all survey metadata
-     * notice This function is used to retrieve survey information
-     */
-    function getSurveyDetails() external view returns (SurveyDetails memory) {
-        return survey;
-    }
+    // TODO: Implement getters for encrypted statistics
 }

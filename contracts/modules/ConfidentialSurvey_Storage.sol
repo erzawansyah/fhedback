@@ -57,7 +57,6 @@ contract ConfidentialSurvey_Storage is SepoliaConfig {
         euint64 sumSquares; // Σ x²
         euint8 minScore; // empirical minimum
         euint8 maxScore; // configured maximum (encrypted for ACL parity)
-        mapping(uint8 => euint64) frequency; // answer → count
     }
 
     /**
@@ -78,29 +77,32 @@ contract ConfidentialSurvey_Storage is SepoliaConfig {
     // Storage (State Variables)
     // -------------------------------------
     /// @notice Complete survey configuration and metadata
-    SurveyDetails internal survey;
+    SurveyDetails public survey;
 
     /// @notice Current number of users who have submitted responses
-    uint256 internal totalRespondents;
+    uint256 public totalRespondents;
 
     /// @dev Tracks whether each address has already responded to prevent duplicate submissions
-    mapping(address => bool) internal hasResponded;
+    mapping(address => bool) public hasResponded;
 
     /// @dev Array of all respondent addresses for enumeration (limited to MAX_RESPONDENTS for gas efficiency)
-    address[] internal respondents; // small (≤1000) –‑ enumeration acceptable
+    address[] public respondents; // small (≤1000) –‑ enumeration acceptable
 
     /// @dev Encrypted responses: respondent address => question index => encrypted answer
-    mapping(address => mapping(uint256 => euint8)) internal responses; // respondent ⇒ (qIdx ⇒ answer)
+    mapping(address => mapping(uint256 => euint8)) public responses; // respondent ⇒ (qIdx ⇒ answer)
 
     // -------------------------------------
     // Statistics Storage
     // -------------------------------------
     /// @dev Encrypted statistical data for each question indexed by question number
-    mapping(uint256 => QuestionStats) internal questionStatistics;
+    mapping(uint256 => QuestionStats) public questionStatistics;
+
+    /// @dev Encrypted frequency counts for each question indexed by question number
+    mapping(uint256 => mapping(uint8 => euint64)) public frequencyCounts;
 
     /// @dev Plaintext maximum scores for each question (used for frequency mapping bounds)
-    mapping(uint256 => uint8) internal maxScores; // plaintext helper
+    mapping(uint256 => uint8) public maxScores; // plaintext helper
 
     /// @dev Encrypted statistical data for each respondent indexed by their address
-    mapping(address => RespondentStats) internal respondentStatistics;
+    mapping(address => RespondentStats) public respondentStatistics;
 }

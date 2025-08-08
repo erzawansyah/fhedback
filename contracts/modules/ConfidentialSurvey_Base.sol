@@ -84,10 +84,10 @@ abstract contract ConfidentialSurvey_Base is ConfidentialSurvey_Storage {
     }
 
     /**
-     * @dev Restricts function access to everyone except the survey owner
+     * @dev Restricts function access by owner
      */
     modifier notOwner() {
-        require(msg.sender != survey.owner, "owner access only");
+        require(msg.sender != survey.owner, "owner not allowed");
         _;
     }
 
