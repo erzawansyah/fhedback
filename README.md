@@ -53,3 +53,9 @@ tasks/           # Hardhat tasks (e.g., account utilities)
 ## License
 
 MIT License
+
+## Contract Addresses
+
+- **ConfidentialSurvey Implementation**: https://sepolia.etherscan.io/address/0x4DcC0712DFf9D89808b70911571f38F94B6a27b0
+- **ConfidentialSurvey_Beacon**: https://sepolia.etherscan.io/address/0x53c4f990a52dFA045F2FfD288f6eeD22a26535C4
+- **ConfidentialSurvey_Factory**: https://sepolia.etherscan.io/address/0x529c50514302984b4edc239646B6775e0375B569

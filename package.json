@@ -85,7 +85,12 @@
     "build:ts": "tsc --project tsconfig.json",
     "typechain": "cross-env TS_NODE_TRANSPILE_ONLY=true ts-node scripts/generate-types.ts",
     "typechain:clean": "rimraf ./types && npm run typechain",
-    "retest": "npm run compile && npm run test"
+    "retest": "npm run compile && npm run test",
+    "deploy:sepolia": "hardhat run scripts/deploy-sepolia.ts --network sepolia",
+    "verify:sepolia": "hardhat run scripts/verify-sepolia.ts --network sepolia",
+    "deploy:local": "hardhat deploy --network localhost",
+    "setup:env": "bash scripts/setup-env.sh",
+    "check:env": "hardhat run scripts/check-env.ts"
   },
   "prettier": {
     "endOfLine": "auto"
