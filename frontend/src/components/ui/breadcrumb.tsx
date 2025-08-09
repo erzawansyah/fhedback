@@ -3,7 +3,7 @@ import { ChevronRight, MoreHorizontal } from "lucide-react"
 
 import * as React from "react"
 
-import { cn } from "@/lib/shadcn/utils"
+import { cn } from "@/utils/shadcn"
 
 function Breadcrumb({ ...props }: React.ComponentProps<"nav">) {
   return <nav data-slot="breadcrumb" aria-label="breadcrumb" {...props} />
