@@ -1,10 +1,8 @@
-"use client"
-
 import * as ProgressPrimitive from "@radix-ui/react-progress"
 
 import * as React from "react"
 
-import { cn } from "@/lib/shadcn/utils"
+import { cn } from "@/utils/shadcn"
 
 function Progress({
   className,
