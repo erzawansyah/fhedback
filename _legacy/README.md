@@ -30,18 +30,6 @@ _legacy/
 - **`frontend_legacy/`**  
     An even earlier, abandoned frontend prototype. Retained only for historical and reference purposes.
 
-## Development Timeline
-
-| Component               | First Commit Date | Last Commit Date |
-|-------------------------|-------------------|------------------|
-| contracts/questionnaire | 2025-08-09        | 2025-08-09       |
-| contracts/zama-fhe      | 2025-08-09        | 2025-08-09       |
-| frontend                | 2025-08-09        | 2025-08-09       |
-| frontend_legacy         | 2025-08-09        | 2025-08-09       |
-
-> **Note:** Dates above reflect when these components were imported into the monorepo.  
-> The actual development of some components may have started much earlier, as seen in their individual commit history.
-
 ## Purpose of Keeping Legacy Code
 
 - **Historical transparency** — Shows how the platform evolved from early experiments to the current architecture.
