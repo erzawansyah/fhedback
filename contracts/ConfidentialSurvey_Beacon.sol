@@ -5,14 +5,14 @@ import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
 /**
  * @title ConfidentialSurvey_Beacon
- * @dev Beacon contract yang mengelola implementasi ConfidentialSurvey
- * @notice Kontrak ini berfungsi sebagai registry untuk implementasi terbaru dari ConfidentialSurvey
+ * @dev Beacon contract that manages the implementation of ConfidentialSurvey
+ * @notice This contract serves as a registry for the latest implementation of ConfidentialSurvey
  */
 contract ConfidentialSurvey_Beacon is UpgradeableBeacon {
     /**
-     * @dev Event yang dipancarkan ketika implementasi diupgrade
-     * @param previousImplementation Alamat implementasi sebelumnya
-     * @param newImplementation Alamat implementasi yang baru
+     * @dev Event emitted when the implementation is upgraded
+     * @param previousImplementation Address of the previous implementation
+     * @param newImplementation Address of the new implementation
      */
     event ImplementationUpgraded(
         address indexed previousImplementation,
@@ -20,9 +20,9 @@ contract ConfidentialSurvey_Beacon is UpgradeableBeacon {
     );
 
     /**
-     * @dev Constructor untuk menginisialisasi beacon dengan implementasi awal
-     * @param _implementation Alamat kontrak implementasi ConfidentialSurvey
-     * @param _owner Alamat yang akan menjadi owner dari beacon ini
+     * @dev Constructor to initialize the beacon with the initial implementation
+     * @param _implementation Address of the ConfidentialSurvey implementation contract
+     * @param _owner Address that will be the owner of this beacon
      */
     constructor(
         address _implementation,
@@ -35,10 +35,10 @@ contract ConfidentialSurvey_Beacon is UpgradeableBeacon {
     }
 
     /**
-     * @dev Mengupgrade implementasi ke versi yang baru
-     * @param _newImplementation Alamat kontrak implementasi yang baru
-     * @notice Hanya owner yang dapat melakukan upgrade
-     * @notice Semua BeaconProxy yang menggunakan beacon ini akan otomatis menggunakan implementasi baru
+     * @dev Upgrade the implementation to a new version
+     * @param _newImplementation Address of the new implementation contract
+     * @notice Only the owner can perform the upgrade
+     * @notice All BeaconProxy contracts using this beacon will automatically use the new implementation
      */
     function upgradeImplementation(
         address _newImplementation
@@ -49,8 +49,8 @@ contract ConfidentialSurvey_Beacon is UpgradeableBeacon {
     }
 
     /**
-     * @dev Mendapatkan alamat implementasi saat ini
-     * @return Alamat kontrak implementasi yang sedang aktif
+     * @dev Get the current implementation address
+     * @return Address of the currently active implementation contract
      */
     function getImplementation() external view returns (address) {
         return implementation();

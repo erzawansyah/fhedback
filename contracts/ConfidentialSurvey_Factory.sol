@@ -8,34 +8,34 @@ import "./ConfidentialSurvey_Beacon.sol";
 
 /**
  * @title ConfidentialSurvey_Factory
- * @dev Factory contract untuk membuat instance ConfidentialSurvey menggunakan BeaconProxy pattern
- * @notice Kontrak ini memungkinkan pembuatan survey yang dapat diupgrade melalui beacon
+ * @dev Factory contract to create ConfidentialSurvey instances using the BeaconProxy pattern
+ * @notice This contract enables creation of surveys that can be upgraded via beacon
  */
 contract ConfidentialSurvey_Factory is Ownable, ReentrancyGuard {
-    /// @dev Address dari beacon contract
+    /// @dev Address of the beacon contract
     ConfidentialSurvey_Beacon public immutable beacon;
 
-    /// @dev Counter untuk total survey yang telah dibuat
+    /// @dev Counter for total surveys created
     uint256 public totalSurveys;
 
-    /// @dev Mapping dari survey ID ke alamat proxy contract
+    /// @dev Mapping from survey ID to proxy contract address
     mapping(uint256 => address) public surveys;
 
-    /// @dev Mapping dari alamat owner ke array survey ID yang dimiliki
+    /// @dev Mapping from owner address to array of owned survey IDs
     mapping(address => uint256[]) public ownerSurveys;
 
-    /// @dev Mapping dari alamat proxy ke survey ID
+    /// @dev Mapping from proxy address to survey ID
     mapping(address => uint256) public surveyIds;
 
-    /// @dev Array semua alamat survey untuk enumerasi
+    /// @dev Array of all survey addresses for enumeration
     address[] public allSurveys;
 
     /**
-     * @dev Event yang dipancarkan ketika survey baru dibuat
-     * @param surveyId ID unik dari survey
-     * @param proxy Alamat BeaconProxy untuk survey
-     * @param owner Alamat owner survey
-     * @param symbol Symbol survey
+     * @dev Event emitted when a new survey is created
+     * @param surveyId Unique ID of the survey
+     * @param proxy BeaconProxy address for the survey
+     * @param owner Owner address of the survey
+     * @param symbol Survey symbol
      */
     event SurveyCreated(
         uint256 indexed surveyId,
@@ -45,9 +45,9 @@ contract ConfidentialSurvey_Factory is Ownable, ReentrancyGuard {
     );
 
     /**
-     * @dev Constructor factory
-     * @param _beacon Alamat beacon contract yang akan digunakan
-     * @param _owner Alamat yang akan menjadi owner factory
+     * @dev Factory constructor
+     * @param _beacon Address of the beacon contract to use
+     * @param _owner Address to be set as the factory owner
      */
     constructor(address _beacon, address _owner) Ownable(_owner) {
         require(_beacon != address(0), "Beacon cannot be zero address");
@@ -55,15 +55,15 @@ contract ConfidentialSurvey_Factory is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Membuat survey baru menggunakan BeaconProxy
-     * @param _owner Address yang akan menjadi owner survey
-     * @param _symbol Symbol untuk survey (Required. Max 10 characters)
-     * @param _metadataCID IPFS CID berisi metadata survey
-     * @param _questionsCID IPFS CID berisi pertanyaan survey
-     * @param _totalQuestions Total jumlah pertanyaan dalam survey
-     * @param _respondentLimit Maksimum jumlah responden yang diizinkan (1-1000)
-     * @return surveyId ID unik survey yang baru dibuat
-     * @return proxy Alamat BeaconProxy untuk survey yang baru dibuat
+     * @dev Creates a new survey using BeaconProxy
+     * @param _owner Address to be set as the survey owner
+     * @param _symbol Symbol for the survey (Required. Max 10 characters)
+     * @param _metadataCID IPFS CID containing survey metadata
+     * @param _questionsCID IPFS CID containing survey questions
+     * @param _totalQuestions Total number of questions in the survey
+     * @param _respondentLimit Maximum number of allowed respondents (1-1000)
+     * @return surveyId Unique ID of the newly created survey
+     * @return proxy BeaconProxy address for the newly created survey
      */
     function createSurvey(
         address _owner,
@@ -77,7 +77,7 @@ contract ConfidentialSurvey_Factory is Ownable, ReentrancyGuard {
 
         surveyId = totalSurveys++;
 
-        // Encode data untuk initialize function
+        // Encode data for initialize function
         bytes memory initData = abi.encodeWithSignature(
             "initialize(address,string,string,string,uint256,uint256)",
             _owner,
@@ -101,9 +101,9 @@ contract ConfidentialSurvey_Factory is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Mendapatkan semua survey yang dimiliki oleh owner tertentu
-     * @param _owner Alamat owner
-     * @return Array berisi ID survey yang dimiliki owner
+     * @dev Gets all surveys owned by a specific owner
+     * @param _owner Owner address
+     * @return Array of survey IDs owned by the owner
      */
     function getSurveysByOwner(
         address _owner
@@ -112,9 +112,9 @@ contract ConfidentialSurvey_Factory is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Mendapatkan alamat proxy dari survey ID
-     * @param _surveyId ID survey
-     * @return Alamat proxy contract survey
+     * @dev Gets the proxy address for a given survey ID
+     * @param _surveyId Survey ID
+     * @return Proxy contract address of the survey
      */
     function getSurveyAddress(
         uint256 _surveyId
@@ -123,42 +123,42 @@ contract ConfidentialSurvey_Factory is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Mendapatkan survey ID dari alamat proxy
-     * @param _proxy Alamat proxy contract
-     * @return ID survey
+     * @dev Gets the survey ID for a given proxy address
+     * @param _proxy Proxy contract address
+     * @return Survey ID
      */
     function getSurveyId(address _proxy) external view returns (uint256) {
         return surveyIds[_proxy];
     }
 
     /**
-     * @dev Mendapatkan semua alamat survey yang pernah dibuat
-     * @return Array berisi semua alamat survey
+     * @dev Gets all survey addresses ever created
+     * @return Array of all survey addresses
      */
     function getAllSurveys() external view returns (address[] memory) {
         return allSurveys;
     }
 
     /**
-     * @dev Mendapatkan alamat beacon yang digunakan
-     * @return Alamat beacon contract
+     * @dev Gets the beacon address in use
+     * @return Beacon contract address
      */
     function getBeacon() external view returns (address) {
         return address(beacon);
     }
 
     /**
-     * @dev Mendapatkan alamat implementasi saat ini dari beacon
-     * @return Alamat implementasi yang sedang aktif
+     * @dev Gets the current implementation address from the beacon
+     * @return Currently active implementation address
      */
     function getCurrentImplementation() external view returns (address) {
         return beacon.implementation();
     }
 
     /**
-     * @dev Mendapatkan jumlah survey yang dimiliki owner tertentu
-     * @param _owner Alamat owner
-     * @return Jumlah survey
+     * @dev Gets the number of surveys owned by a specific owner
+     * @param _owner Owner address
+     * @return Number of surveys
      */
     function getSurveyCountByOwner(
         address _owner
@@ -167,13 +167,35 @@ contract ConfidentialSurvey_Factory is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @dev Mengecek apakah alamat adalah survey yang valid
-     * @param _proxy Alamat yang akan dicek
-     * @return true jika alamat adalah survey yang valid
+     * @dev Checks if an address is a valid survey
+     * @param _proxy Address to check
+     * @return true if the address is a valid survey
      */
     function isValidSurvey(address _proxy) external view returns (bool) {
         return
             surveyIds[_proxy] < totalSurveys &&
             surveys[surveyIds[_proxy]] == _proxy;
+    }
+
+    /**
+     * @dev Query the latest survey created with pagination and offset. Max limit per query is 50
+     * @param _offset Offset for pagination
+     * @param _limit Limit for pagination
+     * @return Array of survey IDs and a flag indicating if there is a next page
+     */
+    function queryLatestSurveys(
+        uint256 _offset,
+        uint256 _limit
+    ) external view returns (uint256[] memory, bool) {
+        require(_offset < totalSurveys, "Invalid offset");
+        require(_limit > 0 && _limit <= 50, "Limit must be between 1 and 50");
+        uint256 end = _offset + _limit > totalSurveys
+            ? totalSurveys
+            : _offset + _limit;
+        uint256[] memory result = new uint256[](end - _offset);
+        for (uint256 i = _offset; i < end; i++) {
+            result[i - _offset] = ownerSurveys[allSurveys[i]].length;
+        }
+        return (result, end < totalSurveys);
     }
 }
