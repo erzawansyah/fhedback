@@ -1,9 +1,0 @@
-// .vscode/settings.json
-{
-    "files.exclude": {
-        "_legacy": true
-    },
-    "search.exclude": {
-        "_legacy": true
-    }
-}
