@@ -1,22 +1,23 @@
-# FHEVM Questionnaire Contracts
+# FHEdback Contracts
 
-This repository contains the smart contracts for a privacy-preserving questionnaire system powered by Zama's FHEVM on the Zama testnet.
+This repository contains the smart contracts for a FHEdback, Confidential Survey Platform powered by Zama's FHEVM.
 
 ## Overview
 
-A fully homomorphic encrypted questionnaire that keeps survey responses encrypted on-chain while allowing statistical computations such as average and standard deviation to be performed in a privacy-preserving manner.
+FHEdback is a confidential survey platform that leverages Zama's Fully Homomorphic Encryption (FHE) technology to ensure privacy and security for users while collecting valuable feedback. This allows for the processing of encrypted data without exposing the underlying information.
+
+### Features:
+- **Confidentiality**: All survey responses are encrypted, ensuring user privacy.
+- **Statistical Analysis**: Perform computations on encrypted data without decrypting it. (Coming Soon)
+- **User-Friendly**: Intuitive interface for both survey creators and respondents.
 
 ## Contracts
 
-- **QuestionnaireFactory**: Factory contract to deploy new questionnaires.
-- **Questionnaire**: Standard questionnaire contract without homomorphic encryption.
-- **FHEQuestionnaire**: Main FHE-powered questionnaire contract.
 
-## Initial Deployed Addresses (Sepolia Testnet)
 
-- **QuestionnaireFactory**: `0x411E6Ed15706e6873fD2410974CEdcF10fc5C19a`
-- **Questionnaire**: `0x8d24b4d9b092826fc197297228e0eed34a51a2db`
-- **FHEQuestionnaire**: `0x05d66455d1aa858e5216714a7eca6db291b5ecb1`
+- **Implementation Address** (_ConfidentialSurvey_): `0xc8d44fB79D9609D30AEb71f11761661d619beCB2`
+- **Factory Address** (_ConfidentialSurvey_Factory_): `0x9F06047fEB154c68a3f176e37941E3804BF3713D`
+
 
 ## Getting Started
 

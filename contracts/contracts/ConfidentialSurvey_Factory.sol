@@ -12,6 +12,10 @@ import "./ConfidentialSurvey_Beacon.sol";
  * @notice This contract enables creation of surveys that can be upgraded via beacon
  */
 contract ConfidentialSurvey_Factory is Ownable, ReentrancyGuard {
+    // -------------------------------------
+    // Storage
+    // -------------------------------------
+
     /// @dev Address of the beacon contract
     ConfidentialSurvey_Beacon public immutable beacon;
 
@@ -30,6 +34,10 @@ contract ConfidentialSurvey_Factory is Ownable, ReentrancyGuard {
     /// @dev Array of all survey addresses for enumeration
     address[] public allSurveys;
 
+    // -------------------------------------
+    // Events
+    // -------------------------------------
+
     /**
      * @dev Event emitted when a new survey is created
      * @param surveyId Unique ID of the survey
@@ -44,6 +52,9 @@ contract ConfidentialSurvey_Factory is Ownable, ReentrancyGuard {
         string symbol
     );
 
+    // -------------------------------------
+    // Constructor
+    // -------------------------------------
     /**
      * @dev Factory constructor
      * @param _beacon Address of the beacon contract to use
@@ -53,6 +64,10 @@ contract ConfidentialSurvey_Factory is Ownable, ReentrancyGuard {
         require(_beacon != address(0), "Beacon cannot be zero address");
         beacon = ConfidentialSurvey_Beacon(_beacon);
     }
+
+    // -------------------------------------
+    // Survey Creation
+    // -------------------------------------
 
     /**
      * @dev Creates a new survey using BeaconProxy
@@ -100,6 +115,10 @@ contract ConfidentialSurvey_Factory is Ownable, ReentrancyGuard {
         emit SurveyCreated(surveyId, proxy, _owner, _symbol);
     }
 
+    // -------------------------------------
+    // Survey Queries
+    // -------------------------------------
+
     /**
      * @dev Gets all surveys owned by a specific owner
      * @param _owner Owner address
@@ -140,6 +159,28 @@ contract ConfidentialSurvey_Factory is Ownable, ReentrancyGuard {
     }
 
     /**
+     * @dev Query the latest survey created with pagination and offset. Max limit per query is 50
+     * @param _offset Offset for pagination
+     * @param _limit Limit for pagination
+     * @return Array of survey IDs and a flag indicating if there is a next page
+     */
+    function queryLatestSurveys(
+        uint256 _offset,
+        uint256 _limit
+    ) external view returns (uint256[] memory, bool) {
+        require(_offset < totalSurveys, "Invalid offset");
+        require(_limit > 0 && _limit <= 50, "Limit must be between 1 and 50");
+        uint256 end = _offset + _limit > totalSurveys
+            ? totalSurveys
+            : _offset + _limit;
+        uint256[] memory result = new uint256[](end - _offset);
+        for (uint256 i = _offset; i < end; i++) {
+            result[i - _offset] = ownerSurveys[allSurveys[i]].length;
+        }
+        return (result, end < totalSurveys);
+    }
+
+    /**
      * @dev Gets the beacon address in use
      * @return Beacon contract address
      */
@@ -175,27 +216,5 @@ contract ConfidentialSurvey_Factory is Ownable, ReentrancyGuard {
         return
             surveyIds[_proxy] < totalSurveys &&
             surveys[surveyIds[_proxy]] == _proxy;
-    }
-
-    /**
-     * @dev Query the latest survey created with pagination and offset. Max limit per query is 50
-     * @param _offset Offset for pagination
-     * @param _limit Limit for pagination
-     * @return Array of survey IDs and a flag indicating if there is a next page
-     */
-    function queryLatestSurveys(
-        uint256 _offset,
-        uint256 _limit
-    ) external view returns (uint256[] memory, bool) {
-        require(_offset < totalSurveys, "Invalid offset");
-        require(_limit > 0 && _limit <= 50, "Limit must be between 1 and 50");
-        uint256 end = _offset + _limit > totalSurveys
-            ? totalSurveys
-            : _offset + _limit;
-        uint256[] memory result = new uint256[](end - _offset);
-        for (uint256 i = _offset; i < end; i++) {
-            result[i - _offset] = ownerSurveys[allSurveys[i]].length;
-        }
-        return (result, end < totalSurveys);
     }
 }
