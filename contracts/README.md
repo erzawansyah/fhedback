@@ -12,9 +12,15 @@ FHEdback is a confidential survey platform that leverages Zama's Fully Homomorph
 - **User-Friendly**: Intuitive interface for both survey creators and respondents.
 
 ## Contracts
-- **Implementation Address** (_ConfidentialSurvey_): `0xc8d44fB79D9609D30AEb71f11761661d619beCB2`
-- **Factory Address** (_ConfidentialSurvey_Factory_): `0x9F06047fEB154c68a3f176e37941E3804BF3713D`
+This repository contains the smart contracts for the FHEdback platform.
+📋 Contract Addresses:
+   ├─ ConfidentialSurvey Implementation: `0x4DcC0712DFf9D89808b70911571f38F94B6a27b0`
+   ├─ ConfidentialSurvey_Beacon: `0xed8B31AcBae5277bcf4Bc2D22A5FBc90848b89DA`
+   ├─ ConfidentialSurvey_Factory Implementation: `0x840173e84fb36ada68CEb7EdBbF1E0C0eb01f677`
+   ├─ ConfidentialSurvey_Factory Proxy: `0x94ffeb2bcBa5F58B4a0475721ED2a1304f3c37A3`
+   └─ ProxyAdmin: `0x525a4bd9C46Ab1Dd2193E23e177dDa63aCA7518A`
 
+Read the [deployment guide](./deploy/README.md) for detailed instructions.
 
 ## Getting Started
 
@@ -49,11 +55,4 @@ tasks/           # Hardhat tasks (e.g., account utilities)
 ```
 
 ## License
-
 MIT License
-
-## Contract Addresses
-
-- **ConfidentialSurvey Implementation**: https://sepolia.etherscan.io/address/0x4DcC0712DFf9D89808b70911571f38F94B6a27b0
-- **ConfidentialSurvey_Beacon**: https://sepolia.etherscan.io/address/0x53c4f990a52dFA045F2FfD288f6eeD22a26535C4
-- **ConfidentialSurvey_Factory**: https://sepolia.etherscan.io/address/0x529c50514302984b4edc239646B6775e0375B569
