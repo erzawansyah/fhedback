@@ -1,0 +1,26 @@
+{
+    "title": "Survey Title Example",
+    "description": "This is an example of a survey description that provides context and instructions for participants.",
+    "instructions": "Please answer all questions to the best of your ability.",
+    "category": "General Category",
+    "tags": [
+        "example",
+        "survey",
+        "metadata"
+    ],
+    "language": "en",
+    "targetAudience": [
+        {
+            "name": "Age",
+            "value": "18-24"
+        },
+        {
+            "name": "Location",
+            "value": "Global"
+        },
+        {
+            "name": "Gender",
+            "value": "All"
+        }
+    ]
+}

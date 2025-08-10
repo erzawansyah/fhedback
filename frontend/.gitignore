@@ -159,3 +159,7 @@ docs/build/
 
 # Supabase
 supabase/.temp/
+
+# Tanstack
+.tanstack/
+
