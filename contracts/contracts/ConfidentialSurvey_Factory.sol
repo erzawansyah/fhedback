@@ -2,8 +2,9 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./ConfidentialSurvey_Beacon.sol";
 
 /**
@@ -11,13 +12,17 @@ import "./ConfidentialSurvey_Beacon.sol";
  * @dev Factory contract to create ConfidentialSurvey instances using the BeaconProxy pattern
  * @notice This contract enables creation of surveys that can be upgraded via beacon
  */
-contract ConfidentialSurvey_Factory is Ownable, ReentrancyGuard {
+contract ConfidentialSurvey_Factory is
+    Initializable,
+    OwnableUpgradeable,
+    ReentrancyGuardUpgradeable
+{
     // -------------------------------------
     // Storage
     // -------------------------------------
 
     /// @dev Address of the beacon contract
-    ConfidentialSurvey_Beacon public immutable beacon;
+    ConfidentialSurvey_Beacon public beacon;
 
     /// @dev Counter for total surveys created
     uint256 public totalSurveys;
@@ -53,15 +58,26 @@ contract ConfidentialSurvey_Factory is Ownable, ReentrancyGuard {
     );
 
     // -------------------------------------
-    // Constructor
+    // Initializer
     // -------------------------------------
+
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
     /**
-     * @dev Factory constructor
+     * @dev Initializes the factory contract
      * @param _beacon Address of the beacon contract to use
      * @param _owner Address to be set as the factory owner
      */
-    constructor(address _beacon, address _owner) Ownable(_owner) {
+    function initialize(address _beacon, address _owner) public initializer {
         require(_beacon != address(0), "Beacon cannot be zero address");
+        require(_owner != address(0), "Owner cannot be zero address");
+
+        __Ownable_init(_owner);
+        __ReentrancyGuard_init();
+
         beacon = ConfidentialSurvey_Beacon(_beacon);
     }
 
