@@ -46,9 +46,10 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   console.log("\n🚀 Step 4: Deploying ProxyAdmin...");
   const proxyAdmin = await deploy("ProxyAdmin", {
     from: deployer,
-    args: [],
+    args: [deployer], // Pass deployer as initial owner
     log: true,
     waitConfirmations: 1,
+    contract: "contracts/ProxyAdmin.sol:ProxyAdmin", // Use fully qualified name
   });
   console.log(`✅ ProxyAdmin: ${proxyAdmin.address}`);
 
@@ -71,6 +72,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     ],
     log: true,
     waitConfirmations: 1,
+    contract:
+      "contracts/TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy", // Use fully qualified name
   });
   console.log(`✅ ConfidentialSurvey_Factory Proxy: ${factoryProxy.address}`);
 

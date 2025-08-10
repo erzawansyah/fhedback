@@ -2,72 +2,131 @@
 
 This directory contains deployment scripts for the FHEdback confidential survey system using Hardhat Deploy.
 
+## 🎯 Quick Deployment Commands
+
+### Deploy to Local Network (Hardhat)
+```bash
+# Deploy everything to local hardhat network
+npm run deploy:local
+
+# Or deploy step by step locally
+npm run deploy:survey-impl:local
+npm run deploy:survey-beacon:local
+npm run deploy:factory:local
+```
+
+### Deploy to Sepolia Testnet
+```bash
+# Deploy everything to Sepolia
+npm run deploy:sepolia
+
+# Or deploy step by step to Sepolia
+npm run deploy:survey-impl:sepolia
+npm run deploy:survey-beacon:sepolia
+npm run deploy:factory:sepolia
+```
+
+### Deploy to Default Network (from hardhat.config.ts)
+```bash
+# Deploy to default network (hardhat)
+npm run deploy
+```
+
 ## 🎯 What Do You Want To Do?
 
 ### If you want to **deploy everything from scratch**, do:
 ```bash
-npm run deploy
+# Local deployment
+npm run deploy:local
+
+# Sepolia deployment  
+npm run deploy:sepolia
 ```
 This runs `01_deploy_all.ts` which deploys the complete system in one go.
 
 ### If you want to **deploy step by step** (for debugging or learning), do:
 ```bash
 # Step 1: Deploy the survey contract template
-npm run deploy:survey-impl
+npm run deploy:survey-impl:local       # for local
+npm run deploy:survey-impl:sepolia     # for sepolia
 
 # Step 2: Deploy the beacon that points to the template
-npm run deploy:survey-beacon  
+npm run deploy:survey-beacon:local     # for local  
+npm run deploy:survey-beacon:sepolia   # for sepolia  
 
 # Step 3: Deploy the factory that creates surveys
-npm run deploy:factory
+npm run deploy:factory:local       # for local
+npm run deploy:factory:sepolia     # for sepolia
 ```
+
+## 🔄 Upgrade Commands
 
 ### If you want to **update the survey contract logic** (affects all existing surveys), do:
 ```bash
-npm run upgrade:survey-impl
+# Local upgrade
+npm run upgrade:survey-impl:local
+
+# Sepolia upgrade  
+npm run upgrade:survey-impl:sepolia
 ```
 This deploys a new survey implementation and updates the beacon.
 
 ### If you want to **update the factory contract logic** (keeps existing surveys unchanged), do:
 ```bash
-npm run upgrade:factory-impl
+# Local upgrade
+npm run upgrade:factory-impl:local
+
+# Sepolia upgrade
+npm run upgrade:factory-impl:sepolia
 ```
 This deploys a new factory implementation and updates the proxy.
 
+## 🧪 Testing Commands
+
 ### If you want to **test on local network first**, do:
 ```bash
-# Start local hardhat node
+# Start local hardhat node (in one terminal)
 npx hardhat node
 
 # In another terminal, deploy to localhost
-npm run deploy --network localhost
+npm run deploy:local
+
+# Or use specific localhost network
+npx hardhat deploy --network localhost --tags All
 ```
 
-### If you want to **deploy to testnet**, do:
+### Direct Hardhat Commands (Alternative)
 ```bash
-# Make sure you have .env configured with:
-# SEPOLIA_RPC_URL=your_rpc_url
-# PRIVATE_KEY=your_private_key
-
-npm run deploy --network sepolia
+# Deploy to specific networks directly
+npx hardhat deploy --network hardhat --tags All      # Local
+npx hardhat deploy --network sepolia --tags All      # Sepolia
+npx hardhat deploy --network localhost --tags All    # Local node
 ```
+
+## 🔍 Verification Commands
 
 ### If you want to **verify contracts on Etherscan**, do:
 ```bash
-# After deployment, verify each contract
+# After deployment to Sepolia, verify each contract
 npx hardhat verify --network sepolia <CONTRACT_ADDRESS>
+
+# For constructor arguments
+npx hardhat verify --network sepolia <CONTRACT_ADDRESS> "arg1" "arg2"
 ```
 
 ## 📁 Script Details
 
-| Script | When to Use | What It Does |
-|--------|-------------|--------------|
-| `01_deploy_all.ts` | First deployment or clean start | Deploys everything: implementation → beacon → factory proxy |
-| `02_deploy_survey_impl.ts` | Need just the survey template | Deploys ConfidentialSurvey implementation only |
-| `03_deploy_survey_beacon.ts` | Need the upgrade mechanism | Deploys beacon pointing to survey implementation |
-| `04_deploy_factory.ts` | Need the survey factory | Deploys factory implementation + proxy + admin |
-| `05_upgrade_survey_impl.ts` | Update survey logic | New implementation + beacon upgrade |
-| `06_upgrade_factory_impl.ts` | Update factory logic | New factory implementation + proxy upgrade |
+| Script | Command | When to Use | What It Does |
+|--------|---------|-------------|--------------|
+| **Complete Deployment** |
+| `01_deploy_all.ts` | `npm run deploy:local` <br> `npm run deploy:sepolia` | First deployment or clean start | Deploys everything: implementation → beacon → factory proxy |
+| **Step-by-step Deployment** |
+| `02_deploy_survey_impl.ts` | `npm run deploy:survey-impl:local` <br> `npm run deploy:survey-impl:sepolia` | Need just the survey template | Deploys ConfidentialSurvey implementation only |
+| `03_deploy_survey_beacon.ts` | `npm run deploy:survey-beacon:local` <br> `npm run deploy:survey-beacon:sepolia` | Need the upgrade mechanism | Deploys beacon pointing to survey implementation |
+| `04_deploy_factory.ts` | `npm run deploy:factory:local` <br> `npm run deploy:factory:sepolia` | Need the survey factory | Deploys factory implementation + proxy + admin |
+| **Upgrade Scripts** |
+| `05_upgrade_survey_impl.ts` | `npm run upgrade:survey-impl:local` <br> `npm run upgrade:survey-impl:sepolia` | Update survey logic | New implementation + beacon upgrade |
+| `06_upgrade_factory_impl.ts` | `npm run upgrade:factory-impl:local` <br> `npm run upgrade:factory-impl:sepolia` | Update factory logic | New factory implementation + proxy upgrade |
 
 ## 📋 Deployment Flow
 
