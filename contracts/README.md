@@ -12,9 +12,6 @@ FHEdback is a confidential survey platform that leverages Zama's Fully Homomorph
 - **User-Friendly**: Intuitive interface for both survey creators and respondents.
 
 ## Contracts
-
-
-
 - **Implementation Address** (_ConfidentialSurvey_): `0xc8d44fB79D9609D30AEb71f11761661d619beCB2`
 - **Factory Address** (_ConfidentialSurvey_Factory_): `0x9F06047fEB154c68a3f176e37941E3804BF3713D`
 
