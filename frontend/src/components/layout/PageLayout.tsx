@@ -1,6 +1,10 @@
-const PageLayout = ({ children }: { children: React.ReactNode }) => {
+import { cn } from "../../utils";
+
+const PageLayout = ({ children, className }
+    :
+    { children: React.ReactNode, className?: string }) => {
     return (
-        <main className="container max-w-7xl mx-auto p-8 space-y-8">
+        <main className={cn('container max-w-7xl mx-auto p-8 space-y-8', className)}>
             {children}
         </main>
     );

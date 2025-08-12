@@ -56,7 +56,7 @@ const Section: React.FC<SectionProps> = ({
         return (
             <div
                 id={title ? title.toLowerCase().replace(/\s+/g, '-') : undefined}
-                className={cn("space-y-4", className)}
+                className="space-y-4"
                 data-slot="page-section"
             >
                 {hasHeader && (
@@ -69,7 +69,7 @@ const Section: React.FC<SectionProps> = ({
                         )}
                     </div>
                 )}
-                <div>
+                <div className={cn("space-y-4", className)}>
                     {children}
                 </div>
             </div>
@@ -79,13 +79,13 @@ const Section: React.FC<SectionProps> = ({
     return (
         <Card
             id={title ? title.toLowerCase().replace(/\s+/g, '-') : undefined}
-            className={cn(variantStyles, className)}
+            className={cn(variantStyles)}
             data-slot="page-section"
         >
             {hasHeader && (
                 <SectionHeader title={title} description={description} />
             )}
-            <CardContent>
+            <CardContent className={cn(className)}>
                 {children}
             </CardContent>
         </Card>

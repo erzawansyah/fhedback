@@ -1,10 +1,11 @@
 import { createRouter, RouterProvider } from '@tanstack/react-router'
 import { routeTree } from '@/routeTree.gen'
+import NotFound from './components/layout/NotFound'
 
 // Create a new router instance
 const router = createRouter({
   routeTree,
-  defaultNotFoundComponent: () => <div className='text-center p-24'>Page Not Found</div>
+  defaultNotFoundComponent: () => <NotFound />
 })
 
 // Register the router instance for type safety
