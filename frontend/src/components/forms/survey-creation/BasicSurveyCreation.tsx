@@ -1,4 +1,4 @@
-import { type UseFormReturn } from "react-hook-form";
+import { type Control, type UseFormReturn } from "react-hook-form";
 import type { FormIn, FormOut } from "@/utils/survey-creation";
 import { Form } from "@/components/ui/form";
 import { Button } from "../../ui/button";
@@ -11,12 +11,26 @@ import NumberInput from "../elements/NumberInput";
 import ArrayTextInput from "../elements/ArrayTextInput";
 
 
+type GlobalExtras = {
+    global: {
+        type: "scale" | "nominal";
+        maxScore: number;
+        minLabel?: string;
+        maxLabel?: string;
+        nominalLabels?: string[];
+    };
+};
+type FormInUI = FormIn & GlobalExtras;
+
 export default function BasicSurveyCreation({
     form, handleSubmit
 }: {
     form: UseFormReturn<FormIn>;
     handleSubmit: (values: FormOut) => Promise<void>
 }) {
+
+
+    const controlUI = form.control as unknown as Control<FormInUI>;
 
     const {
         control,
@@ -60,8 +74,6 @@ export default function BasicSurveyCreation({
                             step={5}
                             required
                         />
-
-
                     </div>
 
                     {/* Survey Title */}
@@ -74,6 +86,7 @@ export default function BasicSurveyCreation({
                         tooltip="This title will be displayed to respondents."
                         required
                     />
+
                     <TextAreaInput
                         control={control}
                         name="metadata.description"
@@ -85,8 +98,17 @@ export default function BasicSurveyCreation({
                         rows={2}
                     />
 
+                    <TextAreaInput
+                        control={control}
+                        name="metadata.instructions"
+                        label="Instructions"
+                        description="Guidance for respondents"
+                        placeholder="Tell respondents how to answer"
+                        required
+                        rows={2}
+                    />
 
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                         <SelectInput
                             control={control}
                             name="metadata.category"
@@ -100,7 +122,18 @@ export default function BasicSurveyCreation({
 
                         <SelectInput
                             control={control}
-                            name="questions.1.type"
+                            name="metadata.language"
+                            label="Survey Language"
+                            description="The primary language of your survey"
+                            options={["EN", "ID", "ES", "FR", "DE"]}
+                            placeholder="Select language"
+                            tooltip="Choose the language that your survey will be presented in."
+                            required
+                        />
+
+                        <SelectInput
+                            control={controlUI}
+                            name="global.type" // Ini harus diganti nantinya, karena nilai pada input ini akan disimpan ke setiap type di item pada questions
                             label="Question Type"
                             description="The type of question being asked"
                             options={["scale", "nominal"]}
@@ -109,14 +142,16 @@ export default function BasicSurveyCreation({
                             required
                         />
 
-                        <SelectInput
-                            control={control}
-                            name="metadata.language"
-                            label="Survey Language"
-                            description="The primary language of your survey"
-                            options={["en", "id", "es", "fr", "de"]}
-                            placeholder="Select language"
-                            tooltip="Choose the language that your survey will be presented in."
+                        <NumberInput
+                            control={controlUI}
+                            name="global.maxScore" // Ini harus diganti nantinya, karena harusnya ke questions.1.response.maxScore tapi pada setiap item
+                            label="Scale Limit"
+                            description="The maximum value for the scale question"
+                            placeholder="Ex: 5"
+                            tooltip="Set a limit to control the maximum value for the scale question."
+                            min={1}
+                            max={100}
+                            step={5}
                             required
                         />
                     </div>

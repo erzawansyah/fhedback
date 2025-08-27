@@ -11,6 +11,8 @@ export const SURVEY_CATEGORY_VALUES = [
   "user_experience",
   "market_research",
   "academic_research",
+  "event_feedback",
+  "psychological_assessment",
   "other",
 ] as const;
 
@@ -168,6 +170,7 @@ export const SurveySubmissionSchema = z.object({
   metadata: SurveyMetadataSchema,
   questions: z.array(SurveySubmissionQuestionSchema),
 });
+
 
 
 /* -----------------------------------------

@@ -11,7 +11,7 @@ export default function HelperText({
             <TooltipTrigger asChild>
                 <HelpCircle className="text-muted-foreground w-3 h-3 ml-2" />
             </TooltipTrigger>
-            <TooltipContent side="right" aria-label={text}>
+            <TooltipContent className="max-w-md" side="bottom" aria-label={text}>
                 <p className="text-xs">{text}</p>
             </TooltipContent>
         </Tooltip>

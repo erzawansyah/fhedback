@@ -1,5 +1,5 @@
 import type z from "zod";
-import type { SurveySubmissionSchema } from "../../types/survey.schema";
+import type {   SurveySubmissionSchema } from "../../types/survey.schema";
 
 /** Tipe form = INPUT TYPE dari Zod (mengizinkan undefined untuk field ber-default) */
 export type FormIn = z.input<typeof SurveySubmissionSchema>;

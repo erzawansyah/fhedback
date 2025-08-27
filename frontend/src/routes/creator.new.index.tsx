@@ -44,16 +44,14 @@ function CreateSurveyPage() {
                 titleIcon={<FileTextIcon />}
                 hideAction
             />
-            <PlainBox>
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h2 className="text-lg font-semibold">Advanced Mode</h2>
-                        <p className="text-sm text-muted-foreground">
-                            Enable advanced features for survey creation.
-                        </p>
-                    </div>
-                    <Switch checked={isAdvancedMode} onCheckedChange={toggleAdvancedMode} />
+            <PlainBox className="flex justify-between items-center">
+                <div>
+                    <h2 className="text-lg font-semibold">Advanced Mode</h2>
+                    <p className="text-sm text-muted-foreground">
+                        Enable advanced features for survey creation.
+                    </p>
                 </div>
+                <Switch checked={isAdvancedMode} onCheckedChange={toggleAdvancedMode} />
             </PlainBox>
             {
                 isAdvancedMode ? (

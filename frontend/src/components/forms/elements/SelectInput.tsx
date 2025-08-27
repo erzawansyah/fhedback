@@ -1,12 +1,21 @@
-import type { Control } from "react-hook-form"
-import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import type { FormIn } from "@/utils/survey-creation"
+// SelectInput.tsx
+import { type Control, type FieldPath, type FieldValues, useController } from "react-hook-form";
+import { FormControl, FormDescription, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import HelperText from "./HelperText";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 
-import type { Path } from "react-hook-form"
-import HelperText from "./HelperText"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select"
+type SelectInputProps<T extends FieldValues> = {
+    control: Control<T>;
+    name: FieldPath<T>;
+    label?: string;
+    description?: string;
+    options: readonly string[] | string[];
+    placeholder?: string;
+    tooltip?: string;
+    required?: boolean;
+};
 
-export default function SelectInput({
+export default function SelectInput<T extends FieldValues>({
     control,
     name,
     label,
@@ -15,68 +24,56 @@ export default function SelectInput({
     placeholder,
     tooltip,
     required,
-}: {
-    control: Control<FormIn>
-    name: Path<FormIn>
-    label?: string
-    description?: string
-    options: readonly string[]
-    placeholder?: string
-    tooltip?: string
-    required?: boolean
-}) {
-    const defaultLabel = name.charAt(0).toUpperCase() + name.slice(1).replace(/([A-Z])/g, ' $1').trim()
-    const inputName: Path<FormIn> = name
+}: SelectInputProps<T>) {
+    const { field } = useController({ control, name });
 
-
+    const defaultLabel = String(name)
+        .replace(/\.(\d+)\./g, " [$1] ") // rapikan indeks array
+        .replace(/\./g, " ")
+        .replace(/([A-Z])/g, " $1")
+        .replace(/\b\w/g, l => l.toUpperCase())
+        .trim();
 
     return (
-        <FormField
-            control={control}
-            name={inputName}
-            render={({ field }) => (
-                <FormItem>
-                    <FormLabel asChild className="flex items-center">
-                        <div className="flex space-x-2">
-                            <h4>
-                                {label ?? defaultLabel}
-                                {
-                                    required && <span className="text-red-500 ml-1">*</span>
-                                }
-                            </h4>
-                            <FormMessage
-                                className="font-base italic text-xs"
-                            />
-                        </div>
-                    </FormLabel>
+        <FormItem>
+            <FormLabel asChild className="flex items-center">
+                <div className="flex space-x-2">
+                    <h4>
+                        {label ?? defaultLabel}
+                        {required && <span className="text-red-500 ml-1">*</span>}
+                    </h4>
+                    {/* Pesan error singkat di label, opsional */}
+                    <FormMessage className="font-base italic text-xs" />
+                </div>
+            </FormLabel>
 
-                    <FormControl>
-                        <Select
-                            onValueChange={field.onChange}
-                        >
-                            <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder={placeholder || "Select an option"} />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                <SelectItem disabled value="Select an option">
-                                    {placeholder || "Select an option"}
-                                </SelectItem>
-                                {options.map((option) => (
-                                    <SelectItem key={option} value={option}>
-                                        {option.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </FormControl>
-                    <FormDescription className="text-xs italic text-subtle flex items-center">
-                        {description}
-                        {tooltip && <HelperText text={tooltip} />}
-                    </FormDescription>
-                </FormItem>
-            )}
-        />
-    )
+            {/* Pola shadcn: Select di luar, FormControl hanya bungkus Trigger */}
+            <Select
+                onValueChange={field.onChange}
+                value={field.value ?? undefined}   // penting agar terkontrol
+                defaultValue={field.value ?? undefined}
+            >
+                <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder={placeholder || "Select an option"} />
+                    </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                    {options.map((opt) => (
+                        <SelectItem key={opt} value={opt}>
+                            {opt.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+
+            <FormDescription className="text-xs italic text-subtle flex items-center">
+                {description}
+                {tooltip && <HelperText text={tooltip} />}
+            </FormDescription>
+
+            {/* Pesan error utama di bawah field */}
+            <FormMessage />
+        </FormItem>
+    );
 }
