@@ -12,7 +12,7 @@ export default function HelperText({
                 <HelpCircle className="text-muted-foreground w-3 h-3 ml-2" />
             </TooltipTrigger>
             <TooltipContent className="max-w-md" side="bottom" aria-label={text}>
-                <p className="text-xs">{text}</p>
+                <span className="text-xs">{text}</span>
             </TooltipContent>
         </Tooltip>
     )

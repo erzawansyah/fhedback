@@ -53,7 +53,7 @@ export default function NumberInput<T extends FieldValues>({
             </FormLabel>
 
             <FormControl>
-                <>
+                <div>
                     {/* Hidden input disini */}
                     <input
                         type="hidden"
@@ -109,7 +109,7 @@ export default function NumberInput<T extends FieldValues>({
                             </Button>
                         </div>
                     </div>
-                </>
+                </div>
             </FormControl>
             <FormDescription className="text-xs italic text-subtle flex items-center">
                 {description}

@@ -9,6 +9,7 @@ import TextAreaInput from "../elements/TextAreaInput";
 import SelectInput from "../elements/SelectInput";
 import NumberInput from "../elements/NumberInput";
 import ArrayTextInput from "../elements/ArrayTextInput";
+import AddQuestions from "../elements/AddQuestions";
 
 
 type GlobalExtras = {
@@ -37,9 +38,19 @@ export default function BasicSurveyCreation({
     } = form;
 
     const onSubmit = form.handleSubmit(async (values: FormIn) => {
-        // Parse the values using the schema to get FormOut type
-        const parsed = SurveySubmissionSchema.parse(values) as FormOut;
-        await handleSubmit(parsed);
+        console.log("Form values before parsing:", values);
+
+        try {
+            // Parse the values using the schema to get FormOut type
+            const parsed = SurveySubmissionSchema.parse(values) as FormOut;
+            console.log("Parsed form values:", parsed);
+
+            await handleSubmit(parsed);
+        } catch (error) {
+            console.error("Form validation error:", error);
+        }
+    }, (errors) => {
+        console.error("Form submission errors:", errors);
     });
 
     return (
@@ -166,7 +177,18 @@ export default function BasicSurveyCreation({
                         required
                     />
                 </Section>
-                <Button type="submit">Create Survey</Button>
+                <Section
+                    title="Add Questions"
+                    description="Create and customize questions for your survey."
+                >
+                    <AddQuestions />
+                </Section>
+                <Button
+                    type="submit"
+                    onClick={() => console.log("Create Survey button clicked!")}
+                >
+                    Create Survey
+                </Button>
             </form>
         </Form>
     );
