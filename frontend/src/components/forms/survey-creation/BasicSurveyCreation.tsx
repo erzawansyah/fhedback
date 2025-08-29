@@ -23,34 +23,90 @@ type GlobalExtras = {
 };
 type FormInUI = FormIn & GlobalExtras;
 
-export default function BasicSurveyCreation({
-    form, handleSubmit
-}: {
+export default function BasicSurveyCreation(props: {
     form: UseFormReturn<FormIn>;
-    handleSubmit: (values: FormOut) => Promise<void>
+    handleSubmit: (values: FormOut) => Promise<void>;
 }) {
+    const { form, handleSubmit } = props;
 
 
     const controlUI = form.control as unknown as Control<FormInUI>;
 
     const {
         control,
+        watch,
     } = form;
 
+    // Watch global type to show/hide relevant fields
+    const globalType = watch("global.type" as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
     const onSubmit = form.handleSubmit(async (values: FormIn) => {
+        console.log("🚀 onSubmit function called!");
         console.log("Form values before parsing:", values);
+        console.log("Questions in form:", values.questions);
+        console.log("Number of questions:", values.questions?.length || 0);
+
+        // Get global settings from UI form
+        const globalData = form.getValues() as unknown as FormInUI;
+        const globalSettings = globalData.global;
+
+        console.log("Global settings:", globalSettings);
+
+        // Apply global settings to all questions
+        const processedValues = {
+            ...values,
+            questions: values.questions?.map(question => {
+                if (globalSettings?.type === "scale") {
+                    return {
+                        text: question.text,
+                        helperText: question.helperText,
+                        type: "scale" as const,
+                        minScore: 1,
+                        maxScore: globalSettings.maxScore || 5,
+                        minLabel: globalSettings.minLabel || "",
+                        maxLabel: globalSettings.maxLabel || "",
+                    };
+                } else {
+                    // For nominal questions
+                    const labels = globalSettings?.nominalLabels && globalSettings.nominalLabels.length > 0
+                        ? globalSettings.nominalLabels.map((label, i) => ({ id: i + 1, text: label }))
+                        : Array.from({ length: globalSettings?.maxScore || 4 }, (_, i) => ({
+                            id: i + 1,
+                            text: `Option ${i + 1}`,
+                        }));
+
+                    return {
+                        text: question.text,
+                        helperText: question.helperText,
+                        type: "nominal" as const,
+                        minScore: 1,
+                        maxScore: globalSettings?.maxScore || 4,
+                        labels,
+                    };
+                }
+            }) || [],
+        };
+
+        console.log("Processed values with global settings:", processedValues);
 
         try {
-            // Parse the values using the schema to get FormOut type
-            const parsed = SurveySubmissionSchema.parse(values) as FormOut;
+            // Parse the processed values using the schema to get FormOut type
+            const parsed = SurveySubmissionSchema.parse(processedValues) as FormOut;
             console.log("Parsed form values:", parsed);
 
             await handleSubmit(parsed);
         } catch (error) {
             console.error("Form validation error:", error);
+            if (error instanceof Error) {
+                console.error("Error details:", error.message);
+            }
         }
     }, (errors) => {
-        console.error("Form submission errors:", errors);
+        console.error("❌ Form submission errors:", errors);
+        console.error("Full error object:", JSON.stringify(errors, null, 2));
+        if (errors.questions) {
+            console.error("Questions errors:", errors.questions);
+        }
     });
 
     return (
@@ -109,16 +165,6 @@ export default function BasicSurveyCreation({
                         rows={2}
                     />
 
-                    <TextAreaInput
-                        control={control}
-                        name="metadata.instructions"
-                        label="Instructions"
-                        description="Guidance for respondents"
-                        placeholder="Tell respondents how to answer"
-                        required
-                        rows={2}
-                    />
-
                     <div className="grid grid-cols-2 gap-4">
                         <SelectInput
                             control={control}
@@ -156,16 +202,52 @@ export default function BasicSurveyCreation({
                         <NumberInput
                             control={controlUI}
                             name="global.maxScore" // Ini harus diganti nantinya, karena harusnya ke questions.1.response.maxScore tapi pada setiap item
-                            label="Scale Limit"
-                            description="The maximum value for the scale question"
+                            label={globalType === "scale" ? "Scale Limit" : "Number of Options"}
+                            description={globalType === "scale" ? "The maximum value for the scale question" : "The number of options for nominal questions"}
                             placeholder="Ex: 5"
-                            tooltip="Set a limit to control the maximum value for the scale question."
-                            min={1}
-                            max={100}
-                            step={5}
+                            tooltip={globalType === "scale" ? "Set a limit to control the maximum value for the scale question." : "Set the number of options available for nominal questions."}
+                            min={2}
+                            max={10}
+                            step={1}
                             required
                         />
                     </div>
+
+
+                    {/* Scale-specific fields - only show when scale is selected */}
+                    {globalType === "scale" && (
+                        <div className="grid grid-cols-2 gap-4">
+                            <TextInput
+                                control={controlUI}
+                                name="global.minLabel"
+                                label="Min Label (Scale)"
+                                description="Label for the minimum value"
+                                placeholder="Ex: Strongly Disagree"
+                                tooltip="This label will appear for the lowest score in scale questions."
+                            />
+
+                            <TextInput
+                                control={controlUI}
+                                name="global.maxLabel"
+                                label="Max Label (Scale)"
+                                description="Label for the maximum value"
+                                placeholder="Ex: Strongly Agree"
+                                tooltip="This label will appear for the highest score in scale questions."
+                            />
+                        </div>
+                    )}
+
+                    {/* Nominal-specific fields */}
+                    {globalType === "nominal" && (
+                        <ArrayTextInput
+                            control={controlUI}
+                            name="global.nominalLabels"
+                            label="Answer Options (Nominal)"
+                            description="Available options for nominal questions separated by comma"
+                            placeholder="Option 1, Option 2, Option 3"
+                            tooltip="These options will be used for all nominal questions in this survey."
+                        />
+                    )}
 
                     <ArrayTextInput
                         control={control}
@@ -176,6 +258,18 @@ export default function BasicSurveyCreation({
                         tooltip="Add relevant tags to your survey for better organization."
                         required
                     />
+
+
+                    <TextAreaInput
+                        control={control}
+                        name="metadata.instructions"
+                        label="Instructions"
+                        description="Guidance for respondents"
+                        placeholder="Tell respondents how to answer"
+                        required
+                        rows={2}
+                    />
+                    
                 </Section>
                 <Section
                     title="Add Questions"
@@ -185,7 +279,13 @@ export default function BasicSurveyCreation({
                 </Section>
                 <Button
                     type="submit"
-                    onClick={() => console.log("Create Survey button clicked!")}
+                    onClick={() => {
+                        console.log("🔥 Create Survey button clicked!");
+                        console.log("Form values at click:", form.getValues());
+                        console.log("Form errors:", form.formState.errors);
+                        console.log("Form is valid:", form.formState.isValid);
+                        console.log("Form is submitting:", form.formState.isSubmitting);
+                    }}
                 >
                     Create Survey
                 </Button>
