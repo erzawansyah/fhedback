@@ -67,10 +67,16 @@ export default function SelectInput<T extends FieldValues>({
                 </SelectContent>
             </Select>
 
-            <FormDescription className="text-xs italic text-subtle flex items-center">
-                {description}
-                {tooltip && <HelperText text={tooltip} />}
-            </FormDescription>
+            {(description || tooltip) && (
+                <div className="flex items-center gap-1">
+                    {description && (
+                        <FormDescription className="text-xs italic text-subtle">
+                            {description}
+                        </FormDescription>
+                    )}
+                    {tooltip && <HelperText text={tooltip} />}
+                </div>
+            )}
 
             {/* Pesan error utama di bawah field */}
             <FormMessage />

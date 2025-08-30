@@ -87,26 +87,21 @@ export default function BasicSurveyCreation(props: {
             }) || [],
         };
 
-        console.log("Processed values with global settings:", processedValues);
 
         try {
             // Parse the processed values using the schema to get FormOut type
             const parsed = SurveySubmissionSchema.parse(processedValues) as FormOut;
-            console.log("Parsed form values:", parsed);
-
             await handleSubmit(parsed);
         } catch (error) {
-            console.error("Form validation error:", error);
             if (error instanceof Error) {
                 console.error("Error details:", error.message);
+            } else {
+                console.error("Form validation error:", error);
             }
         }
     }, (errors) => {
         console.error("❌ Form submission errors:", errors);
         console.error("Full error object:", JSON.stringify(errors, null, 2));
-        if (errors.questions) {
-            console.error("Questions errors:", errors.questions);
-        }
     });
 
     return (
@@ -269,7 +264,7 @@ export default function BasicSurveyCreation(props: {
                         required
                         rows={2}
                     />
-                    
+
                 </Section>
                 <Section
                     title="Add Questions"
@@ -279,13 +274,6 @@ export default function BasicSurveyCreation(props: {
                 </Section>
                 <Button
                     type="submit"
-                    onClick={() => {
-                        console.log("🔥 Create Survey button clicked!");
-                        console.log("Form values at click:", form.getValues());
-                        console.log("Form errors:", form.formState.errors);
-                        console.log("Form is valid:", form.formState.isValid);
-                        console.log("Form is submitting:", form.formState.isSubmitting);
-                    }}
                 >
                     Create Survey
                 </Button>

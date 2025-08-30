@@ -89,10 +89,12 @@ export default function ArrayTextInput<T extends FieldValues>({
                     />
                 </div>
             </FormControl>
-            <FormDescription className="text-xs italic text-subtle flex items-center">
-                {description || "Separate multiple items with commas"}
+            <div className="flex items-center gap-1">
+                <FormDescription className="text-xs italic text-subtle">
+                    {description || "Separate multiple items with commas"}
+                </FormDescription>
                 {tooltip && <HelperText text={tooltip} />}
-            </FormDescription>
+            </div>
 
             {/* Pesan error utama di bawah field */}
             <FormMessage />

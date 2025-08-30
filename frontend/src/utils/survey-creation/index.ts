@@ -40,7 +40,7 @@ export function makeDefaultValues(): FormIn {
             instructions: "Please answer all questions honestly",
             category: "product_feedback",
             // tags: undefined,           // biarkan schema default []
-            language: "en",
+            language: "EN",
             // targetAudience: undefined, // biarkan schema default []
         },
         questions: [defaultScale(5), defaultNominal(3)],

@@ -84,21 +84,19 @@ const ScalePreview: FC<ScalePreviewProps> = ({
     globalMaxLabel
 }) => (
     <div className="space-y-3">
-        {(globalMinLabel || globalMaxLabel) && (
-            <div className="flex justify-between text-xs font-medium text-gray-600">
-                <span>{globalMinLabel || "1"}</span>
-                <span>{globalMaxLabel || globalMaxScore}</span>
-            </div>
-        )}
-        <div className="flex gap-3 justify-center">
-            {Array.from({ length: globalMaxScore || 5 }, (_, i) => (
-                <div key={i + 1} className="flex flex-col items-center gap-2">
-                    <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white flex items-center justify-center">
-                        <div className="w-2 h-2 rounded-full bg-gray-200"></div>
+        <div className="flex justify-between text-sm font-medium text-subtle italic">
+            <span className="font-base">{globalMinLabel || "1"}</span>
+            <div className="flex gap-3 justify-evenly">
+                {Array.from({ length: globalMaxScore || 5 }, (_, i) => (
+                    <div key={i + 1} className="flex flex-col items-center gap-2">
+                        <div className="w-5 h-5 rounded-full border-2 border-gray-300 bg-white flex items-center justify-center">
+                            <div className="w-2 h-2 rounded-full bg-gray-200"></div>
+                        </div>
+                        <span className="text-xs font-medium text-gray-500">{i + 1}</span>
                     </div>
-                    <span className="text-xs font-medium text-gray-500">{i + 1}</span>
-                </div>
-            ))}
+                ))}
+            </div>
+            <span className="font-base">{globalMaxLabel || globalMaxScore}</span>
         </div>
     </div>
 );
@@ -133,11 +131,11 @@ const QuestionPreview: FC<QuestionPreviewProps> = ({
 }) => (
     <div className="space-y-3">
         <div className="mb-3">
-            <h4 className="text-sm font-medium text-gray-900 mb-1">
+            <h4 className="text-lg font-heading">
                 {questionText}
             </h4>
             {helperText && (
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-subtle italic">
                     {helperText}
                 </p>
             )}
@@ -162,24 +160,19 @@ const QuestionForm: FC<QuestionFormProps> = ({
     index,
     questionControl,
     hasContent,
-    globalType,
-    globalMaxScore,
-    globalMinLabel,
-    globalMaxLabel,
-    globalNominalLabels,
     onToggleEdit,
     onRemove
 }) => (
     <div className="space-y-3">
         {/* Mini header for form mode */}
-        <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-            <span className="text-sm font-medium text-gray-700">Question {index + 1}</span>
+        <div className="flex items-center justify-between pb-2">
+            <span className="text-base font-bold text-subtle">Question {index + 1}</span>
             <Button
                 type="button"
                 variant="noShadow"
-                size="sm"
+                size="icon"
                 onClick={onRemove}
-                className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-100 rounded-full"
+                className="h-6 w-6 p-2 bg-white text-danger  hover:text-white hover:bg-danger rounded-full"
             >
                 <Trash2 className="h-3 w-3" />
             </Button>
@@ -200,23 +193,7 @@ const QuestionForm: FC<QuestionFormProps> = ({
             placeholder="Optional helper text to guide respondents"
         />
 
-        {/* Compact global settings info */}
-        <div className="bg-gray-50 p-2 rounded text-xs text-gray-600">
-            <div className="flex gap-4">
-                <span><strong>Type:</strong> {globalType === "scale" ? "Scale" : "Nominal"}</span>
-                <span><strong>Max:</strong> {globalMaxScore || "Not set"}</span>
-            </div>
-            {globalType === "scale" && (globalMinLabel || globalMaxLabel) && (
-                <div className="mt-1">
-                    <span><strong>Labels:</strong> {globalMinLabel || "1"} - {globalMaxLabel || globalMaxScore}</span>
-                </div>
-            )}
-            {globalType === "nominal" && globalNominalLabels && globalNominalLabels.length > 0 && (
-                <div className="mt-1">
-                    <span><strong>Options:</strong> {globalNominalLabels.slice(0, 2).join(", ")}{globalNominalLabels.length > 2 ? "..." : ""}</span>
-                </div>
-            )}
-        </div>
+
 
         {/* Compact Done button */}
         {hasContent && (
