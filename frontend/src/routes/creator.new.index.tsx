@@ -27,6 +27,8 @@ function CreateSurveyPage() {
     const {
         createSurvey,
         receipt,
+        isConfirming,
+        isConfirmed,
     } = useSurveyCreation();
     const form = useForm<FormIn>({
         /** PENTING: resolver dan generic sama-sama berdasarkan schema yang sama */
@@ -68,6 +70,9 @@ function CreateSurveyPage() {
             throw e;
         }
     };
+
+    console.log("Confirming:", isConfirming);
+    console.log("Confirmed:", isConfirmed);
 
     useEffect(() => {
         if (receipt) {

@@ -30,3 +30,15 @@ export async function createDb(
 
   return cid;
 }
+
+export async function getDb(
+  collection: Collection,
+  cid: string
+) {
+  const coll = collection === "questions" ? "questions" : "metadata";
+  const ref = doc(db, coll, cid);
+  const snapshot = await getDoc(ref);
+  if (!snapshot.exists()) return null;
+  return snapshot.data();
+}
+
