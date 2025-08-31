@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Button } from '../components/ui/button'
-import { createQuestions } from '../services/firebase/create_questions'
+import { createQuestions } from '../services/firebase/dbStore'
 import mockup from "@/assets/json/questions-example.json"
 import { useState } from 'react'
 

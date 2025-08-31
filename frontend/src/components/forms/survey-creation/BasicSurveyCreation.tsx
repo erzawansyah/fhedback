@@ -41,17 +41,10 @@ export default function BasicSurveyCreation(props: {
     const globalType = watch("global.type" as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     const onSubmit = form.handleSubmit(async (values: FormIn) => {
-        console.log("🚀 onSubmit function called!");
-        console.log("Form values before parsing:", values);
-        console.log("Questions in form:", values.questions);
-        console.log("Number of questions:", values.questions?.length || 0);
-
         // Get global settings from UI form
         const globalData = form.getValues() as unknown as FormInUI;
         const globalSettings = globalData.global;
-
-        console.log("Global settings:", globalSettings);
-
+        
         // Apply global settings to all questions
         const processedValues = {
             ...values,
