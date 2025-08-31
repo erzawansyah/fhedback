@@ -6,6 +6,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { FileTextIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Switch } from "../components/ui/switch";
+import { transformToSurveyQuestions } from "../utils/survey-transform";
 import PlainBox from "../components/layout/PlainBox";
 import BasicSurveyCreation from "../components/forms/survey-creation/BasicSurveyCreation";
 import { useForm } from "react-hook-form";
@@ -27,8 +28,6 @@ function CreateSurveyPage() {
     const {
         createSurvey,
         receipt,
-        isConfirming,
-        isConfirmed,
     } = useSurveyCreation();
     const form = useForm<FormIn>({
         /** PENTING: resolver dan generic sama-sama berdasarkan schema yang sama */
@@ -53,10 +52,16 @@ function CreateSurveyPage() {
         }
 
         try {
-            const questionsCid = await createDb("questions", values.questions, address);
+            // Transform submission questions to proper SurveyQuestions format
+            const surveyQuestions = transformToSurveyQuestions(
+                values.questions,
+                values.metadata.title // menggunakan title sebagai name
+            );
+
+            const questionsCid = await createDb("questions", surveyQuestions, address);
             console.log("questions OK:", questionsCid);
 
-            const totalQuestions = values.questions.length;
+            const totalQuestions = surveyQuestions.totalQuestions;
             createSurvey({
                 metadataCID: metadataCid,
                 questionsCID: questionsCid,
@@ -70,9 +75,6 @@ function CreateSurveyPage() {
             throw e;
         }
     };
-
-    console.log("Confirming:", isConfirming);
-    console.log("Confirmed:", isConfirmed);
 
     useEffect(() => {
         if (receipt) {

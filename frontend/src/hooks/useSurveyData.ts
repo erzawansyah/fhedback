@@ -207,9 +207,7 @@ export const useSurveyDataById = (surveyId: number | bigint | string) => {
     const run = async () => {
       try {
         if (metadataCid && metadataCid.length > 0) {
-          console.log("Fetching metadata with CID:", metadataCid);
           const response = await getDb("metadata", metadataCid);
-          console.log("Received metadata:", response);
           
           if (fetchTokenRef.current === token) {
             if (!response || !response.content) {
