@@ -61,7 +61,7 @@ contract TestContract is SepoliaConfig {
         externalEuint8[] memory _data,
         bytes memory _proof
     ) external {
-        require(_data.length > 0, "Input must be 8 elements");
+        require(_data.length == 8, "Input must be 8 elements");
         for (uint256 i = 0; i < _data.length; i++) {
             euint8 value = FHE.fromExternal(_data[i], _proof);
             euint64 value64 = FHE.asEuint64(value);

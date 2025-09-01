@@ -44,16 +44,40 @@ describe("ConfidentialSurvey_Factory", function () {
     await beaconContract.waitForDeployment();
     beacon = beaconContract as unknown as ConfidentialSurvey_Beacon;
 
-    // Deploy factory
+    // Deploy factory implementation
     const FactoryContract = await ethers.getContractFactory(
       "ConfidentialSurvey_Factory",
     );
-    const factoryContract = await FactoryContract.deploy(
-      await beacon.getAddress(),
-      owner.address,
+    const factoryImpl = await FactoryContract.deploy();
+    await factoryImpl.waitForDeployment();
+
+    // Deploy ProxyAdmin
+    const ProxyAdminFactory = await ethers.getContractFactory(
+      "contracts/ProxyAdmin.sol:ProxyAdmin",
     );
-    await factoryContract.waitForDeployment();
-    factory = factoryContract as unknown as ConfidentialSurvey_Factory;
+    const proxyAdmin = await ProxyAdminFactory.deploy(owner.address);
+    await proxyAdmin.waitForDeployment();
+
+    // Prepare initialization data
+    const initData = FactoryContract.interface.encodeFunctionData(
+      "initialize",
+      [await beacon.getAddress(), owner.address],
+    );
+
+    // Deploy TransparentUpgradeableProxy
+    const ProxyFactory = await ethers.getContractFactory(
+      "contracts/TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy",
+    );
+    const factoryProxy = await ProxyFactory.deploy(
+      await factoryImpl.getAddress(),
+      await proxyAdmin.getAddress(),
+      initData,
+    );
+    await factoryProxy.waitForDeployment();
+
+    factory = FactoryContract.attach(
+      await factoryProxy.getAddress(),
+    ) as unknown as ConfidentialSurvey_Factory;
   });
 
   describe("Deployment", function () {
@@ -65,16 +89,6 @@ describe("ConfidentialSurvey_Factory", function () {
     it("Should set the correct owner", async function () {
       const factoryOwner = await factory.owner();
       expect(factoryOwner).to.equal(owner.address);
-    });
-
-    it("Should revert if beacon address is zero", async function () {
-      const FactoryContract = await ethers.getContractFactory(
-        "ConfidentialSurvey_Factory",
-      );
-
-      await expect(
-        FactoryContract.deploy(ethers.ZeroAddress, owner.address),
-      ).to.be.revertedWith("Beacon cannot be zero address");
     });
 
     it("Should start with zero total surveys", async function () {

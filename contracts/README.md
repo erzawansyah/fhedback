@@ -13,14 +13,19 @@ FHEdback is a confidential survey platform that leverages Zama's Fully Homomorph
 
 ## Contracts
 This repository contains the smart contracts for the FHEdback platform.
-📋 Contract Addresses:
-   ├─ ConfidentialSurvey Implementation: `0x4DcC0712DFf9D89808b70911571f38F94B6a27b0`
-   ├─ ConfidentialSurvey_Beacon: `0xed8B31AcBae5277bcf4Bc2D22A5FBc90848b89DA`
-   ├─ ConfidentialSurvey_Factory Implementation: `0x840173e84fb36ada68CEb7EdBbF1E0C0eb01f677`
-   ├─ ConfidentialSurvey_Factory Proxy: `0x94ffeb2bcBa5F58B4a0475721ED2a1304f3c37A3`
-   └─ ProxyAdmin: `0x525a4bd9C46Ab1Dd2193E23e177dDa63aCA7518A`
 
-Read the [deployment guide](./deploy/README.md) for detailed instructions.
+### 📋 Sepolia Testnet Deployment (VERIFIED ✅)
+   ├─ **ConfidentialSurvey Implementation**: [`0xb213a72EfF95D042112a13Ea749094a7624F7e6A`](https://eth-sepolia.blockscout.com/address/0xb213a72EfF95D042112a13Ea749094a7624F7e6A#code)
+   ├─ **ConfidentialSurvey_Beacon**: [`0xc08F37e971a3c752c77702bf63f78bbFc2C9Bf5F`](https://eth-sepolia.blockscout.com/address/0xc08F37e971a3c752c77702bf63f78bbFc2C9Bf5F#code)
+   ├─ **ConfidentialSurvey_Factory Implementation**: [`0xe6EB51400def6B97C5cadb1984f701F3996152f0`](https://eth-sepolia.blockscout.com/address/0xe6EB51400def6B97C5cadb1984f701F3996152f0#code)
+   ├─ **ConfidentialSurvey_Factory Proxy** (Main Interface): [`0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214`](https://eth-sepolia.blockscout.com/address/0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214#code)
+   └─ **ProxyAdmin**: [`0x8b7bcBCee9de4134e553365499f206698A9fB434`](https://eth-sepolia.blockscout.com/address/0x8b7bcBCee9de4134e553365499f206698A9fB434#code)
+
+> 🎯 **For Frontend Integration**: Use the **Factory Proxy** address `0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214` to interact with the system.
+
+> 📋 All contracts are **verified** on Sepolia Blockscout. Click the links above to view source code.
+
+Read the [deployment guide](./docs/DEPLOYMENTS.md) for detailed instructions.
 
 ## Getting Started
 

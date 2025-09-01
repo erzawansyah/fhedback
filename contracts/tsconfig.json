@@ -10,8 +10,9 @@
     "lib": [
       "es2022"
     ],
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "node16",
+    // eslint-ignore-next-line
+    "moduleResolution": "node16",
     "noImplicitAny": true,
     "removeComments": true,
     "resolveJsonModule": true,
@@ -23,7 +24,8 @@
     ],
     "sourceMap": true,
     "strict": true,
-    "target": "es2022"
+    "target": "es2022",
+    "skipLibCheck": true
   },
   "exclude": [
     "node_modules"
@@ -37,6 +39,7 @@
     "test/**/*",
     "deploy/**/*",
     "scripts/**/*",
-    "types/"
-, ".bak/TestContract.ts"  ]
+    "types/",
+    ".bak/TestContract.ts"
+  ]
 }

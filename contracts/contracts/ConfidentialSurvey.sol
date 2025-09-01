@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import "@fhevm/solidity/lib/FHE.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {ConfidentialSurvey_Base} from "./modules/ConfidentialSurvey_Base.sol";
 
 /**
@@ -20,7 +20,7 @@ import {ConfidentialSurvey_Base} from "./modules/ConfidentialSurvey_Base.sol";
 contract ConfidentialSurvey is
     Initializable,
     ConfidentialSurvey_Base,
-    ReentrancyGuard
+    ReentrancyGuardUpgradeable
 {
     // -------------------------------------
     // Survey Management (Survey Creation, Metadata, Questions, Publishing)
@@ -59,6 +59,8 @@ contract ConfidentialSurvey is
             _totalQuestions > 0 && _totalQuestions <= MAX_QUESTIONS,
             "totalQuestions out of range"
         );
+
+        __ReentrancyGuard_init();
 
         survey = SurveyDetails({
             owner: _owner,
@@ -128,6 +130,7 @@ contract ConfidentialSurvey is
 
         for (uint256 i = 0; i < survey.totalQuestions; ++i) {
             uint8 m = _maxScores[i];
+            require(m > 1, "maxScore must be greater than 1");
             _initializeQuestionStatistics(i, m);
         }
 

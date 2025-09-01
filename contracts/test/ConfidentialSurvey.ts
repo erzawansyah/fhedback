@@ -314,7 +314,7 @@ describe_flow(
           await expect(surveyContract.publishSurvey([5, 5])) // Wrong length
             .to.be.revertedWith("length mismatch");
           await expect(surveyContract.publishSurvey([1, 5, 5])) // Score too low
-            .to.be.revertedWith("maxScore out of range");
+            .to.be.revertedWith("maxScore must be greater than 1");
           await expect(surveyContract.publishSurvey([11, 5, 5])) // Score too high
             .to.be.revertedWith("maxScore out of range");
         });

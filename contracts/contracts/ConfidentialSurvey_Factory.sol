@@ -105,6 +105,18 @@ contract ConfidentialSurvey_Factory is
         uint256 _respondentLimit
     ) external nonReentrant returns (uint256 surveyId, address proxy) {
         require(_owner != address(0), "Owner cannot be zero address");
+        require(
+            bytes(_symbol).length > 0 && bytes(_symbol).length <= 10,
+            "symbol length invalid"
+        );
+        require(
+            _totalQuestions > 0 && _totalQuestions <= 30,
+            "totalQuestions out of range"
+        );
+        require(
+            _respondentLimit >= 1 && _respondentLimit <= 1000,
+            "bad respondentLimit"
+        );
 
         surveyId = totalSurveys++;
 
@@ -191,7 +203,7 @@ contract ConfidentialSurvey_Factory is
             : _offset + _limit;
         uint256[] memory result = new uint256[](end - _offset);
         for (uint256 i = _offset; i < end; i++) {
-            result[i - _offset] = ownerSurveys[allSurveys[i]].length;
+            result[i - _offset] = i; // Return survey IDs, not owner survey counts
         }
         return (result, end < totalSurveys);
     }

@@ -2,6 +2,32 @@
 
 This directory contains deployment scripts for the FHEdback confidential survey system using Hardhat Deploy.
 
+## 📋 Current Deployment Status
+
+### 🌐 Sepolia Testnet (LIVE & VERIFIED ✅)
+**Deployment Date**: September 1, 2025
+**Status**: ✅ All contracts deployed and verified on Blockscout
+
+| Contract | Address | Status | Blockscout |
+|----------|---------|--------|------------|
+| **ConfidentialSurvey Implementation** | [`0xb213a72EfF95D042112a13Ea749094a7624F7e6A`](https://eth-sepolia.blockscout.com/address/0xb213a72EfF95D042112a13Ea749094a7624F7e6A#code) | ✅ Verified | [View Code](https://eth-sepolia.blockscout.com/address/0xb213a72EfF95D042112a13Ea749094a7624F7e6A#code) |
+| **ConfidentialSurvey_Beacon** | [`0xc08F37e971a3c752c77702bf63f78bbFc2C9Bf5F`](https://eth-sepolia.blockscout.com/address/0xc08F37e971a3c752c77702bf63f78bbFc2C9Bf5F#code) | ✅ Verified | [View Code](https://eth-sepolia.blockscout.com/address/0xc08F37e971a3c752c77702bf63f78bbFc2C9Bf5F#code) |
+| **ConfidentialSurvey_Factory Implementation** | [`0xe6EB51400def6B97C5cadb1984f701F3996152f0`](https://eth-sepolia.blockscout.com/address/0xe6EB51400def6B97C5cadb1984f701F3996152f0#code) | ✅ Verified | [View Code](https://eth-sepolia.blockscout.com/address/0xe6EB51400def6B97C5cadb1984f701F3996152f0#code) |
+| **ConfidentialSurvey_Factory Proxy** 🎯 | [`0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214`](https://eth-sepolia.blockscout.com/address/0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214#code) | ✅ Verified | [View Code](https://eth-sepolia.blockscout.com/address/0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214#code) |
+| **ProxyAdmin** | [`0x8b7bcBCee9de4134e553365499f206698A9fB434`](https://eth-sepolia.blockscout.com/address/0x8b7bcBCee9de4134e553365499f206698A9fB434#code) | ✅ Verified | [View Code](https://eth-sepolia.blockscout.com/address/0x8b7bcBCee9de4134e553365499f206698A9fB434#code) |
+
+> 🎯 **Frontend Integration**: Use Factory Proxy address `0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214`  
+> 🔧 **Network**: Sepolia Testnet (Chain ID: 11155111)  
+> 🌐 **Explorer**: [Sepolia Blockscout](https://eth-sepolia.blockscout.com/)
+
+### 🚀 Next Steps for Production
+- [ ] 🧪 Complete testing on Sepolia testnet
+- [ ] 🛡️ Security audit (if required)
+- [ ] 📋 Deploy to mainnet using same deployment scripts
+- [ ] 🔍 Verify all mainnet contracts
+
+---
+
 ## ⚠️ IMPORTANT: Read Before Deploying
 
 ### 🚨 When System Already Deployed (Production/Testnet)
@@ -139,13 +165,28 @@ npx hardhat deploy --network localhost --tags All    # Local node
 
 ## 🔍 Verification Commands
 
-### If you want to **verify contracts on Etherscan**, do:
+### ✅ Sepolia Contracts Already Verified
+All Sepolia contracts are already verified! You can view the source code on Blockscout:
+
+```bash
+# View verified contracts on Blockscout
+# All links available in the deployment status table above
+```
+
+### If you want to **verify contracts on Etherscan/Blockscout**, do:
 ```bash
 # After deployment to Sepolia, verify each contract
 npx hardhat verify --network sepolia <CONTRACT_ADDRESS>
 
 # For constructor arguments
 npx hardhat verify --network sepolia <CONTRACT_ADDRESS> "arg1" "arg2"
+
+# Example: Verify all current Sepolia contracts
+npx hardhat verify --network sepolia 0xb213a72EfF95D042112a13Ea749094a7624F7e6A
+npx hardhat verify --network sepolia 0xc08F37e971a3c752c77702bf63f78bbFc2C9Bf5F 0xb213a72EfF95D042112a13Ea749094a7624F7e6A
+npx hardhat verify --network sepolia 0xe6EB51400def6B97C5cadb1984f701F3996152f0
+npx hardhat verify --network sepolia 0x8b7bcBCee9de4134e553365499f206698A9fB434
+npx hardhat verify --network sepolia 0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214 0xe6EB51400def6B97C5cadb1984f701F3996152f0 0x8b7bcBCee9de4134e553365499f206698A9fB434 0x
 ```
 
 ## 📁 Script Details
@@ -256,8 +297,25 @@ networks: {
 # List deployment files
 ls deployments/sepolia/
 
-# Check specific contract
+# Check specific contract addresses
+cat deployments/sepolia/ConfidentialSurvey.json | grep '"address"'
+cat deployments/sepolia/ConfidentialSurvey_Beacon.json | grep '"address"'
+cat deployments/sepolia/ConfidentialSurvey_Factory.json | grep '"address"'
+cat deployments/sepolia/TransparentUpgradeableProxy.json | grep '"address"'
+cat deployments/sepolia/ProxyAdmin.json | grep '"address"'
+
+# Or use jq for cleaner output
 cat deployments/sepolia/ConfidentialSurvey.json | jq '.address'
+```
+
+### 🎯 **Current Sepolia Addresses Quick Reference**
+```bash
+# ✅ VERIFIED CONTRACT ADDRESSES (Copy-paste ready)
+SURVEY_IMPL="0xb213a72EfF95D042112a13Ea749094a7624F7e6A"
+BEACON="0xc08F37e971a3c752c77702bf63f78bbFc2C9Bf5F" 
+FACTORY_IMPL="0xe6EB51400def6B97C5cadb1984f701F3996152f0"
+FACTORY_PROXY="0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214"  # ← Use this for frontend
+PROXY_ADMIN="0x8b7bcBCee9de4134e553365499f206698A9fB434"
 ```
 
 ### If you want to **interact with deployed contracts**, do:
@@ -265,11 +323,11 @@ cat deployments/sepolia/ConfidentialSurvey.json | jq '.address'
 # Open hardhat console
 npx hardhat console --network sepolia
 
-# Get factory instance
-> const factory = await ethers.getContractAt("ConfidentialSurvey_Factory", "FACTORY_ADDRESS")
+# Get factory instance (use the PROXY address, not implementation)
+> const factory = await ethers.getContractAt("ConfidentialSurvey_Factory", "0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214")
 
 # Check factory status
-> await factory.getBeacon()
+> await factory.getBeacon()  // Should return: 0xc08F37e971a3c752c77702bf63f78bbFc2C9Bf5F
 > await factory.totalSurveys()
 
 # Create a test survey
@@ -281,6 +339,23 @@ npx hardhat console --network sepolia
     5,           // scale
     100          // max respondents
   )
+```
+
+### 🔗 **Frontend Integration Example**
+```javascript
+// Use these addresses in your frontend
+const SEPOLIA_ADDRESSES = {
+  FACTORY_PROXY: "0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214", // Main contract to interact with
+  BEACON: "0xc08F37e971a3c752c77702bf63f78bbFc2C9Bf5F",
+  SURVEY_IMPL: "0xb213a72EfF95D042112a13Ea749094a7624F7e6A"
+};
+
+// In your web3 integration
+const factory = new ethers.Contract(
+  SEPOLIA_ADDRESSES.FACTORY_PROXY,
+  FactoryABI,
+  signer
+);
 ```
 
 ## ⚠️ Important Notes
@@ -392,3 +467,32 @@ npx hardhat console --network sepolia
 - [ ] ⏰ Consider timelock for future upgrades
 - [ ] 📊 Monitor gas prices and deploy during low congestion
 - [ ] 🔍 Plan post-deployment verification and monitoring
+
+---
+
+## 🔄 **Post-Deployment Status & Next Steps**
+
+### ✅ **What's Been Completed (Sepolia)**
+- [x] ✅ **Fresh deployment** completed successfully
+- [x] ✅ **All contracts verified** on Blockscout  
+- [x] ✅ **Upgrade functionality** tested and working
+- [x] ✅ **Factory proxy** operational and ready for frontend integration
+- [x] ✅ **Beacon pattern** implemented for upgradeable surveys
+
+### 🎯 **Ready for Integration**
+- **Frontend**: Use Factory Proxy `0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214`
+- **Network**: Sepolia Testnet (Chain ID: 11155111)
+- **All functions**: Create surveys, manage responses, upgrade implementations
+
+### 🚀 **Production Deployment Checklist**
+- [ ] Complete frontend integration testing on Sepolia
+- [ ] Deploy to mainnet using: `npm run deploy:mainnet` (after network config)
+- [ ] Verify mainnet contracts: `npx hardhat verify --network mainnet <addresses>`
+- [ ] Update frontend with mainnet addresses
+- [ ] Monitor system performance and gas costs
+
+### 📋 **Important Notes**
+- **System Status**: ✅ Fully operational on Sepolia
+- **Last Updated**: September 1, 2025
+- **Deployer**: `0x60BBa8FAF702082dE098A69ad4c964D5Ef1fd591`
+- **Verification Status**: All contracts verified on Sepolia Blockscout
