@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import type { Address } from 'viem'
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { useForm } from 'react-hook-form'
@@ -53,14 +53,15 @@ export default function SurveyResponseForm({
     questions,
     onSubmitSuccess
 }: SurveyResponseFormProps) {
-    const [isSubmitting, setIsSubmitting] = useState(false)
+    type Step = 'idle' | 'encrypting' | 'submitting' | 'confirming'
+    const [step, setStep] = useState<Step>('idle')
     const writeContract = useWriteContract()
     const { address } = useAccount()
     type EIP1193Provider = { request: (args: { method: string; params?: unknown[] }) => Promise<unknown> }
     const provider = (globalThis as unknown as { ethereum?: EIP1193Provider }).ethereum
     const { instance: fhevmInstance, status: fhevmStatus } = useFhevm({ provider })
 
-    const { data: receipt, isSuccess } = useWaitForTransactionReceipt({
+    const { data: receipt, isSuccess, isLoading: isConfirming, isError: isTxError, error: txError } = useWaitForTransactionReceipt({
         hash: writeContract.data,
         query: { enabled: !!writeContract.data }
     })
@@ -77,9 +78,21 @@ export default function SurveyResponseForm({
         }, {} as ResponseFormData)
     })
 
+    const canSubmit = useMemo(() => {
+        return Boolean(address) && fhevmStatus === 'ready' && step === 'idle' && !writeContract.isPending
+    }, [address, fhevmStatus, step, writeContract.isPending])
+
+    // Reflect write/receipt states to step machine
+    useEffect(() => {
+        if (writeContract.data) setStep('confirming')
+    }, [writeContract.data])
+    useEffect(() => {
+        if (isConfirming) setStep('confirming')
+    }, [isConfirming])
+
     const onSubmit = async (data: ResponseFormData) => {
         try {
-            setIsSubmitting(true)
+            setStep('encrypting')
 
             // Collect clear responses as uint8
             const clearValues: number[] = questions.map((_: SurveyQuestion, index: number) => {
@@ -96,18 +109,30 @@ export default function SurveyResponseForm({
                 return
             }
 
+            // Tiny yield so UI can render spinner before heavy work
+            await new Promise((r) => setTimeout(r, 30))
+
             const buffer = fhevmInstance.createEncryptedInput(surveyAddress as Address, address as Address)
             for (const v of clearValues) buffer.add8(BigInt(v))
-            const ciphertexts = await buffer.encrypt() as unknown as { handles: `0x${string}`[]; inputProof: `0x${string}` }
+            const ciphertexts = await buffer.encrypt().catch((e: unknown) => {
+                console.error('FHE encrypt failed:', e)
+                throw new Error('Encryption failed')
+            }) as unknown as { handles: `0x${string}`[]; inputProof: `0x${string}` }
             const { handles, inputProof } = ciphertexts
 
             // Call the smart contract function with encrypted handles and proof
-            writeContract.writeContract({
-                address: surveyAddress,
-                abi: ABIS.survey,
-                functionName: 'submitResponses',
-                args: [handles, inputProof],
-            })
+            setStep('submitting')
+            try {
+                await writeContract.writeContract({
+                    address: surveyAddress,
+                    abi: ABIS.survey,
+                    functionName: 'submitResponses',
+                    args: [handles, inputProof],
+                })
+            } catch (e) {
+                console.error('Contract write failed:', e)
+                throw e
+            }
 
             toast.success('Response submitted!', {
                 description: 'Your encrypted response has been recorded on-chain.'
@@ -118,8 +143,7 @@ export default function SurveyResponseForm({
             toast.error('Failed to submit response', {
                 description: 'Please try again or contact support.'
             })
-        } finally {
-            setIsSubmitting(false)
+            setStep('idle')
         }
     }
 
@@ -231,17 +255,25 @@ export default function SurveyResponseForm({
                         </Card>
                     ))}
 
-                    {/* Submit Button */}
-                    <div className="flex justify-end pt-6">
+                                        {/* Submit Button */}
+                                        <div className="flex justify-end pt-6">
                         <Button
                             type="submit"
-                            disabled={isSubmitting || writeContract.isPending}
+                disabled={!canSubmit}
                             size="lg"
                         >
-                            {isSubmitting || writeContract.isPending ? (
+                                                        {step !== 'idle' || writeContract.isPending ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Submitting Response...
+                                                                        {(!address)
+                                                                            ? 'Connect wallet'
+                                                                            : (fhevmStatus !== 'ready')
+                                                                            ? 'Preparing FHEVM…'
+                                                                            : step === 'encrypting'
+                                                                            ? 'Encrypting…'
+                                                                            : step === 'submitting'
+                                                                            ? 'Submitting…'
+                                                                            : 'Confirming…'}
                                 </>
                             ) : (
                                 <>
@@ -251,6 +283,10 @@ export default function SurveyResponseForm({
                             )}
                         </Button>
                     </div>
+
+                                        {isTxError && (
+                                                <p className="text-xs text-red-600">Transaction failed: {String(txError?.message || txError)}</p>
+                                        )}
 
                     {/* Privacy Notice */}
                     <Alert>
