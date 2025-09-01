@@ -255,25 +255,25 @@ export default function SurveyResponseForm({
                         </Card>
                     ))}
 
-                                        {/* Submit Button */}
-                                        <div className="flex justify-end pt-6">
+                    {/* Submit Button */}
+                    <div className="flex justify-end pt-6">
                         <Button
                             type="submit"
-                disabled={!canSubmit}
+                            disabled={!canSubmit}
                             size="lg"
                         >
-                                                        {step !== 'idle' || writeContract.isPending ? (
+                            {step !== 'idle' || writeContract.isPending ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                                        {(!address)
-                                                                            ? 'Connect wallet'
-                                                                            : (fhevmStatus !== 'ready')
-                                                                            ? 'Preparing FHEVM…'
-                                                                            : step === 'encrypting'
-                                                                            ? 'Encrypting…'
-                                                                            : step === 'submitting'
-                                                                            ? 'Submitting…'
-                                                                            : 'Confirming…'}
+                                    {(!address)
+                                        ? 'Connect wallet'
+                                        : (fhevmStatus !== 'ready')
+                                            ? 'Preparing FHEVM…'
+                                            : step === 'encrypting'
+                                                ? 'Encrypting…'
+                                                : step === 'submitting'
+                                                    ? 'Submitting…'
+                                                    : 'Confirming…'}
                                 </>
                             ) : (
                                 <>
@@ -284,9 +284,9 @@ export default function SurveyResponseForm({
                         </Button>
                     </div>
 
-                                        {isTxError && (
-                                                <p className="text-xs text-red-600">Transaction failed: {String(txError?.message || txError)}</p>
-                                        )}
+                    {isTxError && (
+                        <p className="text-xs text-red-600">Transaction failed: {String(txError?.message || txError)}</p>
+                    )}
 
                     {/* Privacy Notice */}
                     <Alert>
