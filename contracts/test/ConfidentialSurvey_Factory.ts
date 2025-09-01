@@ -1,8 +1,8 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { ConfidentialSurvey_Factory } from "../types/contracts/ConfidentialSurvey_Factory";
-import { ConfidentialSurvey } from "../types/contracts/ConfidentialSurvey";
+import { ConfidentialSurvey_Factory } from "../types/ConfidentialSurvey_Factory";
+import { ConfidentialSurvey } from "../types/ConfidentialSurvey";
 
 describe("ConfidentialSurvey_Factory", function () {
   let factory: ConfidentialSurvey_Factory;
