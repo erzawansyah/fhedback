@@ -239,7 +239,25 @@ export const useSurveyDataById = (surveyId: number | bigint | string) => {
               setQuestions(null);
               return;
             }
-            setQuestions(response.content as SurveyQuestion[]);
+            const content = response.content as unknown;
+            let qs: SurveyQuestion[] | null = null;
+            const isQuestionArray = (v: unknown): v is SurveyQuestion[] => Array.isArray(v);
+            type QuestionContainer = { questions: SurveyQuestion[] };
+            const isQuestionContainer = (v: unknown): v is QuestionContainer => {
+              return !!v && typeof v === 'object' && Array.isArray((v as QuestionContainer).questions);
+            };
+            if (isQuestionArray(content)) {
+              qs = content;
+            } else if (isQuestionContainer(content)) {
+              qs = content.questions;
+            }
+            if (!qs) {
+              console.warn("Questions content is not an array or missing .questions[]:", response.content);
+              setError(prev => [...prev, "Format pertanyaan tidak dikenali"]);
+              setQuestions(null);
+              return;
+            }
+            setQuestions(qs);
           }
         } else {
           setQuestions(null);
@@ -357,7 +375,18 @@ export const useSurveyDataByAddress = (surveyAddress?: Address) => {
         try {
           const response = await getDb("questions", questionsCid);
           if (response?.content) {
-            setQuestions(response.content as SurveyQuestion[]);
+            const content = response.content as unknown;
+            const isQuestionArray = (v: unknown): v is SurveyQuestion[] => Array.isArray(v);
+            type QuestionContainer = { questions: SurveyQuestion[] };
+            const isQuestionContainer = (v: unknown): v is QuestionContainer => {
+              return !!v && typeof v === 'object' && Array.isArray((v as QuestionContainer).questions);
+            };
+            if (isQuestionArray(content)) setQuestions(content);
+            else if (isQuestionContainer(content)) setQuestions(content.questions);
+            else {
+              setQuestions(null);
+              setError(prev => [...prev, 'Questions content format not recognized']);
+            }
           }
         } catch (e) {
           setError(prev => [...prev, `Failed to fetch questions: ${String(e)}`]);

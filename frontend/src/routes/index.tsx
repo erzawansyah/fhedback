@@ -16,7 +16,7 @@ export const Route = createFileRoute('/')({
 
 function Home() {
     const { address, isConnected } = useAccount()
-    
+
     // Get user's survey count
     const { data: userSurveys } = useReadContract({
         address: FACTORY_ADDRESS,
@@ -57,7 +57,7 @@ function Home() {
                             Privacy-First Survey Platform
                         </h2>
                         <p className="text-lg text-muted-foreground mb-6">
-                            Conduct surveys with complete participant privacy using Fully Homomorphic Encryption (FHE). 
+                            Conduct surveys with complete participant privacy using Fully Homomorphic Encryption (FHE).
                             Collect insights without compromising individual responses.
                         </p>
                         <div className="flex flex-wrap justify-center gap-4">
@@ -218,7 +218,7 @@ function Home() {
                         </div>
                         <h3 className="font-semibold">Fully Homomorphic Encryption</h3>
                         <p className="text-sm text-muted-foreground">
-                            Responses are encrypted end-to-end using cutting-edge FHE technology, 
+                            Responses are encrypted end-to-end using cutting-edge FHE technology,
                             ensuring complete privacy while enabling statistical analysis.
                         </p>
                     </div>
@@ -229,7 +229,7 @@ function Home() {
                         </div>
                         <h3 className="font-semibold">Anonymous Participation</h3>
                         <p className="text-sm text-muted-foreground">
-                            Participants can respond honestly without fear of identification, 
+                            Participants can respond honestly without fear of identification,
                             leading to more accurate and unbiased survey results.
                         </p>
                     </div>
@@ -240,7 +240,7 @@ function Home() {
                         </div>
                         <h3 className="font-semibold">Statistical Insights</h3>
                         <p className="text-sm text-muted-foreground">
-                            Get meaningful aggregate statistics and insights from your survey data 
+                            Get meaningful aggregate statistics and insights from your survey data
                             without accessing individual responses.
                         </p>
                     </div>

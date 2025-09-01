@@ -2,7 +2,17 @@
 // Provides a singleton relayer instance and helpers to encrypt survey responses
 
 import type { Address } from 'viem'
-import { initSDK, createInstance, SepoliaConfig, type FhevmInstance } from '@zama-fhe/relayer-sdk/bundle'
+
+// Minimal type surface we use from the SDK to avoid import-type coupling
+type FhevmInstance = {
+  createEncryptedInput: (
+    contractAddress: Address,
+    userAddress: Address,
+  ) => {
+    add8: (v: bigint) => void
+    encrypt: () => Promise<unknown>
+  }
+}
 
 type EIP1193Provider = {
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>
@@ -16,6 +26,45 @@ type EncryptResult = {
 let relayerInstance: FhevmInstance | null = null
 let initializing = false
 
+// Load SDK in a way that works across different bundles/exports
+async function loadRelayerSDK(): Promise<{
+  initSDK: () => Promise<void>
+  createInstance: (cfg: Record<string, unknown>) => Promise<FhevmInstance>
+  SepoliaConfig: Record<string, unknown>
+}> {
+  // Try explicit bundle first (older docs), then package root
+  let mod: unknown
+  try {
+    mod = await import('@zama-fhe/relayer-sdk/bundle')
+  } catch {
+    // ignore; try next path
+  }
+  if (!mod) {
+    try {
+      // Some versions export from the package root; types may be missing.
+      // @ts-expect-error - optional import fallback
+      mod = await import('@zama-fhe/relayer-sdk')
+    } catch {
+      // ignore; will error below if still missing
+    }
+  }
+
+  const m = mod as Record<string, unknown> | undefined
+  const sdk = (m && (m as { default?: unknown }).default) ?? m
+  const initSDK = (sdk as Record<string, unknown> | undefined)?.initSDK as
+    | (() => Promise<void>)
+    | undefined
+  const createInstance = (sdk as Record<string, unknown> | undefined)
+    ?.createInstance as ((cfg: Record<string, unknown>) => Promise<FhevmInstance>) | undefined
+  const SepoliaConfig = (sdk as Record<string, unknown> | undefined)
+    ?.SepoliaConfig as Record<string, unknown> | undefined
+
+  if (!initSDK || !createInstance || !SepoliaConfig) {
+    throw new Error('Relayer SDK failed to load (initSDK/createInstance/SepoliaConfig not found)')
+  }
+  return { initSDK, createInstance, SepoliaConfig }
+}
+
 export async function getRelayerInstance(): Promise<FhevmInstance> {
   if (relayerInstance) return relayerInstance
   if (initializing) {
@@ -25,9 +74,10 @@ export async function getRelayerInstance(): Promise<FhevmInstance> {
   }
   initializing = true
   try {
+    const { initSDK, createInstance, SepoliaConfig } = await loadRelayerSDK()
     await initSDK() // load WASM
-  const maybeEth = (globalThis as unknown as { ethereum?: EIP1193Provider }).ethereum
-  const network = maybeEth
+    const maybeEth = (globalThis as unknown as { ethereum?: EIP1193Provider }).ethereum
+    const network = maybeEth
     const cfg = { ...SepoliaConfig, network }
     relayerInstance = await createInstance(cfg)
     return relayerInstance

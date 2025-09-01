@@ -36,14 +36,14 @@ function SurveyParticipationPage() {
         args: [BigInt(surveyId)],
     })
 
-  // Get survey data
-  const {
-    surveyData,
-    metadata,
-    questions,
-    isLoading,
-    isError
-  } = useSurveyDataByAddress(surveyAddress as `0x${string}`)    // Check if user has already responded
+    // Get survey data
+    const {
+        surveyData,
+        metadata,
+        questions,
+        isLoading,
+        isError
+    } = useSurveyDataByAddress(surveyAddress as `0x${string}`)    // Check if user has already responded
     const { data: hasResponded } = useReadContract({
         address: surveyAddress as `0x${string}`,
         abi: ABIS.survey,

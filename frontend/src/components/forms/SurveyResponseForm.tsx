@@ -18,7 +18,7 @@ import { Loader2, Send } from 'lucide-react'
 import { toast } from 'sonner'
 
 import type { SurveyQuestion, NominalLabel } from '../../types/survey.schema'
-import { encryptSurveyResponses } from '@/services/fhevm/relayer'
+import { useFhevm } from '@/hooks/useFhevm'
 import { useAccount } from 'wagmi'
 
 interface SurveyResponseFormProps {
@@ -56,6 +56,9 @@ export default function SurveyResponseForm({
     const [isSubmitting, setIsSubmitting] = useState(false)
     const writeContract = useWriteContract()
     const { address } = useAccount()
+    type EIP1193Provider = { request: (args: { method: string; params?: unknown[] }) => Promise<unknown> }
+    const provider = (globalThis as unknown as { ethereum?: EIP1193Provider }).ethereum
+    const { instance: fhevmInstance, status: fhevmStatus } = useFhevm({ provider })
 
     const { data: receipt, isSuccess } = useWaitForTransactionReceipt({
         hash: writeContract.data,
@@ -78,30 +81,33 @@ export default function SurveyResponseForm({
         try {
             setIsSubmitting(true)
 
-                // Collect clear responses as uint8
-                const clearValues: number[] = questions.map((_: SurveyQuestion, index: number) => {
-                    return Number(data[`question_${index}`])
-                })
+            // Collect clear responses as uint8
+            const clearValues: number[] = questions.map((_: SurveyQuestion, index: number) => {
+                return Number(data[`question_${index}`])
+            })
 
-                if (!address) {
-                    toast.error('Connect wallet to submit response')
-                    return
-                }
+            if (!address) {
+                toast.error('Connect wallet to submit response')
+                return
+            }
 
-                // Encrypt using Zama Relayer SDK
-                const { handles, inputProof } = await encryptSurveyResponses(
-                    surveyAddress as Address,
-                    address as Address,
-                    clearValues,
-                )
+            if (!fhevmInstance) {
+                toast.error('FHEVM SDK not ready yet')
+                return
+            }
 
-                // Call the smart contract function with encrypted handles and proof
-                writeContract.writeContract({
-                    address: surveyAddress,
-                    abi: ABIS.survey,
-                    functionName: 'submitResponses',
-                    args: [handles, inputProof],
-                })
+            const buffer = fhevmInstance.createEncryptedInput(surveyAddress as Address, address as Address)
+            for (const v of clearValues) buffer.add8(BigInt(v))
+            const ciphertexts = await buffer.encrypt() as unknown as { handles: `0x${string}`[]; inputProof: `0x${string}` }
+            const { handles, inputProof } = ciphertexts
+
+            // Call the smart contract function with encrypted handles and proof
+            writeContract.writeContract({
+                address: surveyAddress,
+                abi: ABIS.survey,
+                functionName: 'submitResponses',
+                args: [handles, inputProof],
+            })
 
             toast.success('Response submitted!', {
                 description: 'Your encrypted response has been recorded on-chain.'
@@ -254,6 +260,9 @@ export default function SurveyResponseForm({
                             ensuring your individual responses remain completely private.
                         </AlertDescription>
                     </Alert>
+                    {fhevmStatus !== 'ready' && (
+                        <p className="text-xs text-muted-foreground">Preparing FHEVM SDK…</p>
+                    )}
                 </form>
             </Form>
         </Section>
