@@ -2,28 +2,26 @@
 pragma solidity ^0.8.24;
 
 import "@fhevm/solidity/lib/FHE.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {ConfidentialSurvey_Base} from "./modules/ConfidentialSurvey_Base.sol";
 
 /**
  * @custom:since 0.1.0
- * @title ConfidentialSurvey
+ * @title ConfidentialSurvey_Direct
  * @dev A privacy-preserving survey system using Fully Homomorphic Encryption (FHE).
+ *      This is the direct implementation that doesn't use beacon proxy or factory patterns.
  *      Allows surveys to be conducted with encrypted responses, enabling statistical analysis
  *      without revealing individual responses.
  * @author M.E.W (github: erzawansyah)
  * @notice This contract enables creation of confidential surveys where responses remain
  *         encrypted throughout the entire process, only revealing aggregated statistics
  *         to the survey owner after the survey is closed.
+ * @notice This version is deployed directly without using proxy patterns, making it simpler
+ *         but non-upgradeable.
  */
-contract ConfidentialSurvey is
-    Initializable,
-    ConfidentialSurvey_Base,
-    ReentrancyGuardUpgradeable
-{
+contract ConfidentialSurvey is ConfidentialSurvey_Base, ReentrancyGuard {
     // -------------------------------------
-    // Survey Management (Survey Creation, Metadata, Questions, Publishing)
+    // Constructor
     // -------------------------------------
     /**
      * @custom:since 0.1.0
@@ -38,14 +36,14 @@ contract ConfidentialSurvey is
      * @notice metadataCID and questionsCID can be empty strings if not available at creation.
      * @notice Emits SurveyCreated event upon successful creation
      */
-    function initialize(
+    constructor(
         address _owner,
         string memory _symbol,
         string memory _metadataCID,
         string memory _questionsCID,
         uint256 _totalQuestions,
         uint256 _respondentLimit
-    ) external initializer {
+    ) {
         require(
             _respondentLimit >= MIN_RESPONDENTS &&
                 _respondentLimit <= MAX_RESPONDENTS,
@@ -60,8 +58,6 @@ contract ConfidentialSurvey is
             "totalQuestions out of range"
         );
 
-        __ReentrancyGuard_init();
-
         survey = SurveyDetails({
             owner: _owner,
             symbol: _symbol,
@@ -75,6 +71,10 @@ contract ConfidentialSurvey is
 
         emit SurveyCreated(_owner, _symbol, _metadataCID);
     }
+
+    // -------------------------------------
+    // Survey Management (Survey Creation, Metadata, Questions, Publishing)
+    // -------------------------------------
 
     /**
      * @custom:since 0.1.0

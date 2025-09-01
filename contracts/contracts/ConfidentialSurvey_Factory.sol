@@ -1,16 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "./ConfidentialSurvey_Beacon.sol";
+import "./ConfidentialSurvey.sol";
 
 /**
  * @title ConfidentialSurvey_Factory
- * @dev Factory contract to create ConfidentialSurvey instances using the BeaconProxy pattern
- * @notice This contract enables creation of surveys that can be upgraded via beacon
+ * @dev Factory contract to create ConfidentialSurvey instances directly
+ * @notice This contract enables creation of surveys without proxy patterns
  */
 contract ConfidentialSurvey_Factory is
     Initializable,
@@ -21,19 +20,16 @@ contract ConfidentialSurvey_Factory is
     // Storage
     // -------------------------------------
 
-    /// @dev Address of the beacon contract
-    ConfidentialSurvey_Beacon public beacon;
-
     /// @dev Counter for total surveys created
     uint256 public totalSurveys;
 
-    /// @dev Mapping from survey ID to proxy contract address
+    /// @dev Mapping from survey ID to survey contract address
     mapping(uint256 => address) public surveys;
 
     /// @dev Mapping from owner address to array of owned survey IDs
     mapping(address => uint256[]) public ownerSurveys;
 
-    /// @dev Mapping from proxy address to survey ID
+    /// @dev Mapping from survey address to survey ID
     mapping(address => uint256) public surveyIds;
 
     /// @dev Array of all survey addresses for enumeration
@@ -46,13 +42,13 @@ contract ConfidentialSurvey_Factory is
     /**
      * @dev Event emitted when a new survey is created
      * @param surveyId Unique ID of the survey
-     * @param proxy BeaconProxy address for the survey
+     * @param survey ConfidentialSurvey contract address
      * @param owner Owner address of the survey
      * @param symbol Survey symbol
      */
     event SurveyCreated(
         uint256 indexed surveyId,
-        address indexed proxy,
+        address indexed survey,
         address indexed owner,
         string symbol
     );
@@ -68,17 +64,13 @@ contract ConfidentialSurvey_Factory is
 
     /**
      * @dev Initializes the factory contract
-     * @param _beacon Address of the beacon contract to use
      * @param _owner Address to be set as the factory owner
      */
-    function initialize(address _beacon, address _owner) public initializer {
-        require(_beacon != address(0), "Beacon cannot be zero address");
+    function initialize(address _owner) public initializer {
         require(_owner != address(0), "Owner cannot be zero address");
 
         __Ownable_init(_owner);
         __ReentrancyGuard_init();
-
-        beacon = ConfidentialSurvey_Beacon(_beacon);
     }
 
     // -------------------------------------
@@ -86,7 +78,7 @@ contract ConfidentialSurvey_Factory is
     // -------------------------------------
 
     /**
-     * @dev Creates a new survey using BeaconProxy
+     * @dev Creates a new survey by deploying ConfidentialSurvey directly
      * @param _owner Address to be set as the survey owner
      * @param _symbol Symbol for the survey (Required. Max 10 characters)
      * @param _metadataCID IPFS CID containing survey metadata
@@ -94,7 +86,7 @@ contract ConfidentialSurvey_Factory is
      * @param _totalQuestions Total number of questions in the survey
      * @param _respondentLimit Maximum number of allowed respondents (1-1000)
      * @return surveyId Unique ID of the newly created survey
-     * @return proxy BeaconProxy address for the newly created survey
+     * @return survey ConfidentialSurvey contract address
      */
     function createSurvey(
         address _owner,
@@ -103,7 +95,7 @@ contract ConfidentialSurvey_Factory is
         string memory _questionsCID,
         uint256 _totalQuestions,
         uint256 _respondentLimit
-    ) external nonReentrant returns (uint256 surveyId, address proxy) {
+    ) external nonReentrant returns (uint256 surveyId, address survey) {
         require(_owner != address(0), "Owner cannot be zero address");
         require(
             bytes(_symbol).length > 0 && bytes(_symbol).length <= 10,
@@ -120,27 +112,25 @@ contract ConfidentialSurvey_Factory is
 
         surveyId = totalSurveys++;
 
-        // Encode data for initialize function
-        bytes memory initData = abi.encodeWithSignature(
-            "initialize(address,string,string,string,uint256,uint256)",
-            _owner,
-            _symbol,
-            _metadataCID,
-            _questionsCID,
-            _totalQuestions,
-            _respondentLimit
+        // Deploy ConfidentialSurvey directly
+        survey = address(
+            new ConfidentialSurvey(
+                _owner,
+                _symbol,
+                _metadataCID,
+                _questionsCID,
+                _totalQuestions,
+                _respondentLimit
+            )
         );
 
-        // Deploy BeaconProxy
-        proxy = address(new BeaconProxy(address(beacon), initData));
-
         // Update mappings
-        surveys[surveyId] = proxy;
-        surveyIds[proxy] = surveyId;
+        surveys[surveyId] = survey;
+        surveyIds[survey] = surveyId;
         ownerSurveys[_owner].push(surveyId);
-        allSurveys.push(proxy);
+        allSurveys.push(survey);
 
-        emit SurveyCreated(surveyId, proxy, _owner, _symbol);
+        emit SurveyCreated(surveyId, survey, _owner, _symbol);
     }
 
     // -------------------------------------
@@ -209,22 +199,6 @@ contract ConfidentialSurvey_Factory is
     }
 
     /**
-     * @dev Gets the beacon address in use
-     * @return Beacon contract address
-     */
-    function getBeacon() external view returns (address) {
-        return address(beacon);
-    }
-
-    /**
-     * @dev Gets the current implementation address from the beacon
-     * @return Currently active implementation address
-     */
-    function getCurrentImplementation() external view returns (address) {
-        return beacon.implementation();
-    }
-
-    /**
      * @dev Gets the number of surveys owned by a specific owner
      * @param _owner Owner address
      * @return Number of surveys
@@ -237,12 +211,12 @@ contract ConfidentialSurvey_Factory is
 
     /**
      * @dev Checks if an address is a valid survey
-     * @param _proxy Address to check
+     * @param _survey Address to check
      * @return true if the address is a valid survey
      */
-    function isValidSurvey(address _proxy) external view returns (bool) {
+    function isValidSurvey(address _survey) external view returns (bool) {
         return
-            surveyIds[_proxy] < totalSurveys &&
-            surveys[surveyIds[_proxy]] == _proxy;
+            surveyIds[_survey] < totalSurveys &&
+            surveys[surveyIds[_survey]] == _survey;
     }
 }
