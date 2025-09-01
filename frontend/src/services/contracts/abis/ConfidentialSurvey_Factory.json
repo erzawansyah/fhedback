@@ -85,7 +85,7 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "proxy",
+        "name": "survey",
         "type": "address"
       },
       {
@@ -116,19 +116,6 @@
     "outputs": [
       {
         "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "beacon",
-    "outputs": [
-      {
-        "internalType": "contract ConfidentialSurvey_Beacon",
         "name": "",
         "type": "address"
       }
@@ -178,7 +165,7 @@
       },
       {
         "internalType": "address",
-        "name": "proxy",
+        "name": "survey",
         "type": "address"
       }
     ],
@@ -193,32 +180,6 @@
         "internalType": "address[]",
         "name": "",
         "type": "address[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getBeacon",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "getCurrentImplementation",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
       }
     ],
     "stateMutability": "view",
@@ -304,11 +265,6 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_beacon",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
         "name": "_owner",
         "type": "address"
       }
@@ -322,7 +278,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_proxy",
+        "name": "_survey",
         "type": "address"
       }
     ],

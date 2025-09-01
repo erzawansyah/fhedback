@@ -12,13 +12,11 @@ This directory contains everything needed to integrate with FHEdback smart contr
 
 | Contract | Address | Purpose |
 |----------|---------|---------|
-| **Factory Proxy** 🎯 | `0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214` | **Main contract for frontend** |
-| Survey Implementation | `0xb213a72EfF95D042112a13Ea749094a7624F7e6A` | Survey template |
-| Beacon | `0xc08F37e971a3c752c77702bf63f78bbFc2C9Bf5F` | Upgrade mechanism |
-| Factory Implementation | `0xe6EB51400def6B97C5cadb1984f701F3996152f0` | Factory logic |
+| **Factory Proxy** 🎯 | `0xeD772f032bB500F55ed715781CcABff4625Cc5C8` | **Main contract for frontend** |
+| Factory Implementation | `0x95a37bc1148a2Dba364865926863f06B828e5FE4` | Factory logic |
 | Proxy Admin | `0x8b7bcBCee9de4134e553365499f206698A9fB434` | Admin control |
 
-> 🎯 **For Frontend**: Always use the **Factory Proxy** address `0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214`
+> 🎯 **For Frontend**: Always use the **Factory Proxy** address `0xeD772f032bB500F55ed715781CcABff4625Cc5C8`
 
 ## 🚀 Quick Start
 
@@ -48,6 +46,11 @@ const tx = await factoryWithSigner.createSurvey(
   ownerAddress,      // Survey owner
   "SURVEY01",        // Symbol
   "QmMetadataHash",  // Metadata IPFS hash
+  "QmQuestionsHash", // Questions IPFS hash  
+  5,                 // Total questions
+  100                // Respondent limit
+);
+await tx.wait();
   "QmQuestionsHash", // Questions IPFS hash
   5,                 // Rating scale (1-5)
   100               // Max respondents
@@ -73,8 +76,7 @@ const tx = await surveyContract.submitResponses([
 
 ```
 contracts/
-├── index.ts              # Main exports, updated addresses
-├── addresses.ts          # Contract addresses by network
+├── index.ts              # Main exports with contract addresses
 ├── examples.ts           # Usage examples
 ├── README.md            # This file
 └── abis/                # Contract ABIs (auto-updated)
@@ -97,7 +99,7 @@ The ABI files are automatically synchronized with deployed contracts:
 - **Chain ID**: 11155111
 - **RPC**: `https://sepolia.infura.io/v3/YOUR_INFURA_KEY`
 - **Explorer**: https://eth-sepolia.blockscout.com
-- **Factory Address**: `0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214`
+- **Factory Address**: `0xeD772f032bB500F55ed715781CcABff4625Cc5C8`
 
 ### Network Verification
 ```typescript
@@ -138,17 +140,16 @@ import { getFactoryStats } from '@/services/contracts/examples';
 
 const stats = await getFactoryStats(provider);
 console.log(`Total Surveys: ${stats.totalSurveys}`);
-console.log(`Beacon Address: ${stats.beaconAddress}`);
+console.log(`Factory Owner: ${stats.owner}`);
 ```
 
 ## 🔍 Verification Links
 
 All contracts are verified on Sepolia Blockscout:
 
-- [Factory Proxy](https://eth-sepolia.blockscout.com/address/0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214#code) ← **Use this**
-- [Survey Implementation](https://eth-sepolia.blockscout.com/address/0xb213a72EfF95D042112a13Ea749094a7624F7e6A#code)
-- [Beacon](https://eth-sepolia.blockscout.com/address/0xc08F37e971a3c752c77702bf63f78bbFc2C9Bf5F#code)
-- [Factory Implementation](https://eth-sepolia.blockscout.com/address/0xe6EB51400def6B97C5cadb1984f701F3996152f0#code)
+- [Factory Proxy](https://eth-sepolia.blockscout.com/address/0xeD772f032bB500F55ed715781CcABff4625Cc5C8#code) ← **Use this**
+- [Factory Implementation](https://eth-sepolia.blockscout.com/address/0x95a37bc1148a2Dba364865926863f06B828e5FE4#code) ✅ **Verified**
+- [Survey Example](https://eth-sepolia.blockscout.com/address/0x71fcad2522510202CA8D1eB9f1C689CE0AB22894#code) ✅ **Verified**
 - [Proxy Admin](https://eth-sepolia.blockscout.com/address/0x8b7bcBCee9de4134e553365499f206698A9fB434#code)
 
 ## 🆕 What's New (September 1, 2025)
@@ -165,7 +166,7 @@ All contracts are verified on Sepolia Blockscout:
 When ready for mainnet:
 
 1. Deploy contracts to mainnet using deployment scripts
-2. Update `addresses.ts` with mainnet addresses
+2. Update `index.ts` with mainnet addresses
 3. Verify mainnet contracts on Etherscan
 4. Test thoroughly before going live
 

@@ -2,21 +2,21 @@
  * FHEdback Smart Contract Integration
  * 
  * Updated: September 1, 2025
- * Status: ✅ Sepolia contracts deployed and verified
+ * Status: ✅ Sepolia contracts deployed and verified (Direct Implementation)
  * Network: Sepolia Testnet (Chain ID: 11155111)
+ * 
+ * Note: Uses direct survey creation without beacon proxy pattern
  */
 
 import survey_abi from "@/services/contracts/abis/ConfidentialSurvey.json"
 import factory_abi from "@/services/contracts/abis/ConfidentialSurvey_Factory.json"
 
-// ✅ VERIFIED CONTRACT ADDRESSES - Sepolia Testnet
-export const SURVEY_IMPLEMENTATION_ADDRESS = "0xb213a72EfF95D042112a13Ea749094a7624F7e6A"
-export const FACTORY_IMPLEMENTATION_ADDRESS = "0xe6EB51400def6B97C5cadb1984f701F3996152f0"
-export const BEACON_ADDRESS = "0xc08F37e971a3c752c77702bf63f78bbFc2C9Bf5F"
+// ✅ VERIFIED CONTRACT ADDRESSES - Sepolia Testnet (Direct Implementation)
+export const FACTORY_IMPLEMENTATION_ADDRESS = "0x95a37bc1148a2Dba364865926863f06B828e5FE4"
 export const PROXY_ADMIN_ADDRESS = "0x8b7bcBCee9de4134e553365499f206698A9fB434"
 
 // 🎯 MAIN CONTRACT ADDRESS FOR FRONTEND INTEGRATION
-export const FACTORY_ADDRESS = "0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214" // Factory Proxy
+export const FACTORY_ADDRESS = "0xeD772f032bB500F55ed715781CcABff4625Cc5C8" // Factory Proxy
 
 // Contract ABIs (updated from deployment)
 export const ABIS = {
