@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import type { Address } from 'viem'
+import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -18,6 +18,8 @@ import { Loader2, Send } from 'lucide-react'
 import { toast } from 'sonner'
 
 import type { SurveyQuestion, NominalLabel } from '../../types/survey.schema'
+import { encryptSurveyResponses } from '@/services/fhevm/relayer'
+import { useAccount } from 'wagmi'
 
 interface SurveyResponseFormProps {
     surveyAddress: Address
@@ -53,6 +55,7 @@ export default function SurveyResponseForm({
 }: SurveyResponseFormProps) {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const writeContract = useWriteContract()
+    const { address } = useAccount()
 
     const { data: receipt, isSuccess } = useWaitForTransactionReceipt({
         hash: writeContract.data,
@@ -75,20 +78,30 @@ export default function SurveyResponseForm({
         try {
             setIsSubmitting(true)
 
-            // Convert form data to array of encrypted responses
-            const responses = questions.map((_: SurveyQuestion, index: number) => {
-                return data[`question_${index}`]
-            })
+                // Collect clear responses as uint8
+                const clearValues: number[] = questions.map((_: SurveyQuestion, index: number) => {
+                    return Number(data[`question_${index}`])
+                })
 
-            console.log('Submitting responses:', responses)
+                if (!address) {
+                    toast.error('Connect wallet to submit response')
+                    return
+                }
 
-            // Call the smart contract function
-            writeContract.writeContract({
-                address: surveyAddress,
-                abi: ABIS.survey,
-                functionName: 'submitResponse',
-                args: [responses], // This will be encrypted by the FHE library
-            })
+                // Encrypt using Zama Relayer SDK
+                const { handles, inputProof } = await encryptSurveyResponses(
+                    surveyAddress as Address,
+                    address as Address,
+                    clearValues,
+                )
+
+                // Call the smart contract function with encrypted handles and proof
+                writeContract.writeContract({
+                    address: surveyAddress,
+                    abi: ABIS.survey,
+                    functionName: 'submitResponses',
+                    args: [handles, inputProof],
+                })
 
             toast.success('Response submitted!', {
                 description: 'Your encrypted response has been recorded on-chain.'

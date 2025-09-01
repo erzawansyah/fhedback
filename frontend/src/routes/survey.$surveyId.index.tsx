@@ -9,7 +9,7 @@ import { MessageCircle, Users, Clock, CheckCircle } from 'lucide-react'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
 import { Alert, AlertDescription } from '../components/ui/alert'
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import SurveyResponseForm from '../components/forms/SurveyResponseForm'
 
 export const Route = createFileRoute('/survey/$surveyId/')({
@@ -68,6 +68,13 @@ function SurveyParticipationPage() {
 
     // Ensure instructions is a string to satisfy ReactNode children typing
     const instructionsText: string = typeof metadata?.instructions === 'string' ? metadata.instructions : ''
+    const instructionsSection: ReactNode = instructionsText
+        ? (
+            <Section title="Instructions" variant="plain" className="mb-6">
+                <p className="text-foreground/80">{String(instructionsText)}</p>
+            </Section>
+        )
+        : null
 
     if (isLoading) {
         return (
@@ -117,31 +124,27 @@ function SurveyParticipationPage() {
                         <span>{responseCount}/{maxResponses} responses</span>
                     </div>
 
-                    {questions && (
+                    {questions ? (
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <MessageCircle className="h-4 w-4" />
                             <span>{questions.length} questions</span>
                         </div>
-                    )}
+                    ) : null}
                 </div>
             </Section>
 
             {/* Instructions */}
-            {instructionsText && (
-                <Section title="Instructions" variant="plain" className="mb-6">
-                    <p className="text-foreground/80">{instructionsText}</p>
-                </Section>
-            )}
+            {instructionsSection}
 
             {/* Response Status Alerts */}
-            {hasResponded && (
+            {hasResponded === true ? (
                 <Alert className="mb-6">
                     <CheckCircle className="h-4 w-4" />
                     <AlertDescription>
                         You have already submitted a response to this survey. Thank you for your participation!
                     </AlertDescription>
                 </Alert>
-            )}
+            ) : null}
 
             {hasSubmitted && (
                 <Alert className="mb-6">
@@ -177,7 +180,7 @@ function SurveyParticipationPage() {
                     questions={questions}
                     onSubmitSuccess={() => setHasSubmitted(true)}
                 />
-            ) : !canParticipate && address && (
+            ) : (!canParticipate && !!address ? (
                 <Section variant="plain">
                     <div className="text-center py-8">
                         <MessageCircle className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -190,7 +193,7 @@ function SurveyParticipationPage() {
                         </p>
                     </div>
                 </Section>
-            )}
+            ) : null)}
 
             {!address && (
                 <Section variant="plain">
