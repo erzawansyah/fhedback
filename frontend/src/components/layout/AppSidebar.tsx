@@ -42,7 +42,7 @@ const sidebarMenuItems = [
         section: null,
         items: [
             { label: "Documentation", icon: BookOpen, href: "/docs" },
-            { label: "About Fhedback", icon: Megaphone, href: "/about" },
+            { label: "About FHEdback", icon: Megaphone, href: "/about" },
         ],
     },
 ];
