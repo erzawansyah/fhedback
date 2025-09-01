@@ -1,6 +1,6 @@
-# FhedBack - Privacy-Preserving Survey Platform
+# 🔐 FHEdback - Confidential Survey Platform
 
-A modern survey platform built with React, TypeScript, and Zama's Fully Homomorphic Encryption (FHE) technology for ultimate privacy.
+A privacy-first survey platform built with **Fully Homomorphic Encryption (FHE)** using Zama's FHEVM, enabling completely confidential surveys where individual responses remain encrypted while allowing statistical analysis.
 
 ## 🏗️ Project Structure
 

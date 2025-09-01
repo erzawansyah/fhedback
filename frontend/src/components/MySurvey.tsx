@@ -8,6 +8,7 @@ import { useSurveyDataById } from "../hooks/useSurveyData";
 import type { Address } from "viem";
 import { useSurveyManager } from "../hooks/useSurveyManager";
 import { useState } from "react";
+import { Link } from "@tanstack/react-router";
 
 const statusMap: Record<number, string> = {
     0: "Created",
@@ -161,14 +162,16 @@ const PublishButton = ({ address }: { address: Address }) => {
     );
 }
 
-const SurveyActions = ({ status, address }: { status: number; address?: Address }) => {
+const SurveyActions = ({ status, address, surveyId }: { status: number; address?: Address; surveyId: number }) => {
     return (
         <div className="flex items-center gap-2 mt-4 pt-4 border-t">
-            <div className="ml-auto">
-                <Button variant="neutral" size="sm">
-                    <BarChart className="w-4 h-4 mr-2" />
-                    Stats
-                </Button>
+            <div className="ml-auto flex items-center gap-2">
+                <Link to="/survey/$surveyId/results" params={{ surveyId: surveyId.toString() }}>
+                    <Button variant="neutral" size="sm">
+                        <BarChart className="w-4 h-4 mr-2" />
+                        Results
+                    </Button>
+                </Link>
             </div>
 
             {status === 1 && (
@@ -195,7 +198,7 @@ const SurveyActions = ({ status, address }: { status: number; address?: Address 
     );
 }
 
-const SurveyContent = ({ config, metadata, address }: { config: SurveyConfig; metadata?: SurveyMetadata; address?: Address }) => (
+const SurveyContent = ({ config, metadata, address, surveyId }: { config: SurveyConfig; metadata?: SurveyMetadata; address?: Address; surveyId: number }) => (
     <div className="p-4 rounded-lg border bg-card">
         <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -216,7 +219,7 @@ const SurveyContent = ({ config, metadata, address }: { config: SurveyConfig; me
         </div>
 
         <SurveyMetaInfo config={config} address={address} />
-        <SurveyActions status={config.status} address={address} />
+        <SurveyActions status={config.status} address={address} surveyId={surveyId} />
     </div>
 );
 
@@ -245,6 +248,7 @@ export default function MySurvey({ surveyId }: { surveyId: number }) {
                     }}
                     metadata={metadata ?? undefined}
                     address={address ?? undefined}
+                    surveyId={surveyId}
                 />
             )}
         </div>

@@ -267,3 +267,116 @@ export const useSurveyDataById = (surveyId: number | bigint | string) => {
     questions,
   };
 };
+
+export const useSurveyDataByAddress = (surveyAddress?: Address) => {
+  const [error, setError] = useState<string[]>([]);
+  const [config, setConfig] = useState<SurveyConfig | null>(null);
+  const [metadata, setMetadata] = useState<SurveyMetadata | null>(null);
+  const [questions, setQuestions] = useState<SurveyQuestion[] | null>(null);
+  
+  const loading = useMemo(() => {
+    return !config && error.length === 0;
+  }, [config, error]);
+
+  // Get survey data directly from contract address
+  const {
+    data: surveyData,
+    isPending: surveyDataPending,
+    isError: surveyDataIsError,
+  } = useReadContract({
+    address: surveyAddress,
+    abi: surveyAbi,
+    functionName: "survey",
+    query: { 
+      enabled: !!surveyAddress,
+      retry: 2,
+      gcTime: 5 * 60 * 1000
+    },
+  }) as {
+    data: SurveyDataRaw | undefined;
+    isPending: boolean;
+    isError: boolean;
+  };
+
+  useEffect(() => {
+    if (!surveyData) return;
+
+    let metadataCid = '';
+    let questionsCid = '';
+
+    try {
+      const [
+        ownerRaw,
+        symbolRaw,
+        metadataCID,
+        questionsCID,
+        totalQuestionsRaw,
+        respondentLimitRaw,
+        createdAtRaw,
+        statusRaw,
+      ] = surveyData;
+
+      metadataCid = metadataCID || '';
+      questionsCid = questionsCID || '';
+      
+      const totalQuestions = Number(totalQuestionsRaw);
+      const respondentLimit = Number(respondentLimitRaw);
+      const createdAtTimestamp = Number(createdAtRaw) * 1000;
+      const statusNum = Number(statusRaw);
+      
+      const createdAt = new Date(createdAtTimestamp);
+      
+      setConfig({
+        owner: ownerRaw as Address,
+        symbol: symbolRaw,
+        totalQuestions,
+        respondentLimit,
+        createdAt,
+        status: statusNum
+      });
+
+    } catch (e) {
+      setError(prev => [...prev, `Error parsing survey data: ${e instanceof Error ? e.message : String(e)}`]);
+      return;
+    }
+
+    // Fetch metadata and questions
+    const fetchData = async () => {
+      if (metadataCid) {
+        try {
+          const response = await getDb("metadata", metadataCid);
+          if (response?.content) {
+            setMetadata(response.content as SurveyMetadata);
+          }
+        } catch (e) {
+          setError(prev => [...prev, `Failed to fetch metadata: ${String(e)}`]);
+        }
+      }
+
+      if (questionsCid) {
+        try {
+          const response = await getDb("questions", questionsCid);
+          if (response?.content) {
+            setQuestions(response.content as SurveyQuestion[]);
+          }
+        } catch (e) {
+          setError(prev => [...prev, `Failed to fetch questions: ${String(e)}`]);
+        }
+      }
+    };
+
+    fetchData();
+  }, [surveyData]);
+
+  return {
+    loading,
+    error,
+    address: surveyAddress ?? null,
+    config,
+    metadata,
+    questions,
+    surveyData,
+    isLoading: loading || surveyDataPending,
+    isError: surveyDataIsError || error.length > 0,
+  };
+};
