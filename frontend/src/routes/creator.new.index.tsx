@@ -30,7 +30,7 @@ function CreateSurveyPage() {
         receipt,
     } = useSurveyCreation();
     const form = useForm<FormIn>({
-        /** PENTING: resolver dan generic sama-sama berdasarkan schema yang sama */
+        /** IMPORTANT: resolver and generic both based on the same schema */
         resolver: zodResolver(SurveySubmissionSchema),
         mode: "onChange",
         defaultValues: { ...makeDefaultValues() },
@@ -45,21 +45,21 @@ function CreateSurveyPage() {
 
         try {
             metadataCid = await createDb("metadata", values.metadata, address);
-            console.log("metadata OK:", metadataCid);
+            console.log("Metadata saved successfully:", metadataCid);
         } catch (e) {
-            console.error("GAGAL tulis METADATA:", e);
-            throw e; // stop lebih awal
+            console.error("Failed to save metadata:", e);
+            throw e; // Stop execution early
         }
 
         try {
             // Transform submission questions to proper SurveyQuestions format
             const surveyQuestions = transformToSurveyQuestions(
                 values.questions,
-                values.metadata.title // menggunakan title sebagai name
+                values.metadata.title // Use title as name
             );
 
             const questionsCid = await createDb("questions", surveyQuestions, address);
-            console.log("questions OK:", questionsCid);
+            console.log("Questions saved successfully:", questionsCid);
 
             const totalQuestions = surveyQuestions.totalQuestions;
             createSurvey({
@@ -67,11 +67,11 @@ function CreateSurveyPage() {
                 questionsCID: questionsCid,
                 totalQuestions,
                 owner: address as `0x${string}`,
-                respondenLimit: values.respondentLimit,
+                respondentLimit: values.respondentLimit,
                 symbol: values.symbol
             });
         } catch (e) {
-            console.error("GAGAL tulis QUESTIONS:", e);
+            console.error("Failed to save questions:", e);
             throw e;
         }
     };
