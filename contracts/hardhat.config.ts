@@ -3,7 +3,7 @@ import "@nomicfoundation/hardhat-chai-matchers";
 import "@nomicfoundation/hardhat-ethers";
 import "@nomicfoundation/hardhat-verify";
 import "@openzeppelin/hardhat-upgrades";
-// import "@typechain/hardhat";
+import "@typechain/hardhat";
 import "hardhat-deploy";
 import "hardhat-gas-reporter";
 import type { HardhatUserConfig } from "hardhat/config";
@@ -107,6 +107,10 @@ const config: HardhatUserConfig = {
   tracer: {
     enabled: true, // bisa off saat CI
     gasCost: true, // tampilkan gas per call
+  },
+  typechain: {
+    outDir: "types",
+    target: "ethers-v6",
   },
 };
 

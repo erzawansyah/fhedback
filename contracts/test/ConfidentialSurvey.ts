@@ -2,8 +2,8 @@ import { FhevmType } from "@fhevm/hardhat-plugin";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers, fhevm } from "hardhat";
-import { ConfidentialSurvey } from "../types/ConfidentialSurvey";
-import { ConfidentialSurvey__factory } from "../types/factories/ConfidentialSurvey__factory";
+import { ConfidentialSurvey } from "../types/contracts/ConfidentialSurvey";
+import { ConfidentialSurvey__factory } from "../types/factories/contracts/ConfidentialSurvey__factory";
 
 type Signers = {
   owner: HardhatEthersSigner;
@@ -52,7 +52,40 @@ describe_flow(
 
     async function deployFixture() {
       const contractFactory = new ConfidentialSurvey__factory(signers.owner);
-      const contract = await contractFactory.deploy();
+      const contract = await contractFactory.deploy(
+        signers.owner.address,
+        SURVEY_CONFIG.SYMBOL,
+        SURVEY_CONFIG.METADATA,
+        SURVEY_CONFIG.QUESTIONS,
+        SURVEY_CONFIG.TOTAL_QUESTIONS,
+        SURVEY_CONFIG.MAX_RESPONDENTS,
+      );
+      const contractAddress = await contract.getAddress();
+      return { contract, contractAddress };
+    }
+
+    // Helper function to deploy survey with custom parameters
+    async function deployCustomSurvey(args: InitializationArgs = {}) {
+      const contractFactory = new ConfidentialSurvey__factory(signers.owner);
+      const defaultArgs = {
+        owner: signers.owner.address,
+        symbol: SURVEY_CONFIG.SYMBOL,
+        metadataCID: SURVEY_CONFIG.METADATA,
+        questionsCID: SURVEY_CONFIG.QUESTIONS,
+        totalQuestions: SURVEY_CONFIG.TOTAL_QUESTIONS,
+        respondentLimit: SURVEY_CONFIG.MAX_RESPONDENTS,
+      };
+
+      const finalArgs = { ...defaultArgs, ...args };
+
+      const contract = await contractFactory.deploy(
+        finalArgs.owner!,
+        finalArgs.symbol!,
+        finalArgs.metadataCID!,
+        finalArgs.questionsCID!,
+        finalArgs.totalQuestions!,
+        finalArgs.respondentLimit!,
+      );
       const contractAddress = await contract.getAddress();
       return { contract, contractAddress };
     }
@@ -95,27 +128,11 @@ describe_flow(
       ({ contract: surveyContract } = await deployFixture());
     });
 
+    // Survey is already initialized through constructor, no need for separate initialization
     async function initialization(args: InitializationArgs = {}) {
-      const default_config: InitializationArgs = {
-        owner: signers.owner.address,
-        symbol: SURVEY_CONFIG.SYMBOL,
-        metadataCID: SURVEY_CONFIG.METADATA,
-        questionsCID: SURVEY_CONFIG.QUESTIONS,
-        totalQuestions: SURVEY_CONFIG.TOTAL_QUESTIONS,
-        respondentLimit: SURVEY_CONFIG.MAX_RESPONDENTS,
-      };
-      const usedConfig = {
-        ...default_config,
-        ...args,
-      };
-      await surveyContract.initialize(
-        usedConfig.owner!,
-        usedConfig.symbol!,
-        usedConfig.metadataCID!,
-        usedConfig.questionsCID!,
-        usedConfig.totalQuestions!,
-        usedConfig.respondentLimit!,
-      );
+      // This function is no longer needed since survey is initialized in constructor
+      // Left empty for backward compatibility, but return args for potential usage
+      return args;
     }
 
     // =================================================================
@@ -322,15 +339,9 @@ describe_flow(
         it_test(
           "Should require complete metadata before publishing",
           async function () {
-            const { contract: newSurvey } = await deployFixture();
-            await newSurvey.initialize(
-              signers.owner.address,
-              SURVEY_CONFIG.SYMBOL,
-              "", // Empty metadata
-              SURVEY_CONFIG.QUESTIONS,
-              SURVEY_CONFIG.TOTAL_QUESTIONS,
-              SURVEY_CONFIG.MAX_RESPONDENTS,
-            );
+            const { contract: newSurvey } = await deployCustomSurvey({
+              metadataCID: "", // Empty metadata
+            });
             await expect(
               newSurvey.publishSurvey(SURVEY_CONFIG.MAX_SCORES),
             ).to.be.revertedWith("metadata or questions not set");
@@ -432,15 +443,13 @@ describe_flow(
           "Owner can delete survey when not Active and emit SurveyDeleted",
           async function () {
             // Create new survey in Created status (not active)
-            const { contract: newSurvey } = await deployFixture();
-            await newSurvey.initialize(
-              signers.owner.address,
-              "TEST",
-              "meta-cid",
-              "quest-cid",
-              3,
-              6,
-            );
+            const { contract: newSurvey } = await deployCustomSurvey({
+              symbol: "TEST",
+              metadataCID: "meta-cid",
+              questionsCID: "quest-cid",
+              totalQuestions: 3,
+              respondentLimit: 6,
+            });
 
             // Delete survey
             await newSurvey.deleteSurvey();
@@ -824,15 +833,7 @@ describe_flow(
           "Should prevent decryption authorization before survey closure",
           async function () {
             // Create new active survey
-            const { contract: newSurvey } = await deployFixture();
-            await newSurvey.initialize(
-              signers.owner.address,
-              SURVEY_CONFIG.SYMBOL,
-              SURVEY_CONFIG.METADATA,
-              SURVEY_CONFIG.QUESTIONS,
-              SURVEY_CONFIG.TOTAL_QUESTIONS,
-              SURVEY_CONFIG.MAX_RESPONDENTS,
-            );
+            const { contract: newSurvey } = await deployCustomSurvey();
             await newSurvey.publishSurvey(SURVEY_CONFIG.MAX_SCORES);
 
             await expect(newSurvey.grantOwnerDecrypt(0)).to.be.revertedWith(
@@ -873,15 +874,14 @@ describe_flow(
           "Should prevent publishing surveys with incomplete configuration",
           async function () {
             await initialization();
-            const { contract: newSurvey } = await deployFixture();
-            await newSurvey.initialize(
-              signers.owner.address,
-              "TEST",
-              "", // empty metadata
-              "quest-cid",
-              3,
-              6,
-            );
+            const { contract: newSurvey } = await deployCustomSurvey({
+              owner: signers.owner.address,
+              symbol: "TEST",
+              metadataCID: "", // empty metadata
+              questionsCID: "quest-cid",
+              totalQuestions: 3,
+              respondentLimit: 6,
+            });
 
             await expect(
               newSurvey.publishSurvey(SURVEY_CONFIG.MAX_SCORES),

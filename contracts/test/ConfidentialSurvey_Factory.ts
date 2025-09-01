@@ -1,14 +1,11 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { ConfidentialSurvey_Factory } from "../types/ConfidentialSurvey_Factory";
-import { ConfidentialSurvey_Beacon } from "../types/ConfidentialSurvey_Beacon";
-import { ConfidentialSurvey } from "../types/ConfidentialSurvey";
+import { ConfidentialSurvey_Factory } from "../types/contracts/ConfidentialSurvey_Factory";
+import { ConfidentialSurvey } from "../types/contracts/ConfidentialSurvey";
 
 describe("ConfidentialSurvey_Factory", function () {
   let factory: ConfidentialSurvey_Factory;
-  let beacon: ConfidentialSurvey_Beacon;
-  let implementationAddress: string;
   let owner: HardhatEthersSigner;
   let user1: HardhatEthersSigner;
   let user2: HardhatEthersSigner;
@@ -26,24 +23,6 @@ describe("ConfidentialSurvey_Factory", function () {
   beforeEach(async function () {
     [owner, user1, user2, stranger] = await ethers.getSigners();
 
-    // Deploy implementation contract
-    const ConfidentialSurveyImpl =
-      await ethers.getContractFactory("ConfidentialSurvey");
-    const implementation = await ConfidentialSurveyImpl.deploy();
-    await implementation.waitForDeployment();
-    implementationAddress = await implementation.getAddress();
-
-    // Deploy beacon
-    const BeaconFactory = await ethers.getContractFactory(
-      "ConfidentialSurvey_Beacon",
-    );
-    const beaconContract = await BeaconFactory.deploy(
-      implementationAddress,
-      owner.address,
-    );
-    await beaconContract.waitForDeployment();
-    beacon = beaconContract as unknown as ConfidentialSurvey_Beacon;
-
     // Deploy factory implementation
     const FactoryContract = await ethers.getContractFactory(
       "ConfidentialSurvey_Factory",
@@ -58,10 +37,10 @@ describe("ConfidentialSurvey_Factory", function () {
     const proxyAdmin = await ProxyAdminFactory.deploy(owner.address);
     await proxyAdmin.waitForDeployment();
 
-    // Prepare initialization data
+    // Prepare initialization data (only owner address needed now)
     const initData = FactoryContract.interface.encodeFunctionData(
       "initialize",
-      [await beacon.getAddress(), owner.address],
+      [owner.address],
     );
 
     // Deploy TransparentUpgradeableProxy
@@ -81,11 +60,6 @@ describe("ConfidentialSurvey_Factory", function () {
   });
 
   describe("Deployment", function () {
-    it("Should deploy with correct beacon address", async function () {
-      const beaconAddress = await factory.beacon();
-      expect(beaconAddress).to.equal(await beacon.getAddress());
-    });
-
     it("Should set the correct owner", async function () {
       const factoryOwner = await factory.owner();
       expect(factoryOwner).to.equal(owner.address);
@@ -259,11 +233,6 @@ describe("ConfidentialSurvey_Factory", function () {
       expect(await factory.isValidSurvey(ethers.ZeroAddress)).to.equal(false);
     });
 
-    it("Should return current implementation from beacon", async function () {
-      const currentImpl = await factory.getCurrentImplementation();
-      expect(currentImpl).to.equal(implementationAddress);
-    });
-
     it("Should return all surveys", async function () {
       const allSurveys = await factory.getAllSurveys();
       expect(allSurveys.length).to.equal(2);
@@ -276,8 +245,8 @@ describe("ConfidentialSurvey_Factory", function () {
     });
   });
 
-  describe("Survey Proxy Functionality", function () {
-    let surveyProxy: ConfidentialSurvey;
+  describe("Survey Contract Functionality", function () {
+    let surveyContract: ConfidentialSurvey;
 
     beforeEach(async function () {
       // Create a survey
@@ -291,14 +260,14 @@ describe("ConfidentialSurvey_Factory", function () {
       );
 
       const surveyAddress = await factory.surveys(0);
-      surveyProxy = (await ethers.getContractAt(
+      surveyContract = (await ethers.getContractAt(
         "ConfidentialSurvey",
         surveyAddress,
       )) as unknown as ConfidentialSurvey;
     });
 
-    it("Should initialize survey correctly through proxy", async function () {
-      const survey = await surveyProxy.survey();
+    it("Should initialize survey correctly", async function () {
+      const survey = await surveyContract.survey();
       expect(survey.owner).to.equal(user1.address);
       expect(survey.symbol).to.equal(SURVEY_CONFIG.SYMBOL);
       expect(survey.metadataCID).to.equal(SURVEY_CONFIG.METADATA);
@@ -307,13 +276,9 @@ describe("ConfidentialSurvey_Factory", function () {
       expect(survey.respondentLimit).to.equal(SURVEY_CONFIG.MAX_RESPONDENTS);
     });
 
-    it("Should use current implementation from beacon", async function () {
-      // The proxy should delegate to the implementation set in the beacon
-      const beaconImpl = await beacon.implementation();
-      expect(beaconImpl).to.equal(implementationAddress);
-
-      // Survey should be functional (this proves it's using the correct implementation)
-      const surveyTyped = surveyProxy as unknown as ConfidentialSurvey;
+    it("Should be functional after deployment", async function () {
+      // Survey should be functional and allow metadata updates by owner
+      const surveyTyped = surveyContract as unknown as ConfidentialSurvey;
       await expect(
         surveyTyped.connect(user1).updateSurveyMetadata("new-metadata"),
       ).to.not.be.reverted;
@@ -409,50 +374,74 @@ describe("ConfidentialSurvey_Factory", function () {
       // These are view functions, should consume minimal gas
       await factory.totalSurveys.staticCall();
       await factory.getSurveyCountByOwner.staticCall(user1.address);
-      await factory.getCurrentImplementation.staticCall();
 
       const surveyAddress = await factory.surveys(0);
       await factory.isValidSurvey.staticCall(surveyAddress);
     });
   });
 
-  describe("Integration with Beacon Upgrades", function () {
-    it("Should use new implementation after beacon upgrade", async function () {
-      // Create a survey with current implementation
+  describe("Survey Independence", function () {
+    it("Should create independent survey contracts", async function () {
+      // Create two surveys
       await factory.createSurvey(
         user1.address,
-        SURVEY_CONFIG.SYMBOL,
+        "SURV1",
         SURVEY_CONFIG.METADATA,
         SURVEY_CONFIG.QUESTIONS,
         SURVEY_CONFIG.TOTAL_QUESTIONS,
         SURVEY_CONFIG.MAX_RESPONDENTS,
       );
 
-      const surveyAddress = await factory.surveys(0);
-      const surveyProxy = await ethers.getContractAt(
-        "ConfidentialSurvey",
-        surveyAddress,
+      await factory.createSurvey(
+        user2.address,
+        "SURV2",
+        SURVEY_CONFIG.METADATA,
+        SURVEY_CONFIG.QUESTIONS,
+        SURVEY_CONFIG.TOTAL_QUESTIONS,
+        SURVEY_CONFIG.MAX_RESPONDENTS,
       );
 
-      // Deploy new implementation
-      const ConfidentialSurveyImpl =
-        await ethers.getContractFactory("ConfidentialSurvey");
-      const newImplementation = await ConfidentialSurveyImpl.deploy();
-      await newImplementation.waitForDeployment();
+      const survey1Address = await factory.surveys(0);
+      const survey2Address = await factory.surveys(1);
 
-      // Upgrade beacon
-      await beacon.upgradeImplementation(await newImplementation.getAddress());
+      const survey1 = await ethers.getContractAt(
+        "ConfidentialSurvey",
+        survey1Address,
+      );
+      const survey2 = await ethers.getContractAt(
+        "ConfidentialSurvey",
+        survey2Address,
+      );
 
-      // Verify factory shows new implementation
-      const currentImpl = await factory.getCurrentImplementation();
-      expect(currentImpl).to.equal(await newImplementation.getAddress());
+      // Verify surveys have different addresses and owners
+      expect(survey1Address).to.not.equal(survey2Address);
 
-      // Existing proxies should now use new implementation
-      // (This is verified by the beacon proxy mechanism)
-      const surveyTyped = surveyProxy as unknown as ConfidentialSurvey;
+      const survey1Details = await survey1.survey();
+      const survey2Details = await survey2.survey();
+
+      expect(survey1Details.owner).to.equal(user1.address);
+      expect(survey2Details.owner).to.equal(user2.address);
+      expect(survey1Details.symbol).to.equal("SURV1");
+      expect(survey2Details.symbol).to.equal("SURV2");
+
+      // Verify they operate independently - modifying one doesn't affect the other
+      const survey1Typed = survey1 as unknown as ConfidentialSurvey;
+      const survey2Typed = survey2 as unknown as ConfidentialSurvey;
+
       await expect(
-        surveyTyped.connect(user1).updateSurveyMetadata("updated-metadata"),
+        survey1Typed.connect(user1).updateSurveyMetadata("updated-metadata-1"),
       ).to.not.be.reverted;
+
+      await expect(
+        survey2Typed.connect(user2).updateSurveyMetadata("updated-metadata-2"),
+      ).to.not.be.reverted;
+
+      // Verify each survey maintained its independent state
+      const updatedSurvey1Details = await survey1.survey();
+      const updatedSurvey2Details = await survey2.survey();
+
+      expect(updatedSurvey1Details.metadataCID).to.equal("updated-metadata-1");
+      expect(updatedSurvey2Details.metadataCID).to.equal("updated-metadata-2");
     });
   });
 });
