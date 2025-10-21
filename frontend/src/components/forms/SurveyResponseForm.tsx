@@ -133,7 +133,7 @@ export default function SurveyResponseForm({
             // Encrypt the responses using FHEVM
             const buffer = fhevmInstance.createEncryptedInput(surveyAddress as Address, address as Address)
             for (const v of clearValues) buffer.add8(BigInt(v))
-            
+
             const ciphertexts = await buffer.encrypt().catch((error: unknown) => {
                 const parsedError = parseError(error)
                 logger.error('FHE encryption failed', {
@@ -143,7 +143,7 @@ export default function SurveyResponseForm({
                 })
                 throw new Error(`Encryption failed: ${parsedError.message}`)
             }) as unknown as { handles: `0x${string}`[]; inputProof: `0x${string}` }
-            
+
             const { handles, inputProof } = ciphertexts
 
             logger.info('Encryption completed, submitting to contract', {
@@ -187,7 +187,7 @@ export default function SurveyResponseForm({
                 error: parsedError,
                 step
             })
-            
+
             toast.error('Failed to submit response', {
                 description: parsedError.userMessage || 'Please try again or contact support.'
             })

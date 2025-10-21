@@ -121,7 +121,7 @@ export default function BasicSurveyCreation(props: {
             // Set success state
             setIsSuccess(true);
             setIsLoading(false);
-            
+
             logger.info('Basic survey creation completed successfully');
 
             // Show success toast
@@ -140,7 +140,7 @@ export default function BasicSurveyCreation(props: {
 
         } catch (error) {
             const parsedError = parseError(error);
-            
+
             logger.error('Basic survey creation failed', {
                 error: parsedError,
                 surveyTitle: values.metadata?.title,
@@ -157,7 +157,7 @@ export default function BasicSurveyCreation(props: {
         }
     }, (errors) => {
         const errorMessage = "Please check the form for validation errors.";
-        
+
         logger.warn('Form validation failed during basic survey creation', {
             validationErrors: errors
         });

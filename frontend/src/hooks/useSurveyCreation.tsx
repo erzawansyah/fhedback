@@ -145,18 +145,18 @@ export const useSurveyCreation = () => {
         // Transaction identifiers
         hash: txHash,
         receipt,
-        
+
         // Transaction status
         isPending,           // Transaction is being submitted
         isError,             // Error occurred during submission
         isConfirming,        // Waiting for block confirmation
         isConfirmed,         // Transaction confirmed on blockchain
-        
+
         // Error details
         writeError,          // Raw error from contract write operation
         confirmError,        // Raw error from transaction confirmation
         error: parsedError,  // Parsed and structured error
-        
+
         // Actions
         createSurvey,        // Function to create a new survey
         reset                // Function to reset hook state

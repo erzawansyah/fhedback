@@ -56,13 +56,13 @@ export default function AdvancedSurveyCreation({
     const submitHandler = handleSubmit((values: FormIn) => {
         // Parse values to output type with defaults applied
         const parsed = SurveySubmissionSchema.parse(values) as FormOut;
-        
+
         logger.info('Advanced survey creation submission', {
             surveyTitle: parsed.metadata?.title,
             questionsCount: parsed.questions?.length,
             surveyType: 'advanced'
         });
-        
+
         onSubmit?.(parsed);
     });
 

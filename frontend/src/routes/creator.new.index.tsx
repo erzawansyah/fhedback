@@ -62,19 +62,19 @@ function CreateSurveyPage() {
         if (!address) {
             const error = new Error("Please connect your wallet to continue")
             logError("Survey creation failed", error, { component: 'CreateSurveyPage', function: 'submitHandler' })
-            form.setError("root", { 
-                type: "manual", 
+            form.setError("root", {
+                type: "manual",
                 message: getUserErrorMessage(error)
             })
             return
         }
 
         const startTime = Date.now()
-        
+
         try {
             // Step 1: Save metadata to IPFS
             const metadataCid = await createDb("metadata", values.metadata, address)
-            
+
             // Step 2: Transform and save questions to IPFS
             const surveyQuestions = transformToSurveyQuestions(
                 values.questions,
@@ -95,26 +95,26 @@ function CreateSurveyPage() {
             })
 
             // Log successful initiation
-            logSurvey.created(undefined, { 
+            logSurvey.created(undefined, {
                 component: 'CreateSurveyPage',
                 symbol: values.symbol,
-                questionsCount: totalQuestions 
+                questionsCount: totalQuestions
             })
 
         } catch (error) {
             const errorMessage = getUserErrorMessage(error)
-            logError("Survey creation failed", error, { 
-                component: 'CreateSurveyPage', 
+            logError("Survey creation failed", error, {
+                component: 'CreateSurveyPage',
                 function: 'submitHandler',
-                address 
+                address
             })
-            form.setError("root", { 
-                type: "manual", 
-                message: errorMessage 
+            form.setError("root", {
+                type: "manual",
+                message: errorMessage
             })
         } finally {
-            logPerformance("survey_creation_attempt", startTime, { 
-                component: 'CreateSurveyPage' 
+            logPerformance("survey_creation_attempt", startTime, {
+                component: 'CreateSurveyPage'
             })
         }
     }
@@ -122,11 +122,11 @@ function CreateSurveyPage() {
     // Handle successful survey creation
     useEffect(() => {
         if (isConfirmed && receipt) {
-            logTransaction.confirmed(receipt.transactionHash, { 
+            logTransaction.confirmed(receipt.transactionHash, {
                 component: 'CreateSurveyPage',
                 action: 'survey_creation'
             })
-            logSurvey.created(receipt.transactionHash, { 
+            logSurvey.created(receipt.transactionHash, {
                 component: 'CreateSurveyPage'
             })
             form.reset()
@@ -138,15 +138,15 @@ function CreateSurveyPage() {
         if (writeError || confirmError) {
             const error = writeError || confirmError
             const errorMessage = getUserErrorMessage(error)
-            
-            logError("Transaction failed", error, { 
+
+            logError("Transaction failed", error, {
                 component: 'CreateSurveyPage',
                 type: writeError ? 'write_error' : 'confirm_error'
             })
-            
-            form.setError("root", { 
-                type: "manual", 
-                message: errorMessage 
+
+            form.setError("root", {
+                type: "manual",
+                message: errorMessage
             })
         }
     }, [writeError, confirmError, form])
@@ -173,8 +173,8 @@ function CreateSurveyPage() {
             {isAdvancedMode ? (
                 <AdvancedSurveyCreation />
             ) : (
-                <BasicSurveyCreation 
-                    form={form} 
+                <BasicSurveyCreation
+                    form={form}
                     handleSubmit={submitHandler}
                 />
             )}

@@ -44,11 +44,11 @@ export const useSurveyManager = (contractAddress: Address) => {
         if (Array.isArray(data) && data.length > 7) {
             const status = Number(data[7])
             const cid = data[3]
-            
+
             setSurveyStatus(status)
             setQuestionsCID(cid)
             setReady(true)
-            
+
             logger.info('Survey data initialized', {
                 contractAddress,
                 status,
@@ -98,7 +98,7 @@ export const useSurveyManager = (contractAddress: Address) => {
             // Extract max scores from questions
             const surveyQuestions = questions.content.questions as SurveyQuestion[]
             const maxScores = surveyQuestions.map(question => question.response.maxScore)
-            
+
             if (maxScores.length === 0) {
                 const errorMsg = 'No valid questions found for survey'
                 logger.error(errorMsg, { questionsCount: surveyQuestions.length })
@@ -133,13 +133,13 @@ export const useSurveyManager = (contractAddress: Address) => {
         } catch (error) {
             const parsedError = parseError(error)
             const errorMsg = `Failed to publish survey: ${parsedError.message}`
-            
+
             logger.error('Survey publish failed', {
                 contractAddress,
                 error: parsedError,
                 type: parsedError.type
             })
-            
+
             setError(errorMsg)
             return false
         }
