@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 
 // utils component
 import { defaultScale, defaultNominal, makeDefaultValues, type FormIn, type FormOut } from "../../../utils/survey-creation";
+import { logger } from "../../../utils/logger";
 
 
 
@@ -53,10 +54,16 @@ export default function AdvancedSurveyCreation({
     const qFA = useFieldArray({ control, name: "questions" as const });
 
     const submitHandler = handleSubmit((values: FormIn) => {
-        // Ubah ke output type yang sudah terisi default
+        // Parse values to output type with defaults applied
         const parsed = SurveySubmissionSchema.parse(values) as FormOut;
+        
+        logger.info('Advanced survey creation submission', {
+            surveyTitle: parsed.metadata?.title,
+            questionsCount: parsed.questions?.length,
+            surveyType: 'advanced'
+        });
+        
         onSubmit?.(parsed);
-        console.log("VALID SUBMISSION:", parsed);
     });
 
     const switchType = (index: number, nextType: "scale" | "nominal") => {

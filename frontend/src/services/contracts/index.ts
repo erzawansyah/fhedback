@@ -78,12 +78,94 @@ export function getSurveyABI() {
 }
 
 /**
- * Helper function to validate if an address is a valid Ethereum address
+ * Validate if an address is a valid Ethereum address
  * @param address - Address to validate
  * @returns boolean indicating if address is valid
  */
 export function isValidAddress(address: string): boolean {
     return /^0x[a-fA-F0-9]{40}$/.test(address)
+}
+
+/**
+ * Validate survey creation parameters
+ * @param params - Survey creation parameters
+ * @throws Error if validation fails
+ */
+export function validateSurveyParams(params: CreateSurveyParams): void {
+    if (!params.owner || !isValidAddress(params.owner)) {
+        throw new Error("Invalid owner address")
+    }
+    
+    if (!params.symbol || params.symbol.length > 10) {
+        throw new Error("Symbol must be provided and no longer than 10 characters")
+    }
+    
+    if (!params.metadataCID) {
+        throw new Error("Metadata CID is required")
+    }
+    
+    if (!params.questionsCID) {
+        throw new Error("Questions CID is required")
+    }
+    
+    if (params.totalQuestions <= 0 || params.totalQuestions > 50) {
+        throw new Error("Total questions must be between 1 and 50")
+    }
+    
+    if (params.respondentLimit <= 0 || params.respondentLimit > 1000) {
+        throw new Error("Respondent limit must be between 1 and 1000")
+    }
+}
+
+/**
+ * Format survey status for display
+ * @param status - Numeric status from contract
+ * @returns Human-readable status string
+ */
+export function formatSurveyStatus(status: SurveyStatus): string {
+    const statusMap: Record<SurveyStatus, string> = {
+        0: "Created",
+        1: "Active", 
+        2: "Closed",
+        3: "Trashed"
+    }
+    return statusMap[status] || "Unknown"
+}
+
+/**
+ * Get survey status color for UI
+ * @param status - Numeric status from contract
+ * @returns CSS color class
+ */
+export function getSurveyStatusColor(status: SurveyStatus): string {
+    const colorMap: Record<SurveyStatus, string> = {
+        0: "bg-yellow-100 text-yellow-800",
+        1: "bg-green-100 text-green-800",
+        2: "bg-blue-100 text-blue-800", 
+        3: "bg-red-100 text-red-800"
+    }
+    return colorMap[status] || "bg-gray-100 text-gray-800"
+}
+
+/**
+ * Check if a survey can be modified based on its status
+ * @param status - Current survey status
+ * @returns boolean indicating if survey can be modified
+ */
+export function canModifySurvey(status: SurveyStatus): boolean {
+    return status === 0 // Only Created surveys can be modified
+}
+
+/**
+ * Format contract address for display (shortened)
+ * @param address - Full contract address
+ * @param chars - Number of characters to show at start/end
+ * @returns Formatted address string
+ */
+export function formatAddress(address: string, chars: number = 6): string {
+    if (!address || !isValidAddress(address)) return ""
+    if (address.length <= chars * 2) return address
+    return `${address.slice(0, chars)}...${address.slice(-chars)}`
 }
 
 /**

@@ -15,6 +15,8 @@ import { useState, useEffect } from "react";
 import { Loader2, AlertCircle, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
+import { logger } from "../../../utils/logger";
+import { parseError } from "../../../utils/error-handling";
 
 
 type GlobalExtras = {
@@ -68,6 +70,11 @@ export default function BasicSurveyCreation(props: {
         setIsLoading(true);
 
         try {
+            logger.info('Starting basic survey creation', {
+                surveyTitle: values.metadata?.title,
+                questionsCount: values.questions?.length
+            });
+
             // Get global settings from UI form
             const globalData = form.getValues() as unknown as FormInUI;
             const globalSettings = globalData.global;
@@ -113,7 +120,9 @@ export default function BasicSurveyCreation(props: {
 
             // Set success state
             setIsSuccess(true);
-            setIsLoading(false); // Stop loading, but keep success state
+            setIsLoading(false);
+            
+            logger.info('Basic survey creation completed successfully');
 
             // Show success toast
             toast.success("Survey created successfully!", {
@@ -121,55 +130,41 @@ export default function BasicSurveyCreation(props: {
                 duration: 3000,
             });
 
-            // Reset form on success (optional)
-            // form.reset();
-
             // Redirect to creator page after successful submission
             setTimeout(() => {
                 navigate({
                     to: '/creator',
                     replace: true
                 });
-            }, 2000); // Small delay to show toast
+            }, 2000);
 
         } catch (error) {
-            let errorMessage = "An unexpected error occurred while creating the survey.";
+            const parsedError = parseError(error);
+            
+            logger.error('Basic survey creation failed', {
+                error: parsedError,
+                surveyTitle: values.metadata?.title,
+                questionsCount: values.questions?.length
+            });
 
-            if (error instanceof Error) {
-                // Handle different types of errors
-                if (error.message.includes('validation')) {
-                    errorMessage = "Please check your form inputs for any validation errors.";
-                } else if (error.message.includes('network')) {
-                    errorMessage = "Network error occurred. Please check your connection and try again.";
-                } else if (error.message.includes('transaction')) {
-                    errorMessage = "Transaction failed. Please try again.";
-                } else {
-                    errorMessage = error.message;
-                }
-                console.error("Error details:", error.message);
-            } else {
-                console.error("Form validation error:", error);
-            }
-
-            setError(errorMessage);
+            setError(parsedError.userMessage);
             setIsLoading(false);
 
-            // Also show toast error for immediate feedback
             toast.error("Failed to create survey", {
-                description: errorMessage,
+                description: parsedError.userMessage,
                 duration: 5000,
             });
         }
-        // No finally block needed since we handle loading state in success/error cases
     }, (errors) => {
         const errorMessage = "Please check the form for validation errors.";
-        console.error("❌ Form submission errors:", errors);
-        console.error("Full error object:", JSON.stringify(errors, null, 2));
+        
+        logger.warn('Form validation failed during basic survey creation', {
+            validationErrors: errors
+        });
 
         setError(errorMessage);
         setIsLoading(false);
 
-        // Show toast for validation errors
         toast.error("Form validation failed", {
             description: errorMessage,
             duration: 4000,

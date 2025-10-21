@@ -60,7 +60,7 @@ interface ImportMetaEnv {
   readonly VITE_ZAMA_RELAYER_URL: string
   readonly VITE_PINATA_JWT: string
   readonly VITE_PINATA_GATEWAY_URL: string
-  readonly VITE_WALLETCONNECT_PROJECT_ID: string
+  readonly VITE_WALLET_CONNECT_PROJECT_ID: string
   readonly VITE_ANALYTICS_ID: string
   // Add more env variables as needed
 }

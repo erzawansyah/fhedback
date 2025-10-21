@@ -11,7 +11,7 @@ import { getDefaultConfig } from "@rainbow-me/rainbowkit";
  */
 export const wagmiConfig = getDefaultConfig({
     appName: "FHEdback - Confidential Survey Platform",
-    projectId: import.meta.env.VITE_WALLETCONNECT_PROJECT_ID!,
+    projectId: import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID!,
     chains: [sepolia],
     ssr: false, // Disable SSR for client-side rendering
 });

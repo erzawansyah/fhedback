@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { type SurveyMetadata, type SurveyQuestion } from "../types/survey.schema";
 import type { Abi, Address } from "viem";
 import { getDb } from "../services/firebase/dbStore";
+import { logger } from "../utils/logger";
 
 type SurveyConfig = {
   owner: Address;
@@ -60,7 +61,7 @@ export const useSurveyDataById = (surveyId: number | bigint | string) => {
 
       throw new Error(`Unsupported surveyId type: ${typeof surveyId}`);
     } catch (e) {
-      console.error("Failed to convert surveyId to BigInt:", { surveyId, error: e });
+      logger.error("Failed to convert surveyId to BigInt", { surveyId, error: e });
       return null;
     }
   }, [surveyId]);
@@ -131,7 +132,7 @@ export const useSurveyDataById = (surveyId: number | bigint | string) => {
     }
     
     if (next.length > 0) {
-      console.error("Survey data errors:", { 
+      logger.error("Survey data errors", { 
         surveyId, 
         surveyIdType: typeof surveyId,
         surveyIdBig,
@@ -211,7 +212,7 @@ export const useSurveyDataById = (surveyId: number | bigint | string) => {
           
           if (fetchTokenRef.current === token) {
             if (!response || !response.content) {
-              console.warn("Invalid metadata format:", response);
+              logger.warn("Invalid metadata format", { response });
               setError(prev => [...prev, "Metadata tidak lengkap atau rusak"]);
               setMetadata(null);
               return;
@@ -221,11 +222,11 @@ export const useSurveyDataById = (surveyId: number | bigint | string) => {
             setMetadata(response.content as SurveyMetadata);
           }
         } else {
-          console.log("No metadata CID available");
+          logger.info("No metadata CID available");
           setMetadata(null);
         }
       } catch (e) {
-        console.error("Metadata fetch error:", e);
+        logger.error("Metadata fetch error", { error: e, metadataCid });
         setError(prev => [...prev, `Gagal mengambil metadata: ${String(e)}`]);
       }
 
@@ -234,7 +235,7 @@ export const useSurveyDataById = (surveyId: number | bigint | string) => {
           const response = await getDb("questions", questionsCid);
           if (fetchTokenRef.current === token) {
             if (!response || !response.content) {
-              console.warn("Invalid questions format:", response);
+              logger.warn("Invalid questions format", { response });
               setError(prev => [...prev, "Data pertanyaan tidak lengkap atau rusak"]);
               setQuestions(null);
               return;
@@ -252,7 +253,9 @@ export const useSurveyDataById = (surveyId: number | bigint | string) => {
               qs = content.questions;
             }
             if (!qs) {
-              console.warn("Questions content is not an array or missing .questions[]:", response.content);
+              logger.warn("Questions content is not an array or missing .questions[]", { 
+                responseContent: response.content 
+              });
               setError(prev => [...prev, "Format pertanyaan tidak dikenali"]);
               setQuestions(null);
               return;
@@ -263,7 +266,7 @@ export const useSurveyDataById = (surveyId: number | bigint | string) => {
           setQuestions(null);
         }
       } catch (e) {
-        console.error("Questions fetch error:", e);
+        logger.error("Questions fetch error", { error: e, questionsCid });
         setError(prev => [...prev, `Gagal mengambil pertanyaan: ${String(e)}`]);
       }
     };

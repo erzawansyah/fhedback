@@ -138,21 +138,26 @@ const SurveyMetaInfo = ({ config, address }: { config: SurveyConfig; address?: s
 );
 
 const PublishButton = ({ address }: { address: Address }) => {
-    const [loading, setLoading] = useState(false);
-    const manage = useSurveyManager(address!);
+    const [loading, setLoading] = useState(false)
+    const manage = useSurveyManager(address!)
 
     const publish = async () => {
-        setLoading(true);
+        setLoading(true)
         try {
-            await manage.publish();
-        } catch (error) {
-            console.error("Failed to publish survey:", error);
+            const success = await manage.publish()
+            if (success) {
+                // Survey published successfully - the hook manages logging
+                // UI feedback could be added here if needed
+            }
+        } catch {
+            // Error handling is managed by the hook
+            // Additional UI error feedback could be added here
         } finally {
-            setLoading(false);
+            setLoading(false)
         }
     }
 
-    if (!manage.isReady) return null;
+    if (!manage.isReady) return null
 
     return (
         <Button variant="default" size="sm" onClick={publish}>

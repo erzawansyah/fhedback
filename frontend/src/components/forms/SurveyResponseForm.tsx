@@ -20,6 +20,8 @@ import { toast } from 'sonner'
 import type { SurveyQuestion, NominalLabel } from '../../types/survey.schema'
 import { useFhevm } from '@/hooks/useFhevm'
 import { useAccount } from 'wagmi'
+import { logger } from '../../utils/logger'
+import { parseError } from '../../utils/error-handling'
 
 interface SurveyResponseFormProps {
     surveyAddress: Address
@@ -93,34 +95,63 @@ export default function SurveyResponseForm({
     const onSubmit = async (data: ResponseFormData) => {
         try {
             setStep('encrypting')
+            logger.info('Starting survey response submission', {
+                surveyAddress,
+                questionsCount: questions.length
+            })
 
             // Collect clear responses as uint8
             const clearValues: number[] = questions.map((_: SurveyQuestion, index: number) => {
                 return Number(data[`question_${index}`])
             })
 
+            // Validate wallet connection
             if (!address) {
-                toast.error('Connect wallet to submit response')
+                const errorMsg = 'Connect wallet to submit response'
+                logger.warn('Wallet not connected during response submission')
+                toast.error(errorMsg)
                 return
             }
 
+            // Validate FHEVM readiness
             if (!fhevmInstance) {
-                toast.error('FHEVM SDK not ready yet')
+                const errorMsg = 'FHEVM SDK not ready yet'
+                logger.warn('FHEVM SDK not ready during response submission')
+                toast.error(errorMsg)
                 return
             }
 
-            // Tiny yield so UI can render spinner before heavy work
+            // Small delay to show UI state change
             await new Promise((r) => setTimeout(r, 30))
 
+            logger.info('Starting response encryption', {
+                surveyAddress,
+                responseCount: clearValues.length,
+                address
+            })
+
+            // Encrypt the responses using FHEVM
             const buffer = fhevmInstance.createEncryptedInput(surveyAddress as Address, address as Address)
             for (const v of clearValues) buffer.add8(BigInt(v))
-            const ciphertexts = await buffer.encrypt().catch((e: unknown) => {
-                console.error('FHE encrypt failed:', e)
-                throw new Error('Encryption failed')
+            
+            const ciphertexts = await buffer.encrypt().catch((error: unknown) => {
+                const parsedError = parseError(error)
+                logger.error('FHE encryption failed', {
+                    surveyAddress,
+                    address,
+                    error: parsedError
+                })
+                throw new Error(`Encryption failed: ${parsedError.message}`)
             }) as unknown as { handles: `0x${string}`[]; inputProof: `0x${string}` }
+            
             const { handles, inputProof } = ciphertexts
 
-            // Call the smart contract function with encrypted handles and proof
+            logger.info('Encryption completed, submitting to contract', {
+                surveyAddress,
+                handlesCount: handles.length
+            })
+
+            // Submit encrypted responses to smart contract
             setStep('submitting')
             try {
                 await writeContract.writeContract({
@@ -129,9 +160,19 @@ export default function SurveyResponseForm({
                     functionName: 'submitResponses',
                     args: [handles, inputProof],
                 })
-            } catch (e) {
-                console.error('Contract write failed:', e)
-                throw e
+
+                logger.info('Survey response transaction submitted', {
+                    surveyAddress,
+                    address
+                })
+            } catch (error) {
+                const parsedError = parseError(error)
+                logger.error('Contract write failed', {
+                    surveyAddress,
+                    address,
+                    error: parsedError
+                })
+                throw error
             }
 
             toast.success('Response submitted!', {
@@ -139,9 +180,16 @@ export default function SurveyResponseForm({
             })
 
         } catch (error) {
-            console.error('Error submitting response:', error)
+            const parsedError = parseError(error)
+            logger.error('Survey response submission failed', {
+                surveyAddress,
+                address,
+                error: parsedError,
+                step
+            })
+            
             toast.error('Failed to submit response', {
-                description: 'Please try again or contact support.'
+                description: parsedError.userMessage || 'Please try again or contact support.'
             })
             setStep('idle')
         }
