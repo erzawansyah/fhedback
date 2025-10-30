@@ -24,8 +24,6 @@ export const SURVEY_LIMITS = {
 export const QUESTION_TYPES = {
   RATING: 'rating',
   MULTIPLE_CHOICE: 'multiple_choice',
-  TEXT: 'text',
-  BOOLEAN: 'boolean',
 } as const
 
 export type QuestionType = typeof QUESTION_TYPES[keyof typeof QUESTION_TYPES]

@@ -1,119 +1,98 @@
-{
-    "name": "Customer Feedback Survey",
-    "totalQuestions": 5,
-    "group": [
-        {
-            "id": 0,
-            "label": "Service Quality",
-            "description": "Questions about satisfaction, experience, and perceived quality."
-        },
-        {
-            "id": 1,
-            "label": "Product Features",
-            "description": "Questions about feature preferences and priorities."
+[
+    {
+        "id": 0,
+        "text": "How satisfied are you with our service?",
+        "helperText": "1 is Not Satisfied, 10 is Very Satisfied",
+        "response": {
+            "type": "rating",
+            "minScore": 1,
+            "maxScore": 10,
+            "minLabel": "Not Satisfied",
+            "maxLabel": "Very Satisfied"
         }
-    ],
-    "questions": [
-        {
-            "id": 0,
-            "groupId": 0,
-            "text": "How satisfied are you with our service?",
-            "helperText": "1 is Not Satisfied, 10 is Very Satisfied",
-            "response": {
-                "type": "scale",
-                "minScore": 1,
-                "maxScore": 10,
-                "minLabel": "Not Satisfied",
-                "maxLabel": "Very Satisfied"
-            }
-        },
-        {
-            "id": 1,
-            "groupId": 0,
-            "text": "How likely are you to recommend us to a friend?",
-            "helperText": "1 is Not Likely, 10 is Very Likely",
-            "response": {
-                "type": "scale",
-                "minScore": 1,
-                "maxScore": 10,
-                "minLabel": "Not Likely",
-                "maxLabel": "Very Likely"
-            }
-        },
-        {
-            "id": 2,
-            "groupId": 1,
-            "text": "Which main feature do you value the most?",
-            "helperText": "Select one option",
-            "response": {
-                "type": "nominal",
-                "minScore": 1,
-                "maxScore": 5,
-                "labels": [
-                    {
-                        "id": 1,
-                        "text": "Speed"
-                    },
-                    {
-                        "id": 2,
-                        "text": "Security"
-                    },
-                    {
-                        "id": 3,
-                        "text": "Ease of Use"
-                    },
-                    {
-                        "id": 4,
-                        "text": "Customer Support"
-                    },
-                    {
-                        "id": 5,
-                        "text": "Integration"
-                    }
-                ]
-            }
-        },
-        {
-            "id": 3,
-            "groupId": 1,
-            "text": "Which additional feature would you like to see next?",
-            "helperText": "Select one option",
-            "response": {
-                "type": "nominal",
-                "minScore": 1,
-                "maxScore": 4,
-                "labels": [
-                    {
-                        "id": 1,
-                        "text": "Mobile App"
-                    },
-                    {
-                        "id": 2,
-                        "text": "Advanced Analytics"
-                    },
-                    {
-                        "id": 3,
-                        "text": "Multi-language Support"
-                    },
-                    {
-                        "id": 4,
-                        "text": "Offline Mode"
-                    }
-                ]
-            }
-        },
-        {
-            "id": 4,
-            "groupId": 0,
-            "text": "Rate the ease of navigation on our platform",
-            "helperText": "1 is Very Difficult, 10 is Very Easy",
-            "response": {
-                "type": "scale",
-                "minScore": 1,
-                "maxScore": 10,
-                "minLabel": "Very Difficult",
-                "maxLabel": "Very Easy"
-            }
+    },
+    {
+        "id": 1,
+        "text": "How likely are you to recommend us to a friend?",
+        "helperText": "1 is Not Likely, 10 is Very Likely",
+        "response": {
+            "type": "rating",
+            "minScore": 1,
+            "maxScore": 10,
+            "minLabel": "Not Likely",
+            "maxLabel": "Very Likely"
         }
-    ]
-}
+    },
+    {
+        "id": 2,
+        "text": "Which main feature do you value the most?",
+        "helperText": "Select one option",
+        "response": {
+            "type": "multiple_choice",
+            "minScore": 1,
+            "maxScore": 5,
+            "labels": [
+                {
+                    "id": 1,
+                    "text": "Speed"
+                },
+                {
+                    "id": 2,
+                    "text": "Security"
+                },
+                {
+                    "id": 3,
+                    "text": "Ease of Use"
+                },
+                {
+                    "id": 4,
+                    "text": "Customer Support"
+                },
+                {
+                    "id": 5,
+                    "text": "Integration"
+                }
+            ]
+        }
+    },
+    {
+        "id": 3,
+        "text": "Which additional feature would you like to see next?",
+        "helperText": "Select one option",
+        "response": {
+            "type": "multiple_choice",
+            "minScore": 1,
+            "maxScore": 4,
+            "labels": [
+                {
+                    "id": 1,
+                    "text": "Mobile App"
+                },
+                {
+                    "id": 2,
+                    "text": "Advanced Analytics"
+                },
+                {
+                    "id": 3,
+                    "text": "Multi-language Support"
+                },
+                {
+                    "id": 4,
+                    "text": "Offline Mode"
+                }
+            ]
+        }
+    },
+    {
+        "id": 4,
+        "text": "Rate the ease of navigation on our platform",
+        "helperText": "1 is Very Difficult, 10 is Very Easy",
+        "response": {
+            "type": "rating",
+            "minScore": 1,
+            "maxScore": 10,
+            "minLabel": "Very Difficult",
+            "maxLabel": "Very Easy"
+        }
+    }
+]

@@ -11,6 +11,7 @@ export const Route = createRootRoute({
 function RootLayout() {
     return (
         <>
+        
             <SidebarProvider>
                 <AppSidebar />
                 <SidebarInset>
