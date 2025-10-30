@@ -85,6 +85,11 @@
     "deploy": "hardhat deploy --tags All",
     "deploy:local": "hardhat deploy --network hardhat --tags All",
     "deploy:sepolia": "hardhat deploy --network sepolia --tags All",
+    "generate:contract-info": "hardhat run scripts/generate-contract-info.ts",
+    "generate:contract-info:sepolia": "hardhat run scripts/generate-contract-info.ts --network sepolia",
+    "copy:to-frontend": "ts-node scripts/copy-to-frontend.ts sepolia",
+    "copy:to-frontend:network": "ts-node scripts/copy-to-frontend.ts",
+    "deploy:full": "npm run deploy:sepolia && npm run copy:to-frontend",
     "setup:env": "bash scripts/setup-env.sh",
     "check:env": "hardhat run scripts/check-env.ts"
   },

@@ -312,21 +312,19 @@ contract ConfidentialSurvey is ConfidentialSurvey_Base, ReentrancyGuard {
         FHE.allowThis(qs.maxScore); // allow contract to read new value
 
         // TODO: Optimize frequency count updates
-        // Increment frequency count for the given response value
-        // CHANGE: Currently commented out to avoid gas issues with large frequency maps
         // This is a trade-off between gas cost and frequency count accuracy.
         // ===
-        // uint8 maxPlain = maxScores[_qIdx];
-        // for (uint8 i = 1; i <= maxPlain; ++i) {
-        //     ebool isMatch = FHE.eq(_resp, FHE.asEuint8(i));
-        //     euint64 inc = FHE.select(
-        //         isMatch,
-        //         FHE.asEuint64(1),
-        //         FHE.asEuint64(0)
-        //     );
-        //     frequencyCounts[_qIdx][i] = FHE.add(frequencyCounts[_qIdx][i], inc);
-        //     FHE.allowThis(frequencyCounts[_qIdx][i]); // allow contract to read new value
-        // }
+        uint8 maxPlain = maxScores[_qIdx];
+        for (uint8 i = 1; i <= maxPlain; ++i) {
+            ebool isMatch = FHE.eq(_resp, FHE.asEuint8(i));
+            euint64 inc = FHE.select(
+                isMatch,
+                FHE.asEuint64(1),
+                FHE.asEuint64(0)
+            );
+            frequencyCounts[_qIdx][i] = FHE.add(frequencyCounts[_qIdx][i], inc);
+            FHE.allowThis(frequencyCounts[_qIdx][i]); // allow contract to read new value
+        }
     }
 
     /**

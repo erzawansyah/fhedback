@@ -53,3 +53,6 @@ secrets.json
 .solcover.js
 .solhint.json
 .solhintignore
+
+# === Miscellaneous ===
+generated/

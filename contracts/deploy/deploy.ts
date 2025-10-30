@@ -1,5 +1,8 @@
 import { DeployFunction } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
+import { generateContractInfo } from "../scripts/generate-contract-info";
+import { copyContractInfoToFrontend } from "../scripts/copy-to-frontend";
+import { join } from "path";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployer } = await hre.getNamedAccounts();
@@ -36,6 +39,30 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     console.log(`✅ Factory deployment test passed!`);
   } catch (error) {
     console.log(`❌ Factory deployment test failed: ${error}`);
+  }
+
+  // Generate contract information files
+  console.log("\n📋 Generating contract information files...");
+  try {
+    await generateContractInfo();
+    console.log(`✅ Contract information files generated successfully!`);
+  } catch (error) {
+    console.log(`❌ Failed to generate contract information: ${error}`);
+  }
+
+  // Copy to frontend (only for sepolia network)
+  if (hre.network.name === "sepolia") {
+    console.log("\n📋 Copying contract info to frontend...");
+    try {
+      await copyContractInfoToFrontend({
+        contractsDir: process.cwd(),
+        frontendDir: join(process.cwd(), "..", "frontend"),
+        networkName: hre.network.name,
+      });
+      console.log(`✅ Contract info copied to frontend successfully!`);
+    } catch (error) {
+      console.log(`❌ Failed to copy to frontend: ${error}`);
+    }
   }
 };
 

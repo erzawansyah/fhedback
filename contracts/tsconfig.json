@@ -41,5 +41,5 @@
     "scripts/**/*",
     "types/",
     ".bak/TestContract.ts"
-, "test_backup/ConfidentialSurvey_Factory.ts", "test_backup/ConfidentialSurvey_Getters.ts", "test_backup/ConfidentialSurvey.ts"  ]
+, "test/ConfidentialSurvey_Factory.test.ts", "test/ConfidentialSurvey_Getters.test.ts", "test/ConfidentialSurvey.test.ts"  ]
 }
