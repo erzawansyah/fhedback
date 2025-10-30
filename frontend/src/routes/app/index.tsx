@@ -1,20 +1,20 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import PageTitle from '../components/layout/PageTitle'
-import Section from '../components/layout/Section'
+import PageTitle from '@/components/layout/PageTitle'
+import Section from '@/components/layout/Section'
 import { HomeIcon, MessageCircle, BarChart, Users, Zap } from 'lucide-react'
-import PageLayout from '../components/layout/PageLayout'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
-import { Button } from '../components/ui/button'
-import { Badge } from '../components/ui/badge'
+import PageLayout from '@/components/layout/PageLayout'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { useAccount, useReadContract } from 'wagmi'
-import { ABIS, FACTORY_ADDRESS } from '../services/contracts'
+import { ABIS, FACTORY_ADDRESS } from '@/services/contracts'
 import { useMemo } from 'react'
 
-export const Route = createFileRoute('/')({
+export const Route = createFileRoute('/app/')({
     component: Home,
 })
 
-const usePageData = () => {
+function Home() {
     const { address, isConnected } = useAccount()
 
     // Get user's survey count
@@ -39,12 +39,6 @@ const usePageData = () => {
             totalSurveys: totalSurveys ? Number(totalSurveys) : 0
         }
     }, [userSurveys, totalSurveys])
-
-    return { stats, isConnected }
-}
-
-function Home() {
-    const { stats, isConnected } = usePageData()
 
     return (
         <PageLayout>

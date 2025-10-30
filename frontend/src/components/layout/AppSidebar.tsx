@@ -18,24 +18,24 @@ const sidebarMenuItems = [
     {
         section: null,
         items: [
-            { label: "Dashboard", icon: Home, href: "/" },
-            { label: "Browse Surveys", icon: Search, href: "/surveys" },
+            { label: "Dashboard", icon: Home, href: "/app/" },
+            { label: "Browse Surveys", icon: Search, href: "/app/surveys" },
 
         ],
     },
     {
         section: "Creator Menu",
         items: [
-            { label: "My Surveys", icon: ClipboardList, href: "/creator" },
-            { label: "Create Survey", icon: Plus, href: "/creator/new" },
-            { label: "Results & Analytics", icon: BarChart2, href: "/creator/analytics" },
+            { label: "My Surveys", icon: ClipboardList, href: "/app/creator" },
+            { label: "Create Survey", icon: Plus, href: "/app/creator/new" },
+            { label: "Results & Analytics", icon: BarChart2, href: "/app/creator/analytics" },
         ],
     },
     {
         section: "Respondent Menu",
         items: [
-            { label: "Survey History", icon: History, href: "/respondent" },
-            { label: "My Rewards", icon: Ticket, href: "/respondent/rewards" },
+            { label: "Survey History", icon: History, href: "/app/respondent" },
+            { label: "My Rewards", icon: Ticket, href: "/app/respondent/rewards" },
         ],
     },
     {

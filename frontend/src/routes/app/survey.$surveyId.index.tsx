@@ -1,18 +1,18 @@
 import { createFileRoute, useParams } from '@tanstack/react-router'
 import { useAccount, useReadContract } from 'wagmi'
-import { ABIS, FACTORY_ADDRESS } from '../services/contracts'
-import { useSurveyDataByAddress } from '../hooks/useSurveyData'
-import PageLayout from '../components/layout/PageLayout'
-import PageTitle from '../components/layout/PageTitle'
-import Section from '../components/layout/Section'
+import { ABIS, FACTORY_ADDRESS } from '@/services/contracts'
+import { useSurveyDataByAddress } from '@/hooks/useSurveyData'
+import PageLayout from '@/components/layout/PageLayout'
+import PageTitle from '@/components/layout/PageTitle'
+import Section from '@/components/layout/Section'
 import { MessageCircle, Users, Clock, CheckCircle } from 'lucide-react'
-import { Badge } from '../components/ui/badge'
-import { Button } from '../components/ui/button'
-import { Alert, AlertDescription } from '../components/ui/alert'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useMemo, useState, type ReactNode } from 'react'
-import SurveyResponseForm from '../components/forms/SurveyResponseForm'
+import SurveyResponseForm from '@/components/forms/SurveyResponseForm'
 
-export const Route = createFileRoute('/survey/$surveyId/')({
+export const Route = createFileRoute('/app/survey/$surveyId/')({
     component: SurveyParticipationPage,
 })
 
@@ -24,7 +24,7 @@ const statusMap: Record<number, { label: string; color: string }> = {
 }
 
 function SurveyParticipationPage() {
-    const { surveyId } = useParams({ from: '/survey/$surveyId/' })
+    const { surveyId } = useParams({ from: '/app/survey/$surveyId/' })
     const { address } = useAccount()
     const [hasSubmitted, setHasSubmitted] = useState(false)
 

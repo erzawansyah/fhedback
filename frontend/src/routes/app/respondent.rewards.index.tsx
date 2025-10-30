@@ -1,10 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
-import PageLayout from '../components/layout/PageLayout'
-import PageTitle from '../components/layout/PageTitle'
-import Section from '../components/layout/Section'
+import PageLayout from '@/components/layout/PageLayout'
+import PageTitle from '@/components/layout/PageTitle'
+import Section from '@/components/layout/Section'
 import { Ticket } from 'lucide-react'
 
-export const Route = createFileRoute('/respondent/rewards/')({
+export const Route = createFileRoute('/app/respondent/rewards/')({
     component: RewardsPage,
 })
 

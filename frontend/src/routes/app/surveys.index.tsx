@@ -1,19 +1,19 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useReadContract } from 'wagmi'
-import { ABIS, FACTORY_ADDRESS } from '../services/contracts'
-import PageLayout from '../components/layout/PageLayout'
-import PageTitle from '../components/layout/PageTitle'
-import Section from '../components/layout/Section'
+import { ABIS, FACTORY_ADDRESS } from '@/services/contracts'
+import PageLayout from '@/components/layout/PageLayout'
+import PageTitle from '@/components/layout/PageTitle'
+import Section from '@/components/layout/Section'
 import { MessageCircle, Users, Search } from 'lucide-react'
-import { Badge } from '../components/ui/badge'
-import { Button } from '../components/ui/button'
-import { Input } from '../components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useMemo, useState } from 'react'
-import { useSurveyDataByAddress } from '../hooks/useSurveyData'
+import { useSurveyDataByAddress } from '@/hooks/useSurveyData'
 import { Link } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/surveys/')({
+export const Route = createFileRoute('/app/surveys/')({
     component: SurveysListPage,
 })
 
@@ -79,7 +79,6 @@ function SurveyCard({ surveyId }: { surveyId: bigint }) {
                     {metadata.description}
                 </p>
             </CardHeader>
-
             <CardContent className="space-y-4">
                 <div className="flex flex-wrap gap-2">
                     {metadata.tags?.slice(0, 3).map((tag: string, index: number) => (
@@ -106,7 +105,7 @@ function SurveyCard({ surveyId }: { surveyId: bigint }) {
                     </div>
 
                     <Button asChild size="sm" variant="neutral">
-                        <Link to="/survey/$surveyId" params={{ surveyId: surveyId.toString() }}>
+                        <Link to="/app/survey/$surveyId" params={{ surveyId: surveyId.toString() }}>
                             <MessageCircle className="h-4 w-4 mr-2" />
                             Take Survey
                         </Link>

@@ -1,14 +1,14 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import PageLayout from '../components/layout/PageLayout'
-import PageTitle from '../components/layout/PageTitle'
+import PageLayout from '@/components/layout/PageLayout'
+import PageTitle from '@/components/layout/PageTitle'
 import { FilePlus, FileTextIcon } from 'lucide-react'
-import Section from '../components/layout/Section'
+import Section from '@/components/layout/Section'
 import { useAccount, useReadContract } from 'wagmi'
-import { ABIS, FACTORY_ADDRESS } from '../services/contracts'
+import { ABIS, FACTORY_ADDRESS } from '@/services/contracts'
 import { useMemo } from 'react'
-import MySurvey from '../components/MySurvey'
+import MySurvey from '@/components/MySurvey'
 
-export const Route = createFileRoute('/creator/')({
+export const Route = createFileRoute('/app/creator/')({
   component: CreatorPage,
 })
 
@@ -43,7 +43,7 @@ function CreatorPage() {
         handleAction={() => {
           // redirect to create new survey page
           navigate({
-            to: '/creator/new',
+            to: '/app/creator/new',
             replace: true
           });
         }}
