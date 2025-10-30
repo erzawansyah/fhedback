@@ -26,7 +26,6 @@
   "dependencies": {
     "@fhevm/solidity": "^0.7.0",
     "@openzeppelin/contracts": "^5.4.0",
-    "@openzeppelin/contracts-upgradeable": "^5.1.0",
     "@zama-fhe/oracle-solidity": "^0.1.0",
     "encrypted-types": "^0.0.4"
   },
@@ -36,7 +35,6 @@
     "@nomicfoundation/hardhat-ethers": "^3.1.0",
     "@nomicfoundation/hardhat-network-helpers": "^1.1.0",
     "@nomicfoundation/hardhat-verify": "^2.1.0",
-    "@openzeppelin/hardhat-upgrades": "^3.9.1",
     "@typechain/ethers-v6": "^0.5.1",
     "@typechain/hardhat": "^9.1.0",
     "@types/chai": "^4.3.20",
@@ -70,7 +68,7 @@
     "contracts"
   ],
   "scripts": {
-    "clean": "rimraf ./fhevmTemp ./artifacts ./cache ./coverage ./types ./coverage.json ./dist ./deployments",
+    "clean": "rm -rf ./fhevmTemp ./artifacts ./cache ./coverage ./types ./coverage.json ./dist ./deployments",
     "compile": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat compile && npm run typechain",
     "compile:force": "npm run clean && npm run compile",
     "coverage": "SOLIDITY_COVERAGE=true hardhat coverage --solcoverjs ./.solcover.js --temp artifacts --testfiles \"test/**/*.ts\" && npm run typechain",
@@ -87,21 +85,6 @@
     "deploy": "hardhat deploy --tags All",
     "deploy:local": "hardhat deploy --network hardhat --tags All",
     "deploy:sepolia": "hardhat deploy --network sepolia --tags All",
-    "deploy:survey-impl": "hardhat deploy --tags SurveyImpl",
-    "deploy:survey-impl:local": "hardhat deploy --network hardhat --tags SurveyImpl",
-    "deploy:survey-impl:sepolia": "hardhat deploy --network sepolia --tags SurveyImpl",
-    "deploy:survey-beacon": "hardhat deploy --tags SurveyBeacon",
-    "deploy:survey-beacon:local": "hardhat deploy --network hardhat --tags SurveyBeacon",
-    "deploy:survey-beacon:sepolia": "hardhat deploy --network sepolia --tags SurveyBeacon",
-    "deploy:factory": "hardhat deploy --tags Factory",
-    "deploy:factory:local": "hardhat deploy --network hardhat --tags Factory",
-    "deploy:factory:sepolia": "hardhat deploy --network sepolia --tags Factory",
-    "upgrade:survey-impl": "hardhat deploy --tags UpgradeSurvey",
-    "upgrade:survey-impl:local": "hardhat deploy --network hardhat --tags UpgradeSurvey",
-    "upgrade:survey-impl:sepolia": "hardhat deploy --network sepolia --tags UpgradeSurvey",
-    "upgrade:factory-impl": "hardhat deploy --tags UpgradeFactory",
-    "upgrade:factory-impl:local": "hardhat deploy --network hardhat --tags UpgradeFactory",
-    "upgrade:factory-impl:sepolia": "hardhat deploy --network sepolia --tags UpgradeFactory",
     "setup:env": "bash scripts/setup-env.sh",
     "check:env": "hardhat run scripts/check-env.ts"
   },

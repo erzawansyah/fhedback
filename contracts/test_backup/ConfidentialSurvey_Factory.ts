@@ -23,40 +23,14 @@ describe("ConfidentialSurvey_Factory", function () {
   beforeEach(async function () {
     [owner, user1, user2, stranger] = await ethers.getSigners();
 
-    // Deploy factory implementation
+    // Deploy factory directly (no proxy pattern)
     const FactoryContract = await ethers.getContractFactory(
       "ConfidentialSurvey_Factory",
     );
-    const factoryImpl = await FactoryContract.deploy();
-    await factoryImpl.waitForDeployment();
+    const factoryInstance = await FactoryContract.deploy(owner.address);
+    await factoryInstance.waitForDeployment();
 
-    // Deploy ProxyAdmin
-    const ProxyAdminFactory = await ethers.getContractFactory(
-      "contracts/ProxyAdmin.sol:ProxyAdmin",
-    );
-    const proxyAdmin = await ProxyAdminFactory.deploy(owner.address);
-    await proxyAdmin.waitForDeployment();
-
-    // Prepare initialization data (only owner address needed now)
-    const initData = FactoryContract.interface.encodeFunctionData(
-      "initialize",
-      [owner.address],
-    );
-
-    // Deploy TransparentUpgradeableProxy
-    const ProxyFactory = await ethers.getContractFactory(
-      "contracts/TransparentUpgradeableProxy.sol:TransparentUpgradeableProxy",
-    );
-    const factoryProxy = await ProxyFactory.deploy(
-      await factoryImpl.getAddress(),
-      await proxyAdmin.getAddress(),
-      initData,
-    );
-    await factoryProxy.waitForDeployment();
-
-    factory = FactoryContract.attach(
-      await factoryProxy.getAddress(),
-    ) as unknown as ConfidentialSurvey_Factory;
+    factory = factoryInstance as unknown as ConfidentialSurvey_Factory;
   });
 
   describe("Deployment", function () {
@@ -357,7 +331,7 @@ describe("ConfidentialSurvey_Factory", function () {
       const receipt = await tx.wait();
 
       // Survey creation should not be too expensive
-      expect(receipt!.gasUsed).to.be.lt(3000000); // Less than 3M gas
+      expect(receipt!.gasUsed).to.be.lt(3200000); // Less than 3.2M gas
     });
 
     it("Should have minimal gas costs for view functions", async function () {

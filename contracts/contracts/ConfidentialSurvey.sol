@@ -128,6 +128,7 @@ contract ConfidentialSurvey is ConfidentialSurvey_Base, ReentrancyGuard {
     ) external onlyOwner notTrashed notActive metadataAndQuestionsSet {
         require(survey.totalQuestions == _maxScores.length, "length mismatch");
 
+        // Initialize encrypted statistics for each question
         for (uint256 i = 0; i < survey.totalQuestions; ++i) {
             uint8 m = _maxScores[i];
             require(m > 1, "maxScore must be greater than 1");
@@ -193,7 +194,7 @@ contract ConfidentialSurvey is ConfidentialSurvey_Base, ReentrancyGuard {
             responses[msg.sender][i] = resp;
             // TODO: Possibly update question statistics here
             // This is currently commented out to avoid gas issues with large frequency maps
-            // _updateQuestionStatistics(i, resp);
+            _updateQuestionStatistics(i, resp);
             _updateRespondentStatistics(msg.sender, resp);
         }
         _grantRespondentDecrypt(msg.sender); // allow respondent to decrypt their own stats

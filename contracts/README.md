@@ -15,7 +15,7 @@ FHEdback leverages Zama's Fully Homomorphic Encryption (FHE) technology to creat
 - **Confidentiality**: All survey responses are encrypted, ensuring user privacy
 - **Homomorphic Operations**: Perform statistical computations without decrypting data
 - **Access Control**: Robust permission system for survey management
-- **Upgradeable Architecture**: Proxy patterns for future improvements
+- **Direct Architecture**: Simplified deployment without proxy complexity
 - **Gas Optimized**: Efficient design supporting up to 15 questions and 1000 respondents
 
 ## 📋 Smart Contract Architecture
@@ -23,13 +23,13 @@ FHEdback leverages Zama's Fully Homomorphic Encryption (FHE) technology to creat
 ### Core Contracts
 
 #### 🏭 **ConfidentialSurvey_Factory** 
-The main factory contract that creates and manages individual survey instances.
+The main factory contract that creates and manages individual survey instances using direct deployment pattern.
 
 **Key Functions:**
-- `createSurvey()` - Deploy new confidential survey contracts
+- `createSurvey()` - Deploy new confidential survey contracts directly
 - `getSurveysByOwner()` - Retrieve all surveys created by a specific owner
 - `totalSurveys()` - Get the total number of surveys created
-- `surveys()` - Access survey by index
+- `surveys()` - Access survey by ID
 
 #### 📊 **ConfidentialSurvey**
 Individual survey contract instance with full FHE capabilities.
@@ -41,51 +41,99 @@ Individual survey contract instance with full FHE capabilities.
 - `getQuestionStatistics()` - Access encrypted statistical data
 - `getRespondentStatistics()` - Access encrypted respondent data
 
-### 🔄 Contract Lifecycle
+### 🏗️ System Architecture
 
-```mermaid
-graph TB
-    A[Factory.createSurvey] --> B[Survey: Created State]
-    B --> C[Survey.publishSurvey]
-    C --> D[Survey: Active State]
-    D --> E[Users submit responses]
-    E --> F[Survey.closeSurvey]
-    F --> G[Survey: Closed State]
-    D --> H[Survey.deleteSurvey]
-    H --> I[Survey: Trashed State]
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Frontend dApp                        │
+└─────────────────┬───────────────────────────────────────┘
+                  │
+         ┌────────▼──────────────────────────────────┐
+         │     ConfidentialSurvey_Factory             │
+         │  ┌─────────────────────────────────────┐   │
+         │  │ • createSurvey()                    │   │
+         │  │ • getSurveysByOwner()              │   │  
+         │  │ • totalSurveys()                   │   │
+         │  │ • queryLatestSurveys()             │   │
+         │  └─────────────────────────────────────┘   │
+         └────────┬──────────────────────────────────┘
+                  │ deploys
+         ┌────────▼──────────────────────────────────┐
+         │       ConfidentialSurvey                   │
+         │  ┌─────────────────────────────────────┐   │
+         │  │ Survey Management:                  │   │
+         │  │ • publishSurvey()                   │   │
+         │  │ • closeSurvey()                    │   │
+         │  │ • deleteSurvey()                   │   │
+         │  │                                    │   │
+         │  │ Response Handling:                 │   │
+         │  │ • submitResponses() [FHE]          │   │
+         │  │                                    │   │
+         │  │ Statistics Access:                 │   │
+         │  │ • getQuestionStatistics() [FHE]    │   │
+         │  │ • getRespondentStatistics() [FHE]  │   │
+         │  └─────────────────────────────────────┘   │
+         └───────────────────────────────────────────┘
 ```
 
-### 📊 Survey States
+### � Survey Workflow
 
-```solidity
-enum SurveyStatus {
-    Created,    // Initial state - editable, not accepting responses
-    Active,     // Published and accepting encrypted responses  
-    Closed,     // Completed - no more responses, data accessible
-    Trashed     // Deleted - permanently removed
-}
+```
+1. CREATE    → Factory.createSurvey() → Survey Contract Deployed
+   ↓
+2. SETUP     → Survey.updateMetadata() / updateQuestions()
+   ↓  
+3. PUBLISH   → Survey.publishSurvey(maxScores[]) → Status: Active
+   ↓
+4. COLLECT   → Users.submitResponses(encrypted, proofs)
+   ↓
+5. ANALYZE   → Survey.closeSurvey() → Status: Closed
+   ↓
+6. DECRYPT   → Owner.grantOwnerDecrypt() → Access Statistics
 ```
 
 ## 🌐 Deployment Information
 
 ### 📋 Sepolia Testnet (VERIFIED ✅)
-**Deployment Date**: September 1, 2025  
+**Deployment Date**: October 30, 2025  
 **Network**: Sepolia Testnet (Chain ID: 11155111)  
-**Status**: All contracts deployed and verified
+**Status**: Factory contract deployed and verified
 
 | Contract | Address | Purpose | Explorer |
 |----------|---------|---------|----------|
-| **ConfidentialSurvey Implementation** | [`0xb213a72EfF95D042112a13Ea749094a7624F7e6A`](https://eth-sepolia.blockscout.com/address/0xb213a72EfF95D042112a13Ea749094a7624F7e6A#code) | Survey logic template | [View Code](https://eth-sepolia.blockscout.com/address/0xb213a72EfF95D042112a13Ea749094a7624F7e6A#code) |
-| **ConfidentialSurvey_Beacon** | [`0xc08F37e971a3c752c77702bf63f78bbFc2C9Bf5F`](https://eth-sepolia.blockscout.com/address/0xc08F37e971a3c752c77702bf63f78bbFc2C9Bf5F#code) | Upgrade coordination | [View Code](https://eth-sepolia.blockscout.com/address/0xc08F37e971a3c752c77702bf63f78bbFc2C9Bf5F#code) |
-| **ConfidentialSurvey_Factory Implementation** | [`0xe6EB51400def6B97C5cadb1984f701F3996152f0`](https://eth-sepolia.blockscout.com/address/0xe6EB51400def6B97C5cadb1984f701F3996152f0#code) | Factory logic | [View Code](https://eth-sepolia.blockscout.com/address/0xe6EB51400def6B97C5cadb1984f701F3996152f0#code) |
-| **ConfidentialSurvey_Factory Proxy** 🎯 | [`0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214`](https://eth-sepolia.blockscout.com/address/0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214#code) | **Main Interface** | [View Code](https://eth-sepolia.blockscout.com/address/0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214#code) |
-| **ProxyAdmin** | [`0x8b7bcBCee9de4134e553365499f206698A9fB434`](https://eth-sepolia.blockscout.com/address/0x8b7bcBCee9de4134e553365499f206698A9fB434#code) | Upgrade management | [View Code](https://eth-sepolia.blockscout.com/address/0x8b7bcBCee9de4134e553365499f206698A9fB434#code) |
+| **ConfidentialSurvey_Factory** 🎯 | [`0x359B60b008524Da24a154e17B8Bb528Fb7e1aF04`](https://eth-sepolia.blockscout.com/address/0x359B60b008524Da24a154e17B8Bb528Fb7e1aF04#code) | **Main Factory Contract** | [View Code](https://eth-sepolia.blockscout.com/address/0x359B60b008524Da24a154e17B8Bb528Fb7e1aF04#code) |
 
-> 🎯 **For Frontend Integration**: Use the **Factory Proxy** address `0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214` to interact with the system.
+> 🎯 **For Frontend Integration**: Use the **Factory** address `0x359B60b008524Da24a154e17B8Bb528Fb7e1aF04` to create and manage surveys.
 
-> 📋 All contracts are **verified** on Sepolia Blockscout. Click the links above to view source code and interact with contracts.
+> 📋 Contract is **verified** on Sepolia Blockscout. Click the link above to view source code and interact with the contract.
 
-Read the [deployment guide](./docs/DEPLOYMENTS.md) for detailed instructions.
+### 🚀 Quick Start (Frontend Integration)
+
+To use the deployed factory in your dApp:
+
+```typescript
+import { ethers } from "ethers";
+
+// Connect to the deployed factory
+const factoryAddress = "0x359B60b008524Da24a154e17B8Bb528Fb7e1aF04";
+const factory = await ethers.getContractAt(
+  "ConfidentialSurvey_Factory", 
+  factoryAddress
+);
+
+// Create a new survey
+const tx = await factory.createSurvey(
+  ownerAddress,           // survey owner
+  "MYSURVEY",            // survey symbol (max 10 chars)
+  "QmMetadataCID...",     // IPFS metadata CID
+  "QmQuestionsCID...",    // IPFS questions CID  
+  5,                     // total questions
+  100                    // max respondents
+);
+
+const receipt = await tx.wait();
+const [surveyId, surveyAddress] = receipt.logs[0].args;
+```
 
 ## 🚀 Getting Started
 
@@ -132,136 +180,116 @@ npx hardhat vars set INFURA_API_KEY "your_infura_api_key"
 npx hardhat vars set ETHERSCAN_API_KEY "your_etherscan_api_key"
 ```
 
-## 🧪 Testing
+## 🏭 ConfidentialSurvey_Factory Functions
 
-### Running Tests
+### Survey Creation
+- **`createSurvey()`** - Creates a new survey instance with specified parameters
+  - Returns: `(uint256 surveyId, address surveyAddress)`
+  - Parameters: owner, symbol, metadata CID, questions CID, total questions, respondent limit
+  - Emits: `SurveyCreated` event
 
-```bash
-# Run complete test suite
-npm run test
+### Survey Management
+- **`getSurveysByOwner(address)`** - Returns array of survey IDs owned by specific address
+- **`getSurveyAddress(uint256)`** - Returns survey contract address by ID  
+- **`getSurveyId(address)`** - Returns survey ID by contract address
+- **`getAllSurveys()`** - Returns all survey contract addresses
+- **`totalSurveys()`** - Returns total number of surveys created
+- **`getSurveyCountByOwner(address)`** - Returns count of surveys per owner
+- **`isValidSurvey(address)`** - Validates if address is a legitimate survey contract
 
-# Run specific test files
-npm run test -- --grep "ConfidentialSurvey"
+### Query Functions  
+- **`queryLatestSurveys(offset, limit)`** - Paginated query of recent surveys (max 50 per call)
 
-# Generate test coverage report  
-npm run coverage
+## 📊 ConfidentialSurvey Functions
 
-# Test with gas reporting
-npm run test
-```
+### Survey Lifecycle Management
+- **`publishSurvey(uint8[])`** - Activates survey for response collection with max scores per question
+- **`closeSurvey()`** - Ends response collection period (requires minimum respondents)
+- **`deleteSurvey()`** - Permanently removes survey (only when not active)
 
-### Test Structure
+### Metadata Management
+- **`updateSurveyMetadata(string)`** - Updates IPFS metadata CID (before publishing)
+- **`updateQuestions(string, uint256)`** - Updates questions CID and count (before publishing)
 
-```
-test/
-├── ConfidentialSurvey.ts              # Core survey functionality
-├── ConfidentialSurvey_Factory.ts      # Factory contract tests
-├── ConfidentialSurvey_Getters.ts      # Data retrieval tests
-└── integration/                       # End-to-end workflow tests
-```
+### Response Collection
+- **`submitResponses(externalEuint8[], bytes)`** - Submits encrypted responses with ZK proofs
+  - Validates response count matches questions
+  - Prevents duplicate submissions
+  - Auto-closes at respondent limit
 
-## 🚀 Deployment
+### Owner Capabilities
+- **`grantOwnerDecrypt(uint256)`** - Grants owner access to decrypt question statistics (after closure)
 
-### Fresh Deployment (New Network)
+### Data Access (View Functions)
+- **`getSurvey()`** - Returns complete survey details struct
+- **`getSurveyStatus()`** - Returns current survey state (Created/Active/Closed/Trashed)
+- **`getTotalQuestions()`** - Returns number of questions in survey
+- **`getTotalRespondents()`** - Returns current respondent count
+- **`getRespondentLimit()`** - Returns maximum allowed respondents
+- **`getHasResponded(address)`** - Checks if address has submitted responses
 
-```bash
-# Deploy to local hardhat network
-npm run deploy:local
+### Statistical Data Access
+- **`getQuestionStatistics(uint256)`** - Returns encrypted stats for specific question
+- **`getFrequencyCount(uint256, uint8)`** - Returns encrypted frequency for question/answer pair
+- **`getQuestionFrequencies(uint256)`** - Returns all frequency counts for a question
+- **`getMaxScore(uint256)`** - Returns maximum allowed score for question
+- **`getAllMaxScores()`** - Returns max scores for all questions
 
-# Deploy to Sepolia testnet (first time only)
-npm run deploy:sepolia
+### Respondent Data Access  
+- **`getRespondentResponse(address, uint256)`** - Returns encrypted response for specific question
+- **`getRespondentResponses(address)`** - Returns all encrypted responses from respondent
+- **`getRespondentStatistics(address)`** - Returns encrypted personal statistics
+- **`getRespondentAt(uint256)`** - Returns respondent address by index
+- **`getAllRespondents()`** - Returns all respondent addresses
 
-# Deploy all components
-npm run deploy
-```
+### Survey Information
+- **`isActive()`** - Checks if survey is accepting responses
+- **`isClosed()`** - Checks if survey is closed
+- **`isTrashed()`** - Checks if survey is deleted
+- **`hasReachedLimit()`** - Checks if respondent limit reached
+- **`getProgress()`** - Returns completion percentage (0-100)
+- **`getRemainingSlots()`** - Returns available respondent slots
 
-### Upgrading Existing Contracts
+## � Data Structures
 
-⚠️ **Important**: Only use upgrade commands if contracts are already deployed.
-
-```bash
-# Upgrade survey implementation (affects ALL existing surveys)
-npm run upgrade:survey-impl:sepolia
-
-# Upgrade factory implementation (only affects NEW surveys)
-npm run upgrade:factory-impl:sepolia
-```
-
-## 🔧 Development Commands
-
-### Contract Management
-```bash
-npm run clean              # Remove build artifacts
-npm run compile            # Compile contracts + generate types
-npm run compile:force      # Clean compile from scratch
-npm run typechain          # Generate TypeScript interfaces
-```
-
-### Code Quality
-```bash
-npm run lint               # Run all linters (Solidity + TypeScript)
-npm run lint:sol           # Solidity linting only
-npm run lint:ts            # TypeScript linting only
-npm run prettier:write     # Format all code
-npm run prettier:check     # Check code formatting
-```
-
-### Network Operations
-```bash
-npm run deploy:local       # Deploy to local hardhat
-npm run deploy:sepolia     # Deploy to Sepolia testnet
-npm run check:env          # Validate environment setup
-```
-
-## 📚 API Reference
-
-### Factory Contract Interface
-
+### SurveyDetails Struct
 ```solidity
-interface IConfidentialSurveyFactory {
-    function createSurvey(
-        address _owner,
-        string memory _symbol,
-        string memory _metadataCID,
-        string memory _questionsCID, 
-        uint256 _totalQuestions,
-        uint256 _respondentLimit
-    ) external returns (address surveyAddress);
-    
-    function getSurveysByOwner(address _owner) 
-        external view returns (address[] memory);
-        
-    function totalSurveys() external view returns (uint256);
-    
-    function surveys(uint256 _index) external view returns (address);
+struct SurveyDetails {
+    address owner;           // Survey creator address
+    string symbol;           // Survey symbol (max 10 chars)
+    string metadataCID;      // IPFS metadata CID
+    string questionsCID;     // IPFS questions CID
+    uint256 totalQuestions;  // Number of questions
+    uint256 respondentLimit; // Max respondents (1-1000)
+    uint256 createdAt;       // Creation timestamp
+    SurveyStatus status;     // Current survey state
 }
 ```
 
-### Survey Contract Interface
-
+### Survey Status Enum
 ```solidity
-interface IConfidentialSurvey {
-    // Survey Management
-    function publishSurvey(uint8[] calldata _maxScores) external;
-    function closeSurvey() external; 
-    function deleteSurvey() external;
-    
-    // Response Handling
-    function submitResponses(
-        externalEuint8[] calldata _encryptedResponses,
-        bytes calldata _proofs
-    ) external;
-    
-    // Data Access
-    function getQuestionStatistics(uint256 _questionId) 
-        external view returns (QuestionStats memory);
-    function getRespondentStatistics(address _respondent)
-        external view returns (RespondentStats memory);
-    
-    // Survey Info
-    function survey() external view returns (SurveyDetails memory);
-    function totalRespondents() external view returns (uint256);
-    function hasResponded(address _user) external view returns (bool);
+enum SurveyStatus {
+    Created,    // Initial editable state
+    Active,     // Accepting encrypted responses
+    Closed,     // Completed, statistics accessible
+    Trashed     // Permanently deleted
+}
+```
+
+### Encrypted Statistics Structs
+```solidity
+struct QuestionStats {
+    euint64 total;       // Σ x (sum of responses)
+    euint64 sumSquares;  // Σ x² (for variance calculation)
+    euint8 minScore;     // Minimum response value
+    euint8 maxScore;     // Maximum response value
+}
+
+struct RespondentStats {
+    euint64 total;       // Sum of all user responses
+    euint64 sumSquares;  // Sum of squares for user
+    euint8 minScore;     // User's minimum score
+    euint8 maxScore;     // User's maximum score  
 }
 ```
 
@@ -285,7 +313,7 @@ interface IConfidentialSurvey {
 
 ## 📁 Project Structure
 
-```
+```text
 contracts/
 ├── 📁 contracts/                    # Solidity source files
 │   ├── ConfidentialSurvey.sol      # Main survey contract  
@@ -294,65 +322,63 @@ contracts/
 │       ├── ConfidentialSurvey_Base.sol      # Base functionality
 │       └── ConfidentialSurvey_Storage.sol   # Storage layout
 ├── 📁 deploy/                      # Hardhat deployment scripts
+│   └── 01_deploy_all.ts           # Factory deployment script
 ├── 📁 test/                        # Comprehensive test suites  
 ├── 📁 types/                       # Auto-generated TypeChain types
 ├── 📁 tasks/                       # Custom Hardhat tasks
-├── 📁 docs/                        # Contract documentation
+├── 📁 scripts/                     # Utility scripts
+│   ├── check-env.ts               # Environment validation
+│   └── test-deployed-factory.ts   # Factory testing
 └── 📄 hardhat.config.ts           # Hardhat configuration
 ```
 
-## 🤝 Contributing
+## 🔐 Encryption & Privacy
 
-1. **Follow Solidity Style Guide**: Use consistent naming and formatting
-2. **Write Comprehensive Tests**: Ensure full coverage of new features
-3. **Document Functions**: Use NatSpec comments for all public functions
-4. **Gas Optimization**: Consider gas costs in implementation decisions
-5. **Security First**: Follow security best practices and patterns
+### Fully Homomorphic Encryption (FHE)
+- All survey responses are encrypted using Zama's FHEVM
+- Statistical computations performed on encrypted data
+- Individual responses never revealed, only aggregated results
+- Zero-knowledge proofs validate response integrity
 
-### Development Workflow
+### Access Control System
+- **Survey Owner**: Can decrypt aggregated statistics after survey closure
+- **Respondents**: Can decrypt only their own encrypted responses  
+- **Public**: Can view survey metadata and participation status
+- **Contract**: Has permanent ACL on all encrypted operations
 
-```bash
-# 1. Create feature branch
-git checkout -b feature/new-functionality
+### Privacy Guarantees
+- **Response Confidentiality**: Individual answers remain encrypted
+- **Statistical Privacy**: Only aggregated data accessible to owners
+- **Participation Privacy**: Response submission doesn't reveal values
+- **Temporal Privacy**: Decryption only possible after survey closure
 
-# 2. Implement changes with tests
-# Write code in contracts/
-# Add tests in test/
+## � Contract Summary
 
-# 3. Validate changes
-npm run compile
-npm run test
-npm run lint
+### ConfidentialSurvey_Factory
+- **Purpose**: Creates and manages survey instances
+- **Type**: Direct deployment (non-upgradeable)
+- **Functions**: 8 main functions + query utilities
+- **Gas Cost**: ~4.1M for deployment, ~3.1M per survey creation
 
-# 4. Submit for review
-git commit -m "feat: add new functionality"
-git push origin feature/new-functionality
-```
+### ConfidentialSurvey  
+- **Purpose**: Individual survey with FHE capabilities
+- **Type**: Direct deployment via factory
+- **Functions**: 35+ functions covering full survey lifecycle
+- **Gas Cost**: ~3.2M for deployment
+- **Limits**: Max 15 questions, 1000 respondents, score range 1-10
 
-## 📄 License
+### Key Constraints
+- **Survey Symbol**: 1-10 characters
+- **Questions**: 1-15 per survey  
+- **Respondents**: 1-1000 per survey
+- **Response Values**: 1-10 (configurable per question)
+- **Response Requirement**: All questions must be answered
 
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **[Zama](https://zama.ai/)** - Fully Homomorphic Encryption technology
-- **[OpenZeppelin](https://openzeppelin.com/)** - Secure smart contract patterns  
-- **[Hardhat](https://hardhat.org/)** - Ethereum development environment
-- **[FHEVM](https://docs.zama.ai/fhevm)** - FHE Virtual Machine implementation
+### Deployment Status
+- **Network**: Sepolia Testnet
+- **Factory**: `0x359B60b008524Da24a154e17B8Bb528Fb7e1aF04`
+- **Status**: ✅ Verified & Production Ready
 
 ---
 
-**Built with ❤️ for privacy-preserving surveys**
-
-## Project Structure
-
-```
-contracts/       # Solidity contracts
-deploy/          # Deployment scripts
-test/            # Test suites for FHE and standard questionnaires
-types/           # Auto-generated TypeChain types
-tasks/           # Hardhat tasks (e.g., account utilities)
-```
-
-## License
-MIT License
+*Privacy-preserving surveys powered by Zama's Fully Homomorphic Encryption* 🔐

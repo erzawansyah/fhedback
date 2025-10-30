@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "./ConfidentialSurvey.sol";
 
 /**
@@ -11,11 +10,7 @@ import "./ConfidentialSurvey.sol";
  * @dev Factory contract to create ConfidentialSurvey instances directly
  * @notice This contract enables creation of surveys without proxy patterns
  */
-contract ConfidentialSurvey_Factory is
-    Initializable,
-    OwnableUpgradeable,
-    ReentrancyGuardUpgradeable
-{
+contract ConfidentialSurvey_Factory is Ownable, ReentrancyGuard {
     // -------------------------------------
     // Storage
     // -------------------------------------
@@ -54,23 +49,15 @@ contract ConfidentialSurvey_Factory is
     );
 
     // -------------------------------------
-    // Initializer
+    // Constructor
     // -------------------------------------
 
-    /// @custom:oz-upgrades-unsafe-allow constructor
-    constructor() {
-        _disableInitializers();
-    }
-
     /**
-     * @dev Initializes the factory contract
+     * @dev Creates the factory contract
      * @param _owner Address to be set as the factory owner
      */
-    function initialize(address _owner) public initializer {
+    constructor(address _owner) Ownable(_owner) {
         require(_owner != address(0), "Owner cannot be zero address");
-
-        __Ownable_init(_owner);
-        __ReentrancyGuard_init();
     }
 
     // -------------------------------------
