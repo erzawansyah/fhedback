@@ -1,5 +1,7 @@
 @import "@/assets/css/app.css";
 
+::view-transition-group(*) { animation-duration: 220ms; }
+
 :root {
   --subtle: oklch(28.094% 0.00003 271.152 / 0.894);
 

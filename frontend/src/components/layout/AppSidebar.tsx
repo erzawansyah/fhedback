@@ -1,7 +1,6 @@
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import {
     Home,
-    Search,
     ClipboardList,
     Plus,
     BarChart2,
@@ -18,9 +17,7 @@ const sidebarMenuItems = [
     {
         section: null,
         items: [
-            { label: "Dashboard", icon: Home, href: "/app/" },
-            { label: "Browse Surveys", icon: Search, href: "/app/surveys" },
-
+            { label: "Dashboard", icon: Home, href: "/app/" }
         ],
     },
     {

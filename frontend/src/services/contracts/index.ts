@@ -4,27 +4,17 @@
  * This module provides the configuration and interfaces for interacting with
  * the FHEdback confidential survey smart contracts deployed on Sepolia testnet.
  * 
- * Architecture:
- * - Factory Pattern: Central factory creates individual survey contracts
- * - Proxy Pattern: Upgradeable contracts using OpenZeppelin proxies
- * - FHE Integration: Fully Homomorphic Encryption for confidential surveys
- * 
- * Updated: September 1, 2025
+ * Updated: October 30, 2025
  * Status: ✅ Sepolia contracts deployed and verified
  * Network: Sepolia Testnet (Chain ID: 11155111)
  */
 
 import survey_abi from "@/services/contracts/abis/ConfidentialSurvey.json"
 import factory_abi from "@/services/contracts/abis/ConfidentialSurvey_Factory.json"
+import { isAddress, type Address } from "viem"
 
 // ✅ VERIFIED CONTRACT ADDRESSES - Sepolia Testnet
 // All contracts are verified on Sepolia Blockscout and ready for production use
-
-/** Factory Implementation Contract - Contains the factory logic */
-export const FACTORY_IMPLEMENTATION_ADDRESS = "0x95a37bc1148a2Dba364865926863f06B828e5FE4"
-
-/** Proxy Admin Contract - Manages upgrades for the proxy system */
-export const PROXY_ADMIN_ADDRESS = "0x8b7bcBCee9de4134e553365499f206698A9fB434"
 
 /** 
  * 🎯 MAIN CONTRACT ADDRESS FOR FRONTEND INTEGRATION
@@ -32,7 +22,7 @@ export const PROXY_ADMIN_ADDRESS = "0x8b7bcBCee9de4134e553365499f206698A9fB434"
  * This is the Factory Proxy address that the frontend should interact with.
  * It provides a stable interface while allowing for upgrades to the underlying logic.
  */
-export const FACTORY_ADDRESS = "0xeD772f032bB500F55ed715781CcABff4625Cc5C8" // Factory Proxy
+export const FACTORY_ADDRESS: Address = "0xa274B076539Bd331878D83A55d64f95D465b9369" as const
 
 /**
  * Contract ABIs for TypeScript integration
@@ -43,20 +33,6 @@ export const ABIS = {
     factory: factory_abi     // Survey factory contract ABI
 } as const
 
-/**
- * Network configuration for Sepolia testnet
- */
-export const NETWORK_CONFIG = {
-    chainId: 11155111,
-    name: "Sepolia Testnet", 
-    blockExplorer: "https://eth-sepolia.blockscout.com",
-    rpcUrl: "https://sepolia.infura.io/v3/YOUR_INFURA_KEY", // Replace with your Infura key
-    currency: {
-        name: "Sepolia ETH",
-        symbol: "ETH",
-        decimals: 18
-    }
-} as const
 
 /**
  * Helper function to get factory contract configuration
@@ -64,7 +40,7 @@ export const NETWORK_CONFIG = {
  */
 export function getFactoryContract() {
     return {
-        address: FACTORY_ADDRESS as `0x${string}`,
+        address: FACTORY_ADDRESS,
         abi: factory_abi
     } as const
 }
@@ -75,46 +51,6 @@ export function getFactoryContract() {
  */
 export function getSurveyABI() {
     return survey_abi
-}
-
-/**
- * Validate if an address is a valid Ethereum address
- * @param address - Address to validate
- * @returns boolean indicating if address is valid
- */
-export function isValidAddress(address: string): boolean {
-    return /^0x[a-fA-F0-9]{40}$/.test(address)
-}
-
-/**
- * Validate survey creation parameters
- * @param params - Survey creation parameters
- * @throws Error if validation fails
- */
-export function validateSurveyParams(params: CreateSurveyParams): void {
-    if (!params.owner || !isValidAddress(params.owner)) {
-        throw new Error("Invalid owner address")
-    }
-    
-    if (!params.symbol || params.symbol.length > 10) {
-        throw new Error("Symbol must be provided and no longer than 10 characters")
-    }
-    
-    if (!params.metadataCID) {
-        throw new Error("Metadata CID is required")
-    }
-    
-    if (!params.questionsCID) {
-        throw new Error("Questions CID is required")
-    }
-    
-    if (params.totalQuestions <= 0 || params.totalQuestions > 50) {
-        throw new Error("Total questions must be between 1 and 50")
-    }
-    
-    if (params.respondentLimit <= 0 || params.respondentLimit > 1000) {
-        throw new Error("Respondent limit must be between 1 and 1000")
-    }
 }
 
 /**
@@ -163,7 +99,7 @@ export function canModifySurvey(status: SurveyStatus): boolean {
  * @returns Formatted address string
  */
 export function formatAddress(address: string, chars: number = 6): string {
-    if (!address || !isValidAddress(address)) return ""
+    if (!address || !isAddress(address)) return ""
     if (address.length <= chars * 2) return address
     return `${address.slice(0, chars)}...${address.slice(-chars)}`
 }
@@ -171,14 +107,13 @@ export function formatAddress(address: string, chars: number = 6): string {
 /**
  * Type definitions for better TypeScript support
  */
-export type ContractAddress = `0x${string}`
 export type SurveyStatus = 0 | 1 | 2 | 3 // Created | Active | Closed | Trashed
 
 /**
  * Survey creation parameters type for type safety
  */
 export interface CreateSurveyParams {
-    owner: ContractAddress
+    owner: Address
     symbol: string
     metadataCID: string
     questionsCID: string
