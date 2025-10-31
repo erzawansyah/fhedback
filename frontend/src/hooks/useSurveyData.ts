@@ -208,7 +208,7 @@ export const useSurveyDataById = (surveyId: number | bigint | string) => {
     const run = async () => {
       try {
         if (metadataCid && metadataCid.length > 0) {
-          const response = await getDb("metadata", metadataCid);
+          const response = await getDb(metadataCid);
           
           if (fetchTokenRef.current === token) {
             if (!response || !response.content) {
@@ -232,7 +232,7 @@ export const useSurveyDataById = (surveyId: number | bigint | string) => {
 
       try {
         if (questionsCid && questionsCid.length > 0) {
-          const response = await getDb("questions", questionsCid);
+          const response = await getDb(questionsCid);
           if (fetchTokenRef.current === token) {
             if (!response || !response.content) {
               logger.warn("Invalid questions format", { response });
@@ -365,7 +365,7 @@ export const useSurveyDataByAddress = (surveyAddress?: Address) => {
     const fetchData = async () => {
       if (metadataCid) {
         try {
-          const response = await getDb("metadata", metadataCid);
+          const response = await getDb(metadataCid);
           if (response?.content) {
             setMetadata(response.content as SurveyMetadata);
           }
@@ -376,7 +376,7 @@ export const useSurveyDataByAddress = (surveyAddress?: Address) => {
 
       if (questionsCid) {
         try {
-          const response = await getDb("questions", questionsCid);
+          const response = await getDb(questionsCid);
           if (response?.content) {
             const content = response.content as unknown;
             const isQuestionArray = (v: unknown): v is SurveyQuestion[] => Array.isArray(v);

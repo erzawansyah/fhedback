@@ -1,10 +1,11 @@
 import { ConnectButton } from "@/components/ConnectButton";
 import { Link } from '@tanstack/react-router'
-import { HelpCircle, House } from "lucide-react";
+import { Compass, House, LayoutDashboard } from "lucide-react";
 
 const menuItems = [
     { label: "Home", path: "/", icon: House },
-    { label: "How to", path: "/how-to", icon: HelpCircle },
+    { label: "Explore", path: "/surveys/explore", icon: Compass },
+    { label: "My Surveys", path: "/surveys/me", icon: LayoutDashboard },
 ]
 
 const Header = () => {

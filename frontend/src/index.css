@@ -54,6 +54,10 @@
     @apply font-mono;
   }
 
+  p, a {
+    @apply font-base;
+  }
+
   h1,
   h2,
   h3,
@@ -61,6 +65,25 @@
   h5,
   h6 {
     @apply font-sans;
+  }
+
+  h1 {
+    @apply text-3xl font-extrabold;
+  }
+  h2 {
+    @apply text-5xl font-extrabold;
+  }
+  h3 {
+    @apply text-4xl font-bold;
+  }
+  h4 {
+    @apply text-3xl font-bold;
+  }
+  h5 {
+    @apply text-2xl font-semibold;
+  }
+  h6 {
+    @apply text-xl font-semibold;
   }
 }
 

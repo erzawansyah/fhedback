@@ -8,8 +8,8 @@ export const Route = createFileRoute('/')({
 
 function Home() {
     return (
-        <main className="min-h-[92vh] bg-main flex flex-col">
-            <section className='flex flex-col justify-center items-center py-48'>
+        <main className="min-h-[92vh] flex flex-col">
+            <section className='flex flex-col justify-center items-center py-48 bg-main'>
                 <h1 className="font-black text-5xl p-4 bg-secondary-background border-4 border-border mx-auto text-center transform -rotate-2 w-fit">
                     Create Surveys, Earn Onchain, Stay Private
                 </h1>
@@ -18,7 +18,7 @@ function Home() {
                 </p>
                 <div className="w-fit mx-auto mt-12 flex flex-col gap-2">
                     <Button variant={"neutral"} size={"lg"} className="font-heading text-lg transform transition-transform hover:-translate-y-1.5 hover:-rotate-2">
-                        <Link to="/app/creator/new" className="inline-flex items-center gap-2">
+                        <Link to="/create-survey" className="inline-flex items-center gap-2">
                             Launch a Private Survey
                             <ArrowRight size={36} />
                         </Link>

@@ -6,6 +6,7 @@ import { routeTree } from '@/routeTree.gen'
 import NotFound from './components/layout/NotFound'
 import '@rainbow-me/rainbowkit/styles.css';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
+import { FhevmProvider } from './services/fhevm/FhevmProvider'
 
 // Create a new router instance
 const router = createRouter({
@@ -27,9 +28,11 @@ function App() {
     <>
       <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
-          <RainbowKitProvider>
-            <RouterProvider router={router} />
-          </RainbowKitProvider>
+          <FhevmProvider>
+            <RainbowKitProvider>
+              <RouterProvider router={router} />
+            </RainbowKitProvider>
+          </FhevmProvider>
         </QueryClientProvider>
       </WagmiProvider>
     </>

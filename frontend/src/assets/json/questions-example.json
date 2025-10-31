@@ -24,66 +24,6 @@
         }
     },
     {
-        "id": 2,
-        "text": "Which main feature do you value the most?",
-        "helperText": "Select one option",
-        "response": {
-            "type": "multiple_choice",
-            "minScore": 1,
-            "maxScore": 5,
-            "labels": [
-                {
-                    "id": 1,
-                    "text": "Speed"
-                },
-                {
-                    "id": 2,
-                    "text": "Security"
-                },
-                {
-                    "id": 3,
-                    "text": "Ease of Use"
-                },
-                {
-                    "id": 4,
-                    "text": "Customer Support"
-                },
-                {
-                    "id": 5,
-                    "text": "Integration"
-                }
-            ]
-        }
-    },
-    {
-        "id": 3,
-        "text": "Which additional feature would you like to see next?",
-        "helperText": "Select one option",
-        "response": {
-            "type": "multiple_choice",
-            "minScore": 1,
-            "maxScore": 4,
-            "labels": [
-                {
-                    "id": 1,
-                    "text": "Mobile App"
-                },
-                {
-                    "id": 2,
-                    "text": "Advanced Analytics"
-                },
-                {
-                    "id": 3,
-                    "text": "Multi-language Support"
-                },
-                {
-                    "id": 4,
-                    "text": "Offline Mode"
-                }
-            ]
-        }
-    },
-    {
         "id": 4,
         "text": "Rate the ease of navigation on our platform",
         "helperText": "1 is Very Difficult, 10 is Very Easy",
