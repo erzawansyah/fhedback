@@ -13,6 +13,7 @@ interface UseSurveyViewResult {
     isOwner: boolean;
     isActive: boolean;
     hasResponded: boolean;
+    totalRespondent: number;
 }
 
 
@@ -35,6 +36,14 @@ export const useSurveyView = (addr: Address): UseSurveyViewResult => {
             enabled: !!account.address,
         }
     })
+    const { data: currentRespondent} = useReadContract({
+        address: addr,
+        abi: surveyAbi,
+        functionName: 'getTotalRespondents',
+        query: {
+            enabled: !!account.address,
+        }
+    })
     const isOwner = useMemo(() => {
         if (!data.config || !account.address) return false;
         return account.address.toLowerCase() === data.config.owner.toLowerCase();
@@ -50,5 +59,6 @@ export const useSurveyView = (addr: Address): UseSurveyViewResult => {
         isOwner: !!isOwner,
         isActive: !!isActive,
         hasResponded: !!hasResponded,
+        totalRespondent: Number(currentRespondent)
     } 
 }

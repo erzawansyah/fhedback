@@ -1,8 +1,8 @@
-import { useCallback,  useState } from "react";
+import { useCallback, useState } from "react";
 import { bytesToHex, type Abi, type Address } from "viem";
 import { ABIS } from "../services/contracts";
 import { useFhevmContext } from "../services/fhevm/useFhevmContext";
-import {  useWriteContract } from "wagmi";
+import { useReadContract, useSignTypedData, useWriteContract } from "wagmi";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -12,8 +12,16 @@ const surveyAbi = ABIS.survey as Abi;
 export const useSurveySubmission = (addr: Address, account: Address) => {
   const [state, setState] = useState<'idle' | 'encrypting' | 'submitting' | 'submitted'>('idle')
   const [responses, setResponses] = useState<SurveyResponse>({})
+  const [storedResponse, setStoredResponse] = useState<number[] | null>(null)
   const { instance: fhe, status: fheStatus } = useFhevmContext()
   const { writeContractAsync } = useWriteContract()
+  const { data: encryptedResponse } = useReadContract({
+    address: addr as Address,
+    abi: surveyAbi,
+    functionName: 'getRespondentResponses',
+    args: [account],
+  })
+  const { signTypedDataAsync } = useSignTypedData()
 
 
   const encryptResponses = useCallback(async () => {
@@ -86,7 +94,7 @@ export const useSurveySubmission = (addr: Address, account: Address) => {
     setState('idle')
   }
 
-  const closeSurvey = async (onSuccess?: () => void) => {
+  const closeSurvey = async (onSuccess?: () => void, onError?: () => void) => {
     try {
       const tx = await writeContractAsync({
         address: addr as Address,
@@ -106,15 +114,78 @@ export const useSurveySubmission = (addr: Address, account: Address) => {
     } catch (err) {
       toast.error('Failed to close survey: ' + String(err))
       console.log('Error closing survey:', err)
+      onError?.()
+    }
+  }
+
+  const revealResponses = async () => {
+    try {
+      if (!encryptedResponse) return
+      if (!fhe || fheStatus !== 'ready') {
+        toast.error('FHEVM not ready for decryption')
+        return
+      }
+
+      // simulate decryption process
+      const keypair = fhe.generateKeypair()
+      const handleContractPair = (encryptedResponse as string[]).map((ciphertext) => {
+        return {
+          handle: ciphertext,
+          contractAddress: addr as string,
+        };
+      });
+      const startTimeStamp = Math.floor(Date.now() / 1000).toString();
+      const durationDays = '10'; // String for consistency
+      const contractAddresses = [addr];
+
+      const eip712 = fhe.createEIP712(
+        keypair.publicKey,
+        contractAddresses,
+        startTimeStamp,
+        durationDays,
+      );
+
+      // Cast verifyingContract to the required template literal type (`0x${string}`) to satisfy typed-data domain typing.
+      const domain = {
+        ...eip712.domain,
+        verifyingContract: eip712.domain.verifyingContract as unknown as `0x${string}`,
+      };
+
+      const signature = await signTypedDataAsync({
+        domain,
+        types: {
+          UserDecryptRequestVerification: eip712.types.UserDecryptRequestVerification,
+        },
+        primaryType: 'UserDecryptRequestVerification',
+        message: eip712.message,
+      });
+
+      const result = await fhe.userDecrypt(
+        handleContractPair,
+        keypair.privateKey,
+        keypair.publicKey,
+        signature.replace('0x', ''),
+        contractAddresses,
+        account,
+        startTimeStamp,
+        durationDays,
+      );
+      const decryptedValues = Object.keys(result).map((key) => Number(result[key]));
+      setStoredResponse(decryptedValues);
+    } catch (error) {
+      toast.error('Failed to reveal responses: ' + String(error))
+      console.log('Error revealing responses:', error)
     }
   }
 
   return {
     state,
     responses,
+    storedResponse,
     handleRating,
     resetResponses,
     handleSubmit,
     closeSurvey,
+    revealResponses,
   }
 }
