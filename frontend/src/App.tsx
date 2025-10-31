@@ -28,11 +28,11 @@ function App() {
     <>
       <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
-          <FhevmProvider>
-            <RainbowKitProvider>
+          <RainbowKitProvider>
+            <FhevmProvider>
               <RouterProvider router={router} />
-            </RainbowKitProvider>
-          </FhevmProvider>
+            </FhevmProvider>
+          </RainbowKitProvider>
         </QueryClientProvider>
       </WagmiProvider>
     </>
