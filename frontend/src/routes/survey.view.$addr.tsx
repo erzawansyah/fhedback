@@ -1,45 +1,33 @@
 // Route file: /survey/view/$addr.tsx
 
-import { createFileRoute } from '@tanstack/react-router'
-import type { Abi, Address } from 'viem'
-import { useSurveyDataByAddress } from '../hooks/useSurveyData'
-import { useCallback, useMemo, useState } from 'react'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import type { Address } from 'viem'
+import { useMemo, useState } from 'react'
 import { Button } from '../components/ui/button'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card'
+import { Card, CardHeader, CardTitle, CardDescription } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
 import { Progress } from '../components/ui/progress'
-import { useFhevmContext } from '../services/fhevm/useFhevmContext'
-import { useAccount, useWriteContract } from 'wagmi'
-import { Loader2, Lock } from 'lucide-react'
-import { toast } from 'sonner'
-import { ABIS } from '../services/contracts'
-import { bytesToHex } from 'viem'
+import { ArrowRightCircle, Loader2, Lock, StopCircle } from 'lucide-react'
+import { useSurveyView } from '../hooks/useSurveyView'
+import { useSurveySubmission } from '../hooks/useSurveySubmission'
+import QuestionCard from '../components/QuestionCard'
+import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert'
+import QuestionCardPreview from '../components/QuestionCardPreview'
 
 export const Route = createFileRoute('/survey/view/$addr')({
   component: RouteComponent,
 })
 
-type SurveyResponse = { [questionId: number]: number }
-
-const surveyAbi = ABIS.survey as Abi
-
 function RouteComponent() {
   const { addr } = Route.useParams()
-  const account = useAccount()
-  const { instance: fhe, status: fheStatus } = useFhevmContext()
-  const { config, metadata, questions } = useSurveyDataByAddress(addr as Address)
-  const { writeContractAsync } = useWriteContract()
-
-  const [responses, setResponses] = useState<SurveyResponse>({})
-  const [state, setState] = useState<'idle' | 'encrypting' | 'submitting' | 'submitted'>('idle')
+  const { data, account, hasResponded, isActive, isOwner } = useSurveyView(addr as Address)
+  const { config, metadata, questions } = data
+  const { state, responses, handleRating, resetResponses, handleSubmit, closeSurvey } = useSurveySubmission(addr as Address, account.address as Address)
 
   const progress = useMemo(() => {
     if (!questions?.length) return 0
     return (Object.keys(responses).length / questions.length) * 100
   }, [responses, questions])
-
-  const handleRating = (qid: number, rating: number) =>
-    setResponses((prev) => ({ ...prev, [qid]: rating }))
 
   const buttonText = useMemo(() => ({
     idle: 'Submit Survey',
@@ -48,50 +36,40 @@ function RouteComponent() {
     submitted: 'Survey Submitted',
   })[state], [state])
 
-  const encryptResponses = useCallback(async () => {
-    if (!fhe || fheStatus !== 'ready') throw new Error("FHEVM not ready")
-    const buffer = fhe.createEncryptedInput(addr, account.address!)
-    Object.values(responses).forEach(rating => buffer.add8(BigInt(rating)))
-    return await buffer.encrypt()
-  }, [fhe, fheStatus, addr, account.address, responses])
+  if (!isActive) {
+    return (
+      <main className="container mx-auto py-8">
+        <div className="max-w-4xl mx-auto text-center space-y-4">
+          <div className="space-y-6">
+            <Lock className="w-16 h-16 mx-auto text-muted-foreground" />
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Survey Closed</h1>
+              <p className="text-lg text-muted-foreground mb-4">
+                This survey is no longer accepting responses. It has been closed and all responses have been collected.
+              </p>
+              <p className="text-base text-muted-foreground">
+                However, you can still view the survey results and statistics compiled from all participants' responses.
+              </p>
+            </div>
+            <div className="flex flex-col gap-4">
+              <Button className="mt-6" asChild>
+                <Link to="/survey/stats/$addr" params={{ addr }}>
+                  View Survey Results & Statistics
+                  <ArrowRightCircle className="w-4 h-4 ml-2" />
+                </Link>
+              </Button>
+              <Button variant="neutral" asChild>
+                <Link to="/surveys/explore">
+                  Explore Other Surveys
+                  <ArrowRightCircle className="w-4 h-4 ml-2" />
+                </Link>
+              </Button>
+            </div>
 
-  const handleSubmit = async () => {
-    try {
-      console.log("Encrypting survey responses...")
-      const ciphertexts = await encryptResponses()
-      console.log('Encrypted survey data:', ciphertexts)
-
-      const payload = {
-        responses: ciphertexts.handles.map((handle) => bytesToHex(handle)),
-        inputProof: bytesToHex(ciphertexts.inputProof),
-      }
-
-      setState('submitting')
-      console.log("Submitting survey responses to the blockchain...")
-      const tx = await writeContractAsync({
-        address: addr as Address,
-        abi: surveyAbi,
-        functionName: 'submitResponses',
-        args: [payload.responses, payload.inputProof],
-      })
-
-      if (tx) {
-        toast.success('Survey submitted successfully!', {
-          action: {
-            label: 'View TX',
-            onClick: () => { window.open(`https://eth-sepolia.blockscout.com/tx/${tx}`, '_blank') }
-          }
-        })
-        setState('submitted')
-      } else {
-        throw new Error('Transaction failed')
-      }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      toast.error('Failed to encrypt: ' + err.message)
-      console.log('Error during survey submission:', err)
-      setState('idle')
-    }
+          </div>
+        </div>
+      </main>
+    )
   }
 
   if (!config || !metadata || !questions) {
@@ -105,112 +83,91 @@ function RouteComponent() {
     )
   }
 
-  if (state === 'submitted') {
-    return (
-      <main className="container mx-auto py-8">
-        <div className="max-w-4xl mx-auto">
-          <Card>
-            <CardContent className="py-12 text-center">
-              <div className="text-6xl mb-4">🎉</div>
-              <h2 className="text-2xl font-bold mb-2">Terima kasih!</h2>
-              <p className="text-muted-foreground">Survey telah berhasil dikirim</p>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
-    )
-  }
-
   return (
     <>
       <div className="h-64 bg-main" />
       <main className="container mx-auto -mt-40 pb-16">
         <div className="max-w-4xl mx-auto space-y-6">
-          {/* Survey Header */}
-          <Card className="bg-white">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div className="flex-1">
-                  <CardTitle className="text-4xl">{metadata.title}</CardTitle>
-                  <CardDescription className="text-subtle italic">{metadata.description || "Silakan isi survey berikut"}</CardDescription>
-                </div>
-                <Badge>{metadata.category}</Badge>
-              </div>
-              <div className="space-y-2 pt-4">
-                <Progress value={progress} />
-                <p className="text-sm text-muted-foreground">
-                  Progress: {Object.keys(responses).length} / {questions.length} questions
-                </p>
-              </div>
-            </CardHeader>
-          </Card>
+          <PageHeader
+            title={metadata.title}
+            description={metadata.description}
+            category={metadata.category}
+            progress={progress}
+            answered={Object.keys(responses).length}
+            totalQuestions={questions.length}
+          />
+
+          {hasResponded && (
+            <Alert>
+              <StopCircle className="w-4 h-4 mr-2" />
+              <AlertTitle>You have already submitted responses for this survey.</AlertTitle>
+              <AlertDescription>
+                Thank you for your participation! Multiple submissions are not allowed.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {isOwner && (
+            <Alert>
+              <StopCircle className="w-4 h-4 mr-2" />
+              <AlertTitle>You are the owner of this survey.</AlertTitle>
+              <AlertDescription>
+                You can edit or close the survey at any time.
+              </AlertDescription>
+            </Alert>
+          )}
 
           {/* Survey Questions */}
           {questions.map((q, i) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const { minScore = 1, maxScore = 5, minLabel = 'Sangat Tidak Setuju', maxLabel = 'Sangat Setuju' } = q.response as any
+            const { minScore = 1, maxScore = 5, minLabel = 'Strongly Disagree', maxLabel = 'Strongly Agree' } = q.response as any
             const selected = responses[q.id]
 
-            return (
-              <Card key={q.id} className={`bg-white ${selected ? 'ring-2 ring-main/20' : ''}`}>
-                <CardHeader>
-                  <CardTitle className="text-2xl flex gap-3 items-center">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-bold ${selected ? 'bg-main' : 'bg-muted-foreground/60'}`}>
-                      {selected ? '✓' : i + 1}
-                    </div>
-                    {q.text}
-                  </CardTitle>
-                  {q.helperText && <p className="text-xs italic text-subtle">{q.helperText}</p>}
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-base">{minLabel}</span>
-                    <div className="flex gap-2">
-                      {Array.from({ length: maxScore - minScore + 1 }, (_, i) => {
-                        const score = minScore + i
-                        const isSelected = selected === score
-                        return (
-                          <Button
-                            key={score}
-                            onClick={() => handleRating(q.id, score)}
-                            variant={isSelected ? "default" : "neutral"}
-                            size="icon"
-                            className={`w-14 h-14 rounded-full font-bold text-lg ${isSelected ? 'ring-2 ring-offset-2 ring-main/50' : ''}`}
-                          >
-                            {score}
-                          </Button>
-                        )
-                      })}
-                    </div>
-                    <span>{maxLabel}</span>
-                  </div>
-                  {selected && (
-                    <div className="text-center">
-                      <Badge variant="neutral" className="animate-pulse">
-                        Rating: {selected}
-                      </Badge>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )
+            if (!hasResponded && !isOwner) {
+              return (
+                <QuestionCard
+                  key={q.id}
+                  index={i}
+                  question={q}
+                  score={{
+                    min: minScore,
+                    max: maxScore,
+                    minLabel,
+                    maxLabel
+                  }}
+                  selected={selected}
+                  handleRating={handleRating}
+                />
+              )
+            } else {
+              return (
+                <QuestionCardPreview
+                  key={q.id}
+                  index={i}
+                  question={q}
+                  score={{
+                    min: minScore,
+                    max: maxScore,
+                    minLabel,
+                    maxLabel
+                  }}
+                />
+              )
+            }
           })}
 
-          {/* Submit Actions */}
-          {Object.keys(responses).length === questions.length && (
+          {/* Submit Actions (Only for Respondents) */}
+          {!hasResponded && !isOwner && Object.keys(responses).length === questions.length && (
             <div className="flex justify-between">
               <Button
                 variant="neutral"
-                onClick={() => setResponses({})}
+                onClick={resetResponses}
                 className="w-full max-w-xs"
               >
                 Reset Answers
               </Button>
               <Button
-                onClick={() => {
-                  setState('encrypting')
-                  setTimeout(handleSubmit, 500)
-                }}
+                onClick={handleSubmit}
                 disabled={state === 'encrypting' || state === 'submitting'}
                 className="w-full max-w-xs"
               >
@@ -220,8 +177,76 @@ function RouteComponent() {
               </Button>
             </div>
           )}
+
+          {isOwner && <CloseSurveyButton handleClose={closeSurvey} />}
         </div>
       </main>
     </>
+  )
+}
+
+
+type PageHeaderProps = {
+  title: string;
+  description?: string;
+  category: string;
+  progress: number;
+  answered: number;
+  totalQuestions: number;
+}
+
+const PageHeader = ({
+  title,
+  description,
+  category,
+  progress,
+  answered,
+  totalQuestions
+}: PageHeaderProps) => {
+  return (
+    <Card className="bg-white">
+      <CardHeader>
+        <div className="flex justify-between items-start">
+          <div className="flex-1">
+            <CardTitle className="text-4xl">{title}</CardTitle>
+            <CardDescription className="text-subtle italic">{description || "Silakan isi survey berikut"}</CardDescription>
+          </div>
+          <Badge>{category}</Badge>
+        </div>
+        <div className="space-y-2 pt-4">
+          <Progress value={progress} />
+          <p className="text-sm text-muted-foreground">
+            Progress: {answered} / {totalQuestions} questions
+          </p>
+        </div>
+      </CardHeader>
+    </Card>
+  )
+}
+
+const CloseSurveyButton = ({ handleClose }: { handleClose: (onSuccess?: () => void) => void }) => {
+  const [state, setState] = useState<'idle' | 'closing' | 'closed'>('idle')
+
+  const handleClick = () => {
+    setState('closing')
+    handleClose(() => {
+      setState('closed')
+    })
+  }
+
+
+  return (
+    <Button variant="neutral" asChild className="w-full max-w-xs" onClick={handleClick}>
+      <span>
+        {state === 'idle' && 'Close Survey'}
+        {state === 'closing' && (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Closing Survey...
+          </>
+        )}
+        {state === 'closed' && 'Survey Closed'}
+      </span>
+    </Button>
   )
 }

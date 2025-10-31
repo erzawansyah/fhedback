@@ -3,7 +3,7 @@ import { wagmiConfig } from './services/wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createRouter, RouterProvider } from '@tanstack/react-router'
 import { routeTree } from '@/routeTree.gen'
-import NotFound from './components/layout/NotFound'
+import NotFound from './components/NotFound'
 import '@rainbow-me/rainbowkit/styles.css';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
 import { FhevmProvider } from './services/fhevm/FhevmProvider'

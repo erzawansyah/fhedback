@@ -1,7 +1,7 @@
 import { createRootRoute, Outlet, useRouterState } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { useMemo } from 'react'
-import Header from '@/components/layout/Header'
+import Header from '@/components/Header'
 import { Toaster } from '../components/ui/sonner'
 
 export const Route = createRootRoute({

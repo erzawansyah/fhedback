@@ -60,7 +60,6 @@ const useSurveysData = () => {
 
 function RouteComponent() {
   const surveys = useSurveysData()
-
   return (
     <main className="container mx-auto py-8">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -96,6 +95,15 @@ const SurveyItem = ({ addr }: { addr: Address }) => {
     return raw as boolean
   }, [raw, account.address])
 
+  const isClosed = useMemo(() => {
+    if (!data || data.config?.status === undefined) return false
+    return data.config.status === 2
+  }, [data])
+
+  const ownedByUser = useMemo(() => {
+    if (!data || !account.address) return false
+    return data.config?.owner.toLowerCase() === account.address.toLowerCase()
+  }, [data, account.address])
 
   const formatDate = (iso: string) => {
     const d = new Date(iso)
@@ -113,7 +121,7 @@ const SurveyItem = ({ addr }: { addr: Address }) => {
   }, [data])
 
   if (!data) return <div className="p-4 text-sm text-gray-500">Loading survey {addr}...</div>
-  if (data.config?.status !== 1) return null;
+  if (data.config?.status !== 1 && data.config?.status !== 2) return null;
   return (
     <Card className={`px-6 gap-1 ${hasResponded ? 'bg-gray-50 border-gray-200' : 'bg-white'}`}>
       {/* Header */}
@@ -177,22 +185,64 @@ const SurveyItem = ({ addr }: { addr: Address }) => {
           >
             {data.address}
           </span>
-          <Button
-            variant={"reverse"}
-            size="sm"
-            className="h-6 px-2 text-xs"
-            disabled={hasResponded}
-            asChild={!hasResponded}
-          >
-            {
-              hasResponded ? "Already Responded" : (
-                <Link to="/survey/view/$addr" params={{ addr: data.address as Address }}>Take Survey</Link>
-              )
-            }
-
-          </Button>
+          <ActionButton
+            address={addr}
+            hasResponded={hasResponded}
+            owned={ownedByUser}
+            isClosed={isClosed}
+          />
         </div>
       </div>
     </Card>
   )
+}
+
+type ActionButtonProps = {
+  address?: Address;
+  hasResponded: boolean;
+  owned: boolean;
+  isClosed: boolean;
+}
+const ActionButton: React.FC<ActionButtonProps> = ({ address, hasResponded, owned, isClosed }) => {
+  // Styled button (Add classes )
+  const ViewButton = ({ text }: { text: string }) => (
+    <Button asChild variant="reverse" size="sm" className='h-6 px-2 text-xs'>
+      <Link to="/survey/view/$addr" params={{ addr: address as string }}>{text}</Link>
+    </Button>
+  )
+
+
+  const condition = useMemo(() => {
+    if (owned && isClosed) {
+      return 'OWNED_CLOSED' // View Results
+    }
+    if (owned && !isClosed) {
+      return 'OWNED_OPEN' // View Progress
+    }
+    if (hasResponded && isClosed) {
+      return 'RESPONDED_CLOSED'
+    }
+    if (hasResponded && !isClosed) {
+      return 'RESPONDED_OPEN'
+    }
+    if (!hasResponded && !isClosed) {
+      return 'NOT_RESPONDED_OPEN'
+    }
+    return 'DEFAULT'
+  }, [owned, hasResponded, isClosed])
+
+  switch (condition) {
+    case 'OWNED_CLOSED':
+      return <ViewButton text="View Result" />
+    case 'OWNED_OPEN':
+      return <ViewButton text="View Survey" />
+    case 'RESPONDED_CLOSED':
+      return <ViewButton text="View Result" />
+    case 'RESPONDED_OPEN':
+      return <ViewButton text="View My Response" />
+    case 'NOT_RESPONDED_OPEN':
+      return <ViewButton text="Take Survey" />
+    default:
+      return <Button variant="reverse" size="sm" disabled className="h-6 px-2 text-xs">Unavailable</Button>
+  }
 }
