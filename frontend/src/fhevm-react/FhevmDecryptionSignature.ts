@@ -1,10 +1,10 @@
 import { ethers } from "ethers";
 import {
-  EIP712Type,
-  FhevmDecryptionSignatureType,
-  FhevmInstance,
+  type EIP712Type,
+  type FhevmDecryptionSignatureType,
+  type FhevmInstance,
 } from "./fhevmTypes";
-import { GenericStringStorage } from "./GenericStringStorage";
+import { type GenericStringStorage } from "./GenericStringStorage";
 
 function _timestampNow(): number {
   return Math.floor(Date.now() / 1000);
