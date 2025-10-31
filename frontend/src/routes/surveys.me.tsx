@@ -201,7 +201,14 @@ const SurveyAction = ({ status, surveyAddress, maxScores }: { status: number, su
         <Button variant={"reverse"} size="icon" className="h-6 px-2 text-xs"><Share2 className="h-2 w-2" /></Button>
       </>
     case 2: // Closed
-      return <Button variant={"reverse"} size="sm" className="h-6 px-2 text-xs">Submit</Button>
+      return <>
+        <Button variant={"reverse"} size="sm" asChild className="h-6 px-2 text-xs bg-background">
+          <Link to={`/survey/stats/$addr`} params={{ addr: surveyAddress }}>Stats</Link>
+        </Button>
+        <Button variant={"reverse"} size="sm" disabled className="h-6 px-2 text-xs">
+          View
+        </Button>
+      </>
     case 3: // Trashed
       return <Button variant={"reverse"} size="sm" className="h-6 px-2 text-xs" disabled>No Action Allowed</Button>
   }
