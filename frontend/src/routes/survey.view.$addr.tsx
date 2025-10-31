@@ -76,7 +76,12 @@ function RouteComponent() {
       })
 
       if (tx) {
-        toast.success('Survey submitted successfully! TX Hash: ' + tx)
+        toast.success('Survey submitted successfully!', {
+          action: {
+            label: 'View TX',
+            onClick: () => { window.open(`https://eth-sepolia.blockscout.com/tx/${tx}`, '_blank') }
+          }
+        })
         setState('submitted')
       } else {
         throw new Error('Transaction failed')

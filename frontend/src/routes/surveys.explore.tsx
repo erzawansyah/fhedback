@@ -1,13 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Link } from '@tanstack/react-router'
-import { useAccount, useReadContracts } from 'wagmi'
+import { useAccount, useReadContract, useReadContracts } from 'wagmi'
 import { ABIS, FACTORY_ADDRESS } from '../services/contracts'
 import { useEffect, useMemo, useState } from 'react'
 import { useSurveyDataByAddress } from '../hooks/useSurveyData'
 import { Card } from '../components/ui/card'
 import { Badge } from '../components/ui/badge'
 import { Button } from '../components/ui/button'
-import { Share2 } from 'lucide-react'
 import type { Address } from 'viem'
 import { toast } from 'sonner'
 import { hideAddress } from '../utils/hideAddress'
@@ -15,9 +14,9 @@ export const Route = createFileRoute('/surveys/explore')({
   component: RouteComponent,
 })
 
-
 const factoryAddress = FACTORY_ADDRESS
 const factoryAbi = ABIS.factory
+const surveyAbi = ABIS.survey
 
 const status = {
   0: { label: 'Draft', tone: 'default' as const },
@@ -83,6 +82,20 @@ function RouteComponent() {
 const SurveyItem = ({ addr }: { addr: Address }) => {
   const account = useAccount()
   const data = useSurveyDataByAddress(addr)
+  const { data: raw } = useReadContract({
+    address: addr,
+    abi: surveyAbi,
+    functionName: 'getHasResponded',
+    args: [account.address || '0x0000000000000000000000000000000000000000' as Address],
+    query: {
+      enabled: !!account.address, // Only fetch if user is connected
+    }
+  })
+  const hasResponded = useMemo(() => {
+    if (!account.address) return false // If not connected, assume not responded
+    return raw as boolean
+  }, [raw, account.address])
+
 
   const formatDate = (iso: string) => {
     const d = new Date(iso)
@@ -102,7 +115,7 @@ const SurveyItem = ({ addr }: { addr: Address }) => {
   if (!data) return <div className="p-4 text-sm text-gray-500">Loading survey {addr}...</div>
   if (data.config?.status !== 1) return null;
   return (
-    <Card className="px-6 bg-white  gap-1">
+    <Card className={`px-6 gap-1 ${hasResponded ? 'bg-gray-50 border-gray-200' : 'bg-white'}`}>
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="flex-1 min-w-0">
@@ -144,6 +157,11 @@ const SurveyItem = ({ addr }: { addr: Address }) => {
           >
             {statusInfo.label}
           </Badge>
+          {hasResponded && (
+            <Badge variant="neutral" className="h-5 px-2 text-xs bg-green-100 text-green-700">
+              Responded
+            </Badge>
+          )}
           <span className="text-xs text-gray-500">
             {account.address === data.config?.owner ? "<You>" : hideAddress(data.config?.owner)}
           </span>
@@ -163,18 +181,16 @@ const SurveyItem = ({ addr }: { addr: Address }) => {
             variant={"reverse"}
             size="sm"
             className="h-6 px-2 text-xs"
-            onClick={() => {
-              navigator.clipboard.writeText(data.address || '')
-              toast.success('Survey address copied to clipboard')
-            }}
+            disabled={hasResponded}
+            asChild={!hasResponded}
           >
-            <Share2 className="w-3 h-3" />
+            {
+              hasResponded ? "Already Responded" : (
+                <Link to="/survey/view/$addr" params={{ addr: data.address as Address }}>Take Survey</Link>
+              )
+            }
+
           </Button>
-          <Link to={`/survey/view/$addr`} params={{ addr: addr }}>
-            <Button variant={"reverse"} size="sm" className="h-6 px-2 text-xs">
-              Participate
-            </Button>
-          </Link>
         </div>
       </div>
     </Card>
