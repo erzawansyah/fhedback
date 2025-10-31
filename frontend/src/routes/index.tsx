@@ -18,20 +18,20 @@ function Home() {
                 </p>
                 <div className="w-fit mx-auto mt-12 flex flex-col gap-2">
                     <Button variant={"neutral"} size={"lg"} className="font-heading text-lg transform transition-transform hover:-translate-y-1.5 hover:-rotate-2">
-                        <Link to="/create-survey" className="inline-flex items-center gap-2">
+                        <Link to="/survey/create" className="inline-flex items-center gap-2">
                             Launch a Private Survey
                             <ArrowRight size={36} />
                         </Link>
                     </Button>
                     <Button asChild variant={"noShadow"} size={"lg"} className="font-heading text-lg border-none transform transition-transform hover:translate-y-1.5 hover:rotate-2">
-                        <Link to="/app/surveys" className="flex items-center gap-2">
+                        <Link to="/surveys/explore" className="flex items-center gap-2">
                             Answer Privately & Earn
                             <ChevronDown size={36} />
                         </Link>
                     </Button>
                 </div>
             </section>
-            <section className='bg-background border-t-[4px]  py-48'>
+            <section className='bg-background border-t-4 py-48'>
                 {/* section title */}
                 <h2 className='text-2xl font-bold text-center pt-4'>Latest Surveys</h2>
                 <div className='flex flex-col gap-4 mt-4'>
