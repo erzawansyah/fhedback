@@ -1,0 +1,55 @@
+{
+    "totalRespondents": {
+        "error": {
+            "cause": {
+                "metaMessages": [
+                    "This could be due to any of the following:",
+                    "  - The contract does not have the function \"getTotalRespondents\",",
+                    "  - The parameters passed to the contract function may be invalid, or",
+                    "  - The address is not a contract."
+                ],
+                "shortMessage": "The contract function \"getTotalRespondents\" returned no data (\"0x\").",
+                "version": "2.38.5",
+                "name": "ContractFunctionZeroDataError"
+            },
+            "docsPath": "/docs/contract/multicall",
+            "metaMessages": [
+                "This could be due to any of the following:",
+                "  - The contract does not have the function \"getTotalRespondents\",",
+                "  - The parameters passed to the contract function may be invalid, or",
+                "  - The address is not a contract.",
+                " ",
+                "Contract Call:",
+                "  address:   0x89Cbb93dee9C0078202a05dEd10630B5B8594397\n  function:  getTotalRespondents()"
+            ],
+            "shortMessage": "The contract function \"getTotalRespondents\" returned no data (\"0x\").",
+            "version": "2.38.5",
+            "name": "ContractFunctionExecutionError",
+            "args": [
+                0
+            ],
+            "contractAddress": "0x89Cbb93dee9C0078202a05dEd10630B5B8594397",
+            "functionName": "getTotalRespondents"
+        },
+        "status": "failure"
+    },
+    "questionStats": {
+        "result": {
+            "total": "0x0161d3531dd6fcccba5b823ff478af31b62d69b89eff0000000000aa36a70500",
+            "sumSquares": "0xc43f4b55c3c9198d776de1298522c23ad0479505baff0000000000aa36a70500",
+            "minScore": "0x6fc0a7f23715717a00e5f5f3c5fcbff846c75ac6efff0000000000aa36a70200",
+            "maxScore": "0xb4461e19908f673a052f4988f7f4d3a1d1adf32321ff0000000000aa36a70200"
+        },
+        "status": "success"
+    },
+    "questionFrequencies": {
+        "result": [
+            "0x57e969cadbdade3e30a1dd03f01818aefcea8e3e8dff0000000000aa36a70500",
+            "0x4d06419d7961cd5444c1deebb13a0a363f96262509ff0000000000aa36a70500",
+            "0xb3de9339faa28806609790790cb635d20f4de4fa10ff0000000000aa36a70500",
+            "0xaf6c36885b2aa264ab2cacca5eaafcc5cb4a1b96d5ff0000000000aa36a70500",
+            "0x01494c533502af555b6fa5bd5f8b846bcfa23d75b3ff0000000000aa36a70500"
+        ],
+        "status": "success"
+    }
+}
