@@ -208,7 +208,7 @@ function RouteComponent() {
       // Navigate to the survey review page
       setTimeout(() => {
         navigate({
-          to: `/my/surveys`,
+          to: `/surveys/me`,
           search: {
             addr: surveyAddress as string
           }
