@@ -238,6 +238,52 @@ contract ConfidentialSurvey is ConfidentialSurvey_Base, ReentrancyGuard {
         }
     }
 
+    /**
+     * @custom:since 0.1.0
+     * @notice Grants the public to decrypt aggregated statistics for a question
+     * @dev Only available after the survey is closed to preserve privacy during data collection
+     * @param _qIdx Index of the question to grant decryption access for
+     * @notice Allows owner to decrypt: total, sumSquares, minScore, maxScore, and frequency data
+     * @notice This enables post-survey statistical analysis while maintaining respondent privacy
+     * @notice Individual responses remain encrypted and inaccessible
+     */
+    function makeItPublic(uint256 _qIdx) external onlyOwner onlyClosed {
+        require(_qIdx < survey.totalQuestions, "bad index");
+        QuestionStats storage qs = questionStatistics[_qIdx];
+
+        FHE.allow(qs.total, msg.sender);
+        FHE.allow(qs.sumSquares, msg.sender);
+        FHE.allow(qs.minScore, msg.sender);
+        FHE.allow(qs.maxScore, msg.sender);
+        uint8 m = maxScores[_qIdx];
+        for (uint8 i = 1; i <= m; ++i) {
+            FHE.allow(frequencyCounts[_qIdx][i], msg.sender);
+        }
+    }
+
+    /**
+     * @custom:since 0.1.0
+     * @notice Grants the public to decrypt aggregated statistics for a question
+     * @dev Only available after the survey is closed to preserve privacy during data collection
+     * @param _qIdx Index of the question to grant decryption access for
+     * @notice Allows owner to decrypt: total, sumSquares, minScore, maxScore, and frequency data
+     * @notice This enables post-survey statistical analysis while maintaining respondent privacy
+     * @notice Individual responses remain encrypted and inaccessible
+     */
+    function grantRespondentDecrypt(uint256 _qIdx) external onlyClosed {
+        require(hasResponded[msg.sender], "Not respondent");
+        QuestionStats storage qs = questionStatistics[_qIdx];
+
+        FHE.allow(qs.total, msg.sender);
+        FHE.allow(qs.sumSquares, msg.sender);
+        FHE.allow(qs.minScore, msg.sender);
+        FHE.allow(qs.maxScore, msg.sender);
+        uint8 m = maxScores[_qIdx];
+        for (uint8 i = 1; i <= m; ++i) {
+            FHE.allow(frequencyCounts[_qIdx][i], msg.sender);
+        }
+    }
+
     // -------------------------------------
     // Statistics Functions
     // -------------------------------------
