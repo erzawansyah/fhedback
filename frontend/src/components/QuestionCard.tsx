@@ -26,16 +26,17 @@ export default function QuestionCard({ index, question: q, score, selected, hand
     return (
         <Card className={`bg-white ${selected ? 'ring-2 ring-main/20' : ''}`}>
             <CardHeader>
-                <CardTitle className="text-2xl flex gap-3 items-center">
-                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-bold ${selected ? 'bg-main' : 'bg-muted-foreground/60'}`}>
+                <CardTitle className="text-lg md:text-2xl flex gap-3 items-center">
+                    <div className={`w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0 ${selected ? 'bg-main' : 'bg-muted-foreground/60'}`}>
                         {selected ? '✓' : index + 1}
                     </div>
                     {q.text}
                 </CardTitle>
                 {q.helperText && <p className="text-xs italic text-subtle">{q.helperText}</p>}
             </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="flex justify-between items-center text-sm">
+            <CardContent className="space-y-4 md:space-y-6">
+                {/* Desktop Layout */}
+                <div className="hidden md:flex justify-between items-center text-sm">
                     <span className="text-base">{minLabel}</span>
                     <div className="flex gap-2">
                         {Array.from({ length: max - min + 1 }, (_, i) => {
@@ -56,6 +57,32 @@ export default function QuestionCard({ index, question: q, score, selected, hand
                     </div>
                     <span>{maxLabel}</span>
                 </div>
+
+                {/* Mobile Layout */}
+                <div className="md:hidden space-y-3">
+                    <div className="flex justify-between text-xs text-subtle">
+                        <span>{minLabel}</span>
+                        <span>{maxLabel}</span>
+                    </div>
+                    <div className="grid grid-cols-5 gap-2">
+                        {Array.from({ length: max - min + 1 }, (_, i) => {
+                            const score = min + i
+                            const isSelected = selected === score
+                            return (
+                                <Button
+                                    key={score}
+                                    onClick={() => handleRating(q.id, score)}
+                                    variant={isSelected ? "default" : "neutral"}
+                                    size="icon"
+                                    className={`w-full aspect-square rounded-full font-bold text-sm ${isSelected ? 'ring-2 ring-offset-2 ring-main/50' : ''}`}
+                                >
+                                    {score}
+                                </Button>
+                            )
+                        })}
+                    </div>
+                </div>
+
                 {selected && (
                     <div className="text-center">
                         <Badge variant="neutral" className="animate-pulse">

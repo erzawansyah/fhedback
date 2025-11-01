@@ -30,9 +30,9 @@ function SurveyStatsPage() {
 
   return (
     <>
-      <div className="h-64 bg-main" />
-      <main className="container mx-auto -mt-32 pb-16">
-        <div className="mx-auto max-w-4xl space-y-6">
+      <div className="h-40 md:h-64 bg-main" />
+      <main className="container mx-auto -mt-32 pb-16 px-4">
+        <div className="mx-auto max-w-4xl space-y-4 md:space-y-6">
           <Card className="bg-white">
             <CardContent>
               <h4 className="text-2xl">Survey Insights & Trends</h4>

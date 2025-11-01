@@ -230,8 +230,8 @@ function CreateSurveyPage() {
   const maxLabel = watch('max_label') ?? 'Strongly Agree'
 
   return (
-    <main className="container mx-auto py-8">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <main className="container mx-auto py-8 px-4">
+      <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
 
         {step !== "review" && (
           <>
@@ -420,16 +420,16 @@ function CreateSurveyPage() {
             step === 'review' && <ReviewCard data={reviewedData} />
           }
 
-          <div className='flex justify-between gap-'>
+          <div className='flex flex-col md:flex-row justify-between gap-4'>
             {step === 'metadata' ? (
               <>
-                <Button className='min-w-52' asChild variant='neutral' type='button' disabled={disabledButton}>
+                <Button className='w-full md:min-w-52' asChild variant='neutral' type='button' disabled={disabledButton}>
                   <Link to="/">
                     <ArrowLeft />
                     Back to Home
                   </Link>
                 </Button>
-                <Button className='min-w-52' type='button' onClick={(e) => {
+                <Button className='w-full md:min-w-52' type='button' onClick={(e) => {
                   e.preventDefault()
                   setStep('questions')
                 }} disabled={disabledButton}>
@@ -439,13 +439,13 @@ function CreateSurveyPage() {
               </>
             ) : step === 'questions' ? (
               <>
-                <Button className='min-w-52' type='button' variant='neutral' onClick={(e) => {
+                <Button className='w-full md:min-w-52' type='button' variant='neutral' onClick={(e) => {
                   e.preventDefault()
                   setStep('metadata')
                 }} disabled={disabledButton}>
                   Edit Metadata
                 </Button>
-                <Button className='min-w-52' type='button' onClick={(e) => {
+                <Button className='w-full md:min-w-52' type='button' onClick={(e) => {
                   e.preventDefault()
                   setStep('review')
                 }} disabled={disabledButton}>
@@ -454,13 +454,13 @@ function CreateSurveyPage() {
               </>
             ) : (
               <>
-                <Button className='min-w-52' type='button' variant='neutral' onClick={(e) => {
+                <Button className='w-full md:min-w-52' type='button' variant='neutral' onClick={(e) => {
                   e.preventDefault()
                   setStep('questions')
                 }} disabled={disabledButton}>
                   Edit Questions
                 </Button>
-                <Button className='min-w-52' type='submit' disabled={disabledButton}>
+                <Button className='w-full md:min-w-52' type='submit' disabled={disabledButton}>
                   {
                     status === "submitting" && <Loader2 className="animate-spin mr-2 h-4 w-4" />
                   }
@@ -615,10 +615,10 @@ function ReviewCard({ data }: {
 }) {
   return (
     <>
-      <Card className="mt-4 px-8 bg-white gap-2">
-        <div className='flex items-start justify-between'>
-          <h3>{data.title}</h3>
-          {data.category && <Badge>{data.category}</Badge>}
+      <Card className="mt-4 px-4 md:px-8 bg-white gap-2">
+        <div className='flex flex-col md:flex-row items-start justify-between gap-2'>
+          <h3 className="text-xl md:text-2xl">{data.title}</h3>
+          {data.category && <Badge className="self-start">{data.category}</Badge>}
         </div>
         {data.description && <p className="text-subtle text-sm">{data.description}</p>}
       </Card>
@@ -633,26 +633,27 @@ function ReviewCard({ data }: {
 
       <div className="space-y-4 mt-4">
         {data.questions && data.questions.map((q, idx) => (
-          <Card key={idx} className="flex px-8 bg-white">
+          <Card key={idx} className="flex px-4 md:px-8 bg-white">
             {/* Question Number */}
             <div className="flex-1">
-              <h4 className="font-medium text-xl">{q.text}</h4>
+              <h4 className="font-medium text-base md:text-xl">{q.text}</h4>
               {q.helper_text && <p className="text-subtle text-xs italic mt-1">{q.helper_text}</p>}
               <div className="flex mt-2">
-                <div className="flex items-center justify-around w-full">
-                  <div className="text-sm">{data.min_label ?? "Strongly Disagree"}</div>
-                  <div className="flex flex-1 justify-center gap-[2%]">
+                <div className="flex flex-col md:flex-row items-center justify-around w-full gap-2">
+                  <div className="text-xs md:text-sm self-start md:self-center">{data.min_label ?? "Strongly Disagree"}</div>
+                  <div className="flex flex-1 justify-center gap-1 md:gap-[2%] flex-wrap">
                     {Array.from({ length: data.max_scale ?? 5 }, (_, i) => (
                       <Button
                         key={i}
                         size={"icon"}
                         variant={"reverse"}
+                        className="w-10 h-10 md:w-12 md:h-12"
                       >
                         {i + 1}
                       </Button>
                     ))}
                   </div>
-                  <div className="text-sm">{data.max_label ?? "Strongly Agree"}</div>
+                  <div className="text-xs md:text-sm self-end md:self-center">{data.max_label ?? "Strongly Agree"}</div>
                 </div>
               </div>
 

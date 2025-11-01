@@ -81,8 +81,8 @@ function ExploreSurveysPage() {
 
 
   return (
-    <main className="container mx-auto py-8">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <main className="container mx-auto py-8 px-4">
+      <div className="max-w-4xl mx-auto space-y-4 md:space-y-6">
 
         <Card className="px-8 bg-white gap-4">
           <h1>Explore Surveys</h1>
@@ -143,18 +143,18 @@ const SurveyItem = ({ addr }: { addr: Address }) => {
   if (!data) return <div className="p-4 text-sm text-gray-500">Loading survey {addr}...</div>
   if (data.config?.status !== 1 && data.config?.status !== 2) return null;
   return (
-    <Card className={`px-6 gap-1 ${hasResponded ? 'bg-gray-50 border-gray-200' : 'bg-white'}`}>
+    <Card className={`px-4 md:px-6 gap-1 ${hasResponded ? 'bg-gray-50 border-gray-200' : 'bg-white'}`}>
       {/* Header */}
-      <div className="flex items-start justify-between gap-3 mb-2">
-        <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold truncate mb-1">
+      <div className="flex flex-col md:flex-row items-start justify-between gap-2 md:gap-3 mb-2">
+        <div className="flex-1 min-w-0 w-full">
+          <h3 className="text-sm font-semibold mb-1">
             <span className='mr-2 font-extrabold'>[{data.config?.symbol}]</span>
             {data.metadata?.title}</h3>
-          <p className="text-xs text-subtle truncate">
+          <p className="text-xs text-subtle line-clamp-2">
             {data.metadata?.description || 'No description'}
           </p>
         </div>
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-1 shrink-0 self-start">
           {data.metadata?.category && (
             <Badge variant="neutral" className="h-5 px-2 text-xs">{data.metadata.category}</Badge>
           )}
@@ -165,20 +165,20 @@ const SurveyItem = ({ addr }: { addr: Address }) => {
       </div>
 
       {/* Metrics */}
-      <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between text-xs text-gray-500 mb-2 gap-1">
+        <div className="flex items-center gap-2 md:gap-4 flex-wrap">
           <span className="font-medium text-gray-800">{data.config?.symbol}</span>
           <span>{data.config?.totalQuestions} Questions</span>
           <span>Limit: {data.config?.respondentLimit}</span>
         </div>
         {data.config?.createdAt && (
-          <span>{formatDate(data.config.createdAt.toISOString())}</span>
+          <span className="text-[10px] md:text-xs">{formatDate(data.config.createdAt.toISOString())}</span>
         )}
       </div>
 
       {/* Footer */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Badge
             variant={statusInfo.tone === 'success' ? 'default' : 'neutral'}
             className="h-5 px-2 text-xs"
@@ -194,7 +194,7 @@ const SurveyItem = ({ addr }: { addr: Address }) => {
             {account.address === data.config?.owner ? "<You>" : hideAddress(data.config?.owner)}
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end">
           <span
             className="hidden sm:inline text-xs text-gray-400 cursor-pointer hover:text-gray-600 truncate max-w-[150px]"
             onClick={() => {

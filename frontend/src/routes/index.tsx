@@ -10,38 +10,38 @@ function Home() {
     return (
         <main className="min-h-[92vh] flex flex-col">
             {/* Hero Section */}
-            <section className='flex flex-col justify-center items-center py-48 bg-main'>
-                <h1 className="font-black text-5xl p-4 bg-secondary-background border-4 border-border mx-auto text-center transform -rotate-2 w-fit">
+            <section className='flex flex-col justify-center items-center py-24 md:py-48 bg-main px-4'>
+                <h1 className="font-black text-3xl md:text-5xl p-4 bg-secondary-background border-4 border-border mx-auto text-center transform -rotate-2 w-fit">
                     Create Fully Confidential Onchain Surveys
                 </h1>
-                <p className="text-xl font-heading mt-12 mx-auto text-center w-3/4">
+                <p className="text-base md:text-xl font-heading mt-8 md:mt-12 mx-auto text-center w-full md:w-3/4 px-4">
                     Build surveys where every response stays encrypted end-to-end. No identities, no tracking, no data exposure — not even the survey owner can access individual answers.
                 </p>
-                <div className="w-fit mx-auto mt-12 flex flex-col gap-2">
-                    <Button variant={"neutral"} size={"lg"} className="font-heading text-lg transform transition-transform hover:-translate-y-1.5 hover:-rotate-2">
+                <div className="w-full md:w-fit mx-auto mt-8 md:mt-12 flex flex-col gap-2 px-4">
+                    <Button variant={"neutral"} size={"lg"} className="font-heading text-base md:text-lg transform transition-transform hover:-translate-y-1.5 hover:-rotate-2 w-full md:w-auto">
                         <Link to="/survey/create" className="inline-flex items-center gap-2">
                             Launch a Confidential Survey
-                            <ArrowRight size={36} />
+                            <ArrowRight className="w-6 h-6 md:w-9 md:h-9" />
                         </Link>
                     </Button>
-                    <Button asChild variant={"noShadow"} size={"lg"} className="font-heading text-lg border-none transform transition-transform hover:translate-y-1.5 hover:rotate-2">
+                    <Button asChild variant={"noShadow"} size={"lg"} className="font-heading text-base md:text-lg border-none transform transition-transform hover:translate-y-1.5 hover:rotate-2 w-full md:w-auto">
                         <Link to="/surveys/explore" className="flex items-center gap-2">
                             Answer Anonymously
-                            <ChevronDown size={36} />
+                            <ChevronDown className="w-6 h-6 md:w-9 md:h-9" />
                         </Link>
                     </Button>
                 </div>
             </section>
 
             {/* Problems Section */}
-            <section className='py-20 px-8 bg-secondary-background'>
+            <section className='py-12 md:py-20 px-4 md:px-8 bg-secondary-background'>
                 <div className='max-w-6xl mx-auto'>
-                    <h2 className='text-4xl font-black mb-4 text-center'>
-                        <span className='bg-main border-4 border-border px-6 py-2 inline-block transform rotate-1'>
+                    <h2 className='text-2xl md:text-4xl font-black mb-4 text-center'>
+                        <span className='bg-main border-4 border-border px-4 md:px-6 py-2 inline-block transform rotate-1'>
                             ❌ Traditional Survey Problems
                         </span>
                     </h2>
-                    <div className='grid md:grid-cols-2 gap-6 mt-12'>
+                    <div className='grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 md:mt-12'>
                         <div className='bg-main border-4 border-border p-6 transform -rotate-1 hover:rotate-0 transition-transform'>
                             <div className='flex items-start gap-4'>
                                 <Eye className='w-8 h-8 shrink-0 mt-1' />
@@ -83,10 +83,10 @@ function Home() {
             </section>
 
             {/* FHE Solution Section */}
-            <section className='py-20 px-8 bg-main'>
+            <section className='py-12 md:py-20 px-4 md:px-8 bg-main'>
                 <div className='max-w-6xl mx-auto'>
-                    <h2 className='text-4xl font-black mb-8 text-center'>
-                        <span className='bg-secondary-background border-4 border-border px-6 py-2 inline-block transform -rotate-1'>
+                    <h2 className='text-2xl md:text-4xl font-black mb-6 md:mb-8 text-center'>
+                        <span className='bg-secondary-background border-4 border-border px-4 md:px-6 py-2 inline-block transform -rotate-1'>
                             ✅ The FHEdback Solution
                         </span>
                     </h2>
@@ -119,14 +119,14 @@ function Home() {
             </section>
 
             {/* Key Features Section */}
-            <section className='py-20 px-8 bg-secondary-background'>
+            <section className='py-12 md:py-20 px-4 md:px-8 bg-secondary-background'>
                 <div className='max-w-6xl mx-auto'>
-                    <h2 className='text-4xl font-black mb-12 text-center'>
-                        <span className='bg-main border-4 border-border px-6 py-2 inline-block transform rotate-1'>
+                    <h2 className='text-2xl md:text-4xl font-black mb-8 md:mb-12 text-center'>
+                        <span className='bg-main border-4 border-border px-4 md:px-6 py-2 inline-block transform rotate-1'>
                             🎯 FHEdback Advantages
                         </span>
                     </h2>
-                    <div className='grid md:grid-cols-3 gap-6'>
+                    <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
                         <div className='bg-main border-4 border-border p-6 transform hover:-translate-y-2 transition-transform'>
                             <div className='text-4xl mb-4'>🔒</div>
                             <h3 className='font-bold text-xl mb-3'>Absolute Privacy</h3>
@@ -162,10 +162,10 @@ function Home() {
             </section>
 
             {/* How It Works Section */}
-            <section className='py-20 px-8 bg-main'>
+            <section className='py-12 md:py-20 px-4 md:px-8 bg-main'>
                 <div className='max-w-6xl mx-auto'>
-                    <h2 className='text-4xl font-black mb-12 text-center'>
-                        <span className='bg-secondary-background border-4 border-border px-6 py-2 inline-block transform -rotate-1'>
+                    <h2 className='text-2xl md:text-4xl font-black mb-8 md:mb-12 text-center'>
+                        <span className='bg-secondary-background border-4 border-border px-4 md:px-6 py-2 inline-block transform -rotate-1'>
                             🔄 How It Works
                         </span>
                     </h2>
@@ -188,17 +188,17 @@ function Home() {
             </section>
 
             {/* Who Needs Section */}
-            <section className='py-20 px-8 bg-secondary-background'>
+            <section className='py-12 md:py-20 px-4 md:px-8 bg-secondary-background'>
                 <div className='max-w-6xl mx-auto'>
-                    <h2 className='text-4xl font-black mb-4 text-center'>
-                        <span className='bg-main border-4 border-border px-6 py-2 inline-block transform rotate-1'>
+                    <h2 className='text-2xl md:text-4xl font-black mb-4 text-center'>
+                        <span className='bg-main border-4 border-border px-4 md:px-6 py-2 inline-block transform rotate-1'>
                             👥 Who Needs FHEdback?
                         </span>
                     </h2>
-                    <p className='text-center font-heading text-xl italic mt-8 mb-12'>
+                    <p className='text-center font-heading text-base md:text-xl italic mt-6 md:mt-8 mb-8 md:mb-12 px-4'>
                         "Anyone who cares about their data privacy can leverage FHEdback to gather insights without compromising privacy."
                     </p>
-                    <div className='grid md:grid-cols-2 lg:grid-cols-3 gap-6'>
+                    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
                         {[
                             { emoji: '🔬', title: 'Research Organizations', desc: 'Sensitive surveys with guaranteed respondent privacy' },
                             { emoji: '🏢', title: 'Corporations', desc: 'Employee feedback without risk of individual identification' },
@@ -217,16 +217,16 @@ function Home() {
             </section>
 
             {/* Live Demo Section */}
-            <section className='py-20 px-8 bg-main'>
+            <section className='py-12 md:py-20 px-4 md:px-8 bg-main'>
                 <div className='max-w-4xl mx-auto text-center'>
-                    <h2 className='text-4xl font-black mb-8'>
-                        <span className='bg-secondary-background border-4 border-border px-6 py-2 inline-block transform -rotate-1'>
+                    <h2 className='text-2xl md:text-4xl font-black mb-6 md:mb-8'>
+                        <span className='bg-secondary-background border-4 border-border px-4 md:px-6 py-2 inline-block transform -rotate-1'>
                             🌐 Live on Sepolia Testnet
                         </span>
                     </h2>
-                    <div className='bg-secondary-background border-4 border-border p-8 transform rotate-1'>
-                        <h3 className='font-bold text-2xl mb-4'>Factory Contract</h3>
-                        <p className='font-mono text-sm bg-main border-2 border-border p-3 break-all mb-6'>
+                    <div className='bg-secondary-background border-4 border-border p-4 md:p-8 transform rotate-1'>
+                        <h3 className='font-bold text-xl md:text-2xl mb-4'>Factory Contract</h3>
+                        <p className='font-mono text-xs md:text-sm bg-main border-2 border-border p-3 break-all mb-6'>
                             0x24405CcEE48dc76B34b7c80865e9c5CF2bEDCD15
                         </p>
                         <a
@@ -244,14 +244,14 @@ function Home() {
             </section>
 
             {/* CTA Section */}
-            <section className='py-20 px-8 bg-secondary-background'>
+            <section className='py-12 md:py-20 px-4 md:px-8 bg-secondary-background'>
                 <div className='max-w-4xl mx-auto text-center'>
-                    <h2 className='text-4xl font-black mb-8'>Ready to Create Your Confidential Survey?</h2>
-                    <div className="w-fit mx-auto flex flex-col gap-4">
-                        <Button variant={"neutral"} size={"lg"} className="font-heading text-xl transform transition-transform hover:-translate-y-1.5 hover:-rotate-2">
+                    <h2 className='text-2xl md:text-4xl font-black mb-6 md:mb-8 px-4'>Ready to Create Your Confidential Survey?</h2>
+                    <div className="w-full md:w-fit mx-auto flex flex-col gap-4 px-4">
+                        <Button variant={"neutral"} size={"lg"} className="font-heading text-base md:text-xl transform transition-transform hover:-translate-y-1.5 hover:-rotate-2 w-full md:w-auto">
                             <Link to="/survey/create" className="inline-flex items-center gap-2">
                                 Get Started Now
-                                <ArrowRight size={36} />
+                                <ArrowRight className="w-6 h-6 md:w-9 md:h-9" />
                             </Link>
                         </Button>
                     </div>

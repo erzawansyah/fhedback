@@ -67,22 +67,22 @@ function SurveyViewPage() {
 
   if (!isActive) {
     return (
-      <main className="container mx-auto py-8">
+      <main className="container mx-auto py-8 px-4">
         <div className="max-w-4xl mx-auto text-center space-y-4">
           <div className="space-y-6">
             <Lock className="mx-auto h-16 w-16 text-muted-foreground" />
             <div>
-              <h1 className="mb-2 text-3xl font-bold">Survey Closed</h1>
-              <p className="mb-4 text-lg text-muted-foreground">
+              <h1 className="mb-2 text-2xl md:text-3xl font-bold">Survey Closed</h1>
+              <p className="mb-4 text-base md:text-lg text-muted-foreground px-4">
                 This survey is no longer accepting responses. It has been closed and all responses
                 have been collected.
               </p>
-              <p className="text-base text-muted-foreground">
+              <p className="text-sm md:text-base text-muted-foreground px-4">
                 However, you can still view the survey results and statistics compiled from all
                 participants&apos; responses.
               </p>
             </div>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 px-4">
               <Button className="mt-6" asChild>
                 <Link to="/survey/stats/$addr" params={{ addr }}>
                   View Survey Results & Statistics
@@ -104,7 +104,7 @@ function SurveyViewPage() {
 
   if (!config || !metadata || !questions) {
     return (
-      <main className="container mx-auto py-8">
+      <main className="container mx-auto py-8 px-4">
         <div className="max-w-4xl mx-auto space-y-4 text-center">
           <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-border" />
           <p>Loading survey...</p>
@@ -115,9 +115,9 @@ function SurveyViewPage() {
 
   return (
     <>
-      <div className="h-64 bg-main" />
-      <main className="container mx-auto -mt-40 pb-16">
-        <div className="mx-auto max-w-4xl space-y-6">
+      <div className="h-40 md:h-64 bg-main" />
+      <main className="container mx-auto -mt-32 md:-mt-40 pb-16 px-4">
+        <div className="mx-auto max-w-4xl space-y-4 md:space-y-6">
           {isOwner ? (
             <OwnerPageHeader
               title={metadata.title}
@@ -239,19 +239,19 @@ const PageHeader = ({
   return (
     <Card className="bg-white">
       <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <CardTitle className="text-4xl">{title}</CardTitle>
-            <CardDescription className="text-subtle italic">
+        <div className="flex flex-col md:flex-row items-start justify-between gap-3">
+          <div className="flex-1 w-full">
+            <CardTitle className="text-2xl md:text-4xl wrap-break-word">{title}</CardTitle>
+            <CardDescription className="text-subtle italic text-sm md:text-base">
               {description || 'Silakan isi survey berikut'}
             </CardDescription>
           </div>
-          <Badge>{category}</Badge>
+          <Badge className="self-start">{category}</Badge>
         </div>
 
         <div className="pt-4 space-y-2">
           <Progress value={progress} />
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs md:text-sm text-muted-foreground">
             Progress: {answered} / {totalQuestions} questions
           </p>
         </div>
@@ -280,19 +280,19 @@ const OwnerPageHeader = ({
   return (
     <Card className="bg-white">
       <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <CardTitle className="text-4xl">{title}</CardTitle>
-            <CardDescription className="text-subtle italic">
+        <div className="flex flex-col md:flex-row items-start justify-between gap-3">
+          <div className="flex-1 w-full">
+            <CardTitle className="text-2xl md:text-4xl wrap-break-word">{title}</CardTitle>
+            <CardDescription className="text-subtle italic text-sm md:text-base">
               {description || 'Silakan isi survey berikut'}
             </CardDescription>
           </div>
-          <Badge>{category}</Badge>
+          <Badge className="self-start">{category}</Badge>
         </div>
 
         <div className="pt-4 space-y-2">
           <Progress value={progress} />
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs md:text-sm text-muted-foreground">
             Progress: {currentRespondent} / {maxRespondent} responses
           </p>
         </div>
@@ -317,14 +317,14 @@ const SubmitResponsesButton: React.FC<SubmitResponsesButtonProps> = ({
   resetResponses,
 }) => {
   return (
-    <div className="flex justify-between">
-      <Button variant="neutral" onClick={resetResponses} className="w-full max-w-xs">
+    <div className="flex flex-col md:flex-row justify-between gap-4">
+      <Button variant="neutral" onClick={resetResponses} className="w-full md:max-w-xs">
         Reset Answers
       </Button>
       <Button
         onClick={handleSubmit}
         disabled={state === 'encrypting' || state === 'submitting'}
-        className="w-full max-w-xs"
+        className="w-full md:max-w-xs"
       >
         {state === 'encrypting' && <Lock className="mr-2 h-4 w-4 animate-spin" />}
         {state === 'submitting' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
