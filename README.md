@@ -174,6 +174,94 @@ See complete documentation at:
 
 ---
 
+## 🔮 Potential Development Areas
+
+This section outlines potential enhancements and technical challenges identified during development. These represent areas of interest for future exploration, not committed roadmap items.
+
+### 1. 📝 Multiple Question Types
+
+**Current State**: Only supports rating scale questions (1-5)
+
+**Potential Additions:**
+- Multiple choice (single selection)
+- Checkbox (multiple selections)
+- Yes/No questions
+- Text input (open-ended responses with FHE)
+- Ranking questions
+- Matrix/Grid questions
+
+**Challenge**: Each question type requires different FHE encoding and aggregation methods.
+
+### 2. 💰 Incentive Mechanism
+
+**Concept**: Token-based rewards from survey creators to respondents
+
+**Considerations:**
+- Reward escrow during survey period
+- Automatic distribution upon submission
+- Support for ETH and ERC-20 tokens
+- Fair distribution for partial completions
+
+### 3. 🤖 Bot Prevention
+
+**Challenge**: If rewards are implemented, bot abuse becomes critical
+
+**Potential Approaches:**
+- On-chain identity verification (WorldID, Proof of Humanity, Gitcoin Passport)
+- Minimal staking requirements
+- Rate limiting and cooldown periods
+- reCAPTCHA integration for high-value surveys
+- Balancing privacy with accountability
+
+### 4. 🔍 Advanced Survey Discovery
+
+**Current State**: Basic survey listing
+
+**Potential Features:**
+- Filtering (category, status, rewards, completion rate)
+- Sorting (date, popularity, deadline)
+- Search functionality (title, tags, creator)
+- The Graph integration for efficient querying
+
+### 5. 📊 Demographic Analysis
+
+**Concept**: Optional demographic profiling while maintaining privacy
+
+**Approach:**
+- Encrypted demographic data (age, location, gender)
+- Selective disclosure by respondents
+- Aggregate-only analysis with k-anonymity
+- Example: "Average rating by age group"
+
+### 6. 📈 Advanced Statistics
+
+**Current State**: Basic operations (sum, average, count)
+
+**Potential Operations:**
+- Standard deviation and variance
+- Median and mode
+- Correlation between questions
+- Conditional statistics
+
+**Challenge**: FHE computational complexity and gas costs increase significantly.
+
+### 7. ⚙️ BeaconProxy Pattern
+
+**Issue**: [Reported to Zama Team](https://discord.com/channels/1287736665103798433/1315252078758858783/1412062254622314597)
+
+**Problem**: BeaconProxy implementation causes FHE decryption failures
+
+**Current Workaround**: Using direct contract deployment
+
+**Impact if Resolved**:
+- ~80% reduction in deployment gas costs
+- Ability to upgrade contracts without data migration
+- Standardized interface across all surveys
+
+**Status**: Awaiting feedback from Zama team on fhEVM compatibility with proxy patterns
+
+---
+
 ## 🤝 Contributing
 
 Contributions are very welcome! Please:
@@ -200,11 +288,18 @@ This project uses **MIT License**.
 
 ---
 
-## 📞 Contact
+## 📞 Contact & Social
 
+**Project Links:**
 - **Repository**: [github.com/erzawansyah/fhedback](https://github.com/erzawansyah/fhedback)
 - **Live Demo**: [fhedback.vercel.app](https://fhedback.vercel.app)
-- **Owner**: [@erzawansyah](https://github.com/erzawansyah)
+- **Website**: [mew3.xyz](https://mew3.xyz)
+
+**Connect with the Developer:**
+- **GitHub**: [@erzawansyah](https://github.com/erzawansyah)
+- **Twitter/X**: [@mew294071](https://twitter.com/mew294071)
+- **Discord**: erzawansyah
+- **Farcaster**: [mewww.eth](https://farcaster.xyz/mewww.eth)
 
 ---
 

@@ -763,8 +763,23 @@ This project is licensed under the MIT License.
 
 **This Project:**
 - 📖 [Smart Contracts Documentation](../contracts/README.md)
-- 🧪 [Smnart Contracts Test Results](../contracts/TEST_RESULTS.md)
+- 🧪 [Smart Contracts Test Results](../contracts/TEST_RESULTS.md)
 - 💻 [GitHub Repository](https://github.com/erzawansyah/fhedback)
+
+---
+
+## 📞 Contact & Social
+
+**Project Links:**
+- **Repository**: [github.com/erzawansyah/fhedback](https://github.com/erzawansyah/fhedback)
+- **Live Demo**: [fhedback.vercel.app](https://fhedback.vercel.app)
+- **Website**: [mew3.xyz](https://mew3.xyz)
+
+**Connect with the Developer:**
+- **GitHub**: [@erzawansyah](https://github.com/erzawansyah)
+- **Twitter/X**: [@mew294071](https://twitter.com/mew294071)
+- **Discord**: erzawansyah
+- **Farcaster**: [mewww.eth](https://farcaster.xyz/mewww.eth)
 
 ---
 

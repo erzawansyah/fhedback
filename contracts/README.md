@@ -685,6 +685,21 @@ This project is licensed under **BSD-3-Clause-Clear License**.
 
 ---
 
+## 📞 Contact & Social
+
+**Project Links:**
+- **Repository**: [github.com/erzawansyah/fhedback](https://github.com/erzawansyah/fhedback)
+- **Live Demo**: [fhedback.vercel.app](https://fhedback.vercel.app)
+- **Website**: [mew3.xyz](https://mew3.xyz)
+
+**Connect with the Developer:**
+- **GitHub**: [@erzawansyah](https://github.com/erzawansyah)
+- **Twitter/X**: [@mew294071](https://twitter.com/mew294071)
+- **Discord**: erzawansyah
+- **Farcaster**: [mewww.eth](https://farcaster.xyz/mewww.eth)
+
+---
+
 **Built with ❤️ using Zama's Fully Homomorphic Encryption**
 
 
