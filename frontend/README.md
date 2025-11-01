@@ -1,515 +1,773 @@
-# 🔐 FHEdback - Confidential Survey Platform
+# 🎨 FHEdback Frontend - React Application
 
-> A privacy-first survey platform built with **Fully Homomorphic Encryption (FHE)** using Zama's FHEVM, enabling completely confidential surveys where individual responses remain encrypted while allowing statistical analysis.
+> Modern React frontend for FHEdback confidential survey platform with Fully Homomorphic Encryption (FHE)
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Solidity](https://img.shields.io/badge/Solidity-%5E0.8.24-orange)](https://docs.soliditylang.org/)
-[![React](https://img.shields.io/badge/React-19.1.0-blue)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19.1.0-61dafb?logo=react)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-3178c6?logo=typescript)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-7.0.4-646cff?logo=vite)](https://vitejs.dev/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.1.11-38bdf8?logo=tailwindcss)](https://tailwindcss.com/)
 
-## 🌟 Features
+---
 
-- **� Fully Homomorphic Encryption**: Individual responses remain encrypted while enabling statistical computations
-- **📊 Confidential Analytics**: Survey creators can view aggregated statistics without accessing individual responses  
-- **🚀 Zero-Knowledge Proofs**: Response validity verified without revealing actual values
-- **🎯 On-Chain Survey Management**: Decentralized survey creation, publication, and lifecycle management
-- **📱 Modern Web Interface**: Intuitive React-based frontend with real-time blockchain integration
-- **🌐 IPFS Storage**: Distributed storage for survey metadata and questions
-- **🔄 Upgradeable Contracts**: Proxy pattern allows for secure contract updates
+## 📋 Table of Contents
 
-## 🏗️ Architecture Overview
+- [🌟 Overview](#-overview)
+- [✨ Features](#-features)
+- [🏗️ Project Structure](#️-project-structure)
+- [🚀 Getting Started](#-getting-started)
+- [⚙️ Configuration](#️-configuration)
+- [🛠️ Development](#️-development)
+- [📦 Tech Stack](#-tech-stack)
+- [🧩 Code Organization](#-code-organization)
+- [🎨 UI Components](#-ui-components)
+- [🌐 Routing](#-routing)
+- [🔗 Smart Contract Integration](#-smart-contract-integration)
+- [📊 State Management](#-state-management)
+- [📝 Scripts](#-scripts)
+- [🧪 Testing](#-testing)
+- [🏗️ Build & Deployment](#️-build--deployment)
+- [🔧 Troubleshooting](#-troubleshooting)
+- [🤝 Contributing](#-contributing)
+- [🏆 Zama Developer Program](#-zama-developer-program)
 
-```mermaid
-graph TB
-    A[Survey Creator] -->|Creates Survey| B[Factory Contract]
-    B -->|Deploys| C[Survey Contract]
-    C -->|Stores Metadata| D[IPFS]
-    E[Respondents] -->|Submit Encrypted| C
-    C -->|FHE Processing| F[Encrypted Statistics]
-    A -->|Views Results| F
-    G[Web3 Frontend] -->|Interacts| B
-    G -->|Interacts| C
-    H[Zama Relayer] -->|Processes| I[FHE Operations]
+---
+
+## 🌟 Overview
+
+FHEdback Frontend is a modern web application built with React 19, TypeScript, and Vite. It provides a user interface for creating, managing, and participating in confidential surveys using **Fully Homomorphic Encryption (FHE)** technology from **Zama**.
+
+### 🎯 About This Project
+
+This project is developed as part of the **Zama Developer Program**, showcasing the practical implementation of **fhEVM (Fully Homomorphic Encryption Virtual Machine)** for building privacy-preserving decentralized applications. FHEdback demonstrates how FHE technology can solve real-world privacy challenges in survey and voting systems.
+
+**Key Highlights:**
+- 🔐 **Privacy-First**: Survey responses remain encrypted on-chain, even during computation
+- ⛓️ **Blockchain Native**: Built on Ethereum-compatible networks using Zama's fhEVM
+- 🔬 **Production Ready**: Demonstrates real-world FHE application beyond proof-of-concepts
+- 🌐 **Web3 Integration**: Seamless wallet connection and smart contract interaction
+
+> **⚠️ Note on Storage**: Currently, this project uses **Firebase** for testing and development purposes. The ideal solution is to use **IPFS** for fully decentralized storage. However, the project architecture has been designed with abstraction layers that allow for easy migration to IPFS in the future with minimal code changes.
+
+---
+
+## ✨ Features
+
+### 🎯 Core Features
+
+- **Survey Creation**
+  - Form wizard for creating surveys
+  - Rating question type (1-5 scale)
+  - Metadata storage integration (Firebase/IPFS)
+  - Real-time validation with Zod
+
+- **Survey Management**
+  - Dashboard for survey creators
+  - Edit and publish surveys
+  - View statistics and analytics
+  - Close and delete surveys (only before publication)
+
+- **Response Submission**
+  - Encrypted response submission
+  - Progress tracking
+  - Transaction confirmation
+
+### 🔒 Privacy Features
+
+- Client-side encryption before submission
+- FHE operations for statistical analysis
+- Zero-knowledge proofs for validation
+- Respondent anonymity
+
+### 🌐 Web3 Features
+
+- Wallet connection with RainbowKit
+- Multi-wallet support (MetaMask, WalletConnect, etc.)
+- Transaction management
+
+---
+
+## 🏗️ Project Structure
+
+```
+frontend/
+├── 📁 public/                  # Static assets
+├── 📁 scripts/                 # Build and setup scripts
+│
+├── 📁 src/
+│   ├── 📄 main.tsx            # Entry point
+│   ├── 📄 App.tsx             # Root component
+│   │
+│   ├── 📁 components/         # React components
+│   │   └── 📁 ui/             # Reusable UI primitives (30+ components)
+│   │
+│   ├── 📁 hooks/              # Custom React hooks
+│   │
+│   ├── 📁 routes/             # TanStack Router routes (file-based)
+│   │
+│   ├── 📁 services/           # External service integrations
+│   │   ├── wagmi.ts           # Wagmi configuration
+│   │   ├── 📁 contracts/      # Smart contract services
+│   │   ├── 📁 fhevm/          # FHEVM services
+│   │   └── 📁 firebase/       # Firebase services
+│   │
+│   ├── 📁 types/              # TypeScript type definitions
+│   │   ├── survey.d.ts        # Survey types
+│   │   └── survey.schema.ts   # Survey schemas (Zod)
+│   │
+│   ├── 📁 utils/              # Utility functions
+│   │
+│   ├── 📁 fhevm-react/        # FHEVM React integration module
+│   │
+│   ├── 📁 context/            # React contexts
+│   └── 📁 assets/             # Images, icons, fonts
+│
+├── � tests/                  # Test files
+│
+├── 📄 package.json            # Dependencies & scripts
+├── 📄 vite.config.ts          # Vite configuration
+├── 📄 tsconfig.json           # TypeScript config
+└── 📄 .env.local              # Environment variables (gitignored)
 ```
 
-## 📁 Project Structure
+---
 
-```
-fhedback/
-├── 📁 frontend/                 # React Frontend Application
-│   ├── 📁 src/
-│   │   ├── 📁 components/      # Reusable UI components
-│   │   ├── 📁 routes/          # Application routes (TanStack Router)
-│   │   ├── 📁 services/        # Web3 and API services
-│   │   ├── 📁 hooks/           # Custom React hooks
-│   │   ├── 📁 types/           # TypeScript type definitions
-│   │   └── 📁 utils/           # Utility functions
-│   ├── 📁 public/              # Static assets
-│   └── 📁 docs/                # Frontend documentation
-├── 📁 contracts/               # Smart Contracts & Deployment
-│   ├── 📁 contracts/           # Solidity contracts
-│   │   ├── ConfidentialSurvey.sol       # Main survey contract
-│   │   ├── ConfidentialSurvey_Factory.sol # Factory for creating surveys
-│   │   └── 📁 modules/         # Contract modules and libraries
-│   ├── 📁 deploy/              # Hardhat deployment scripts
-│   ├── 📁 test/                # Contract test suites
-│   └── 📁 docs/                # Contract documentation
-└── 📄 README.md                # This file
-```
-
-## 🚀 Quick Start
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- **Node.js** 20+ and npm 7+
+- **Node.js** 20.0.0 or higher
+- **npm** 7.0.0 or higher
+- **MetaMask** or other Web3 wallet
 - **Git** for version control
-- **MetaMask** or compatible Web3 wallet
-- **Sepolia ETH** for testnet deployment
 
-### 1. Clone Repository
+### Installation
 
-```bash
-git clone https://github.com/your-username/fhedback.git
-cd fhedback
+1. **Clone repository** (if not already):
+   ```bash
+   git clone https://github.com/erzawansyah/fhedback.git
+   cd fhedback/frontend
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Setup environment variables**:
+   ```bash
+   cp .env.example .env.local
+   ```
+
+4. **Configure `.env.local`**:
+   ```env
+   # Firebase Configuration (Currently used for testing)
+   VITE_FIREBASE_API_KEY=your_firebase_api_key
+   VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=your_project_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+   VITE_FIREBASE_APP_ID=your_app_id
+
+   # ReCAPTCHA (Optional - for bot protection)
+   VITE_RECAPTCHA_SITE_KEY=your_recaptcha_site_key
+   VITE_RECAPTCHA_SECRET_KEY=your_recaptcha_secret_key
+
+   # WalletConnect (Required for wallet connection)
+   VITE_WALLET_CONNECT_PROJECT_ID=your_walletconnect_project_id
+   ```
+
+5. **Start development server**:
+   ```bash
+   npm run dev
+   ```
+
+   Server will run at `http://localhost:5173`
+
+---
+
+## ⚙️ Configuration
+
+### Environment Variables
+
+The frontend uses environment variables defined in `vite-env.d.ts`:
+
+```typescript
+interface ImportMetaEnv {
+  // App Info
+  readonly VITE_APP_NAME: string
+  readonly VITE_APP_VERSION: string
+  readonly VITE_NODE_ENV: string
+  
+  // API & Network
+  readonly VITE_API_BASE_URL: string
+  readonly VITE_ZAMA_TESTNET_RPC: string
+  readonly VITE_ZAMA_RELAYER_URL: string
+  
+  // IPFS (Future implementation)
+  readonly VITE_PINATA_JWT: string
+  readonly VITE_PINATA_GATEWAY_URL: string
+  
+  // Web3
+  readonly VITE_WALLET_CONNECT_PROJECT_ID: string
+  
+  // Analytics
+  readonly VITE_ANALYTICS_ID: string
+}
 ```
 
-### 2. Frontend Setup
+### Storage Architecture
 
-```bash
-cd frontend
-npm install
-cp .env.example .env.local
+**Current Implementation (Testing):**
+- Firebase for metadata and survey data storage
+- Abstracted through service layer in `src/services/`
+
+**Future Migration Path:**
+- IPFS for fully decentralized storage
+- Easy migration due to abstracted storage service
+- Minimal code changes required (only in `src/services/storage.ts`)
+
+**Why this approach?**
+- Faster development and testing with Firebase
+- Clear separation of concerns
+- Production-ready architecture for IPFS migration
+- Service layer abstracts storage implementation details
+
+### Contract Addresses
+
+Contract addresses and ABIs are configured in `src/services/contracts/index.ts`:
+
+```typescript
+// Main factory address for frontend integration
+export const FACTORY_ADDRESS: Address = "0x24405CcEE48dc76B34b7c80865e9c5CF2bEDCD15"
+
+// Contract ABIs
+export const ABIS = {
+    survey: survey_abi,    // Individual survey contract
+    factory: factory_abi   // Survey factory contract
+}
+
+// Helper functions
+export function getFactoryContract() {
+    return {
+        address: FACTORY_ADDRESS,
+        abi: factory_abi
+    }
+}
 ```
 
-Edit `.env.local` with your configuration:
+**Contract Deployment Details:**
+- **Network**: Sepolia Testnet (Chain ID: 11155111)
+- **Factory Address**: `0x24405CcEE48dc76B34b7c80865e9c5CF2bEDCD15`
+- **Status**: ✅ Verified on Sepolia Blockscout
+- **ABIs Location**: `src/services/contracts/abis/`
 
-```bash
-# Required: Wallet Connect Project ID
-VITE_WALLETCONNECT_PROJECT_ID=your_project_id
+### Wagmi Configuration
 
-# Required: IPFS Storage (Pinata)
-VITE_PINATA_JWT=your_pinata_jwt
-VITE_PINATA_GATEWAY_URL=https://gateway.pinata.cloud
+Web3 configuration in `src/services/wagmi.ts`:
 
-# Network Configuration
-VITE_ZAMA_TESTNET_RPC=https://devnet.zama.ai
+```typescript
+const config = getDefaultConfig({
+  appName: 'FHEdback',
+  projectId: import.meta.env.VITE_WALLET_CONNECT_PROJECT_ID,
+  chains: [sepolia],
+  // ...
+})
 ```
 
-Start development server:
+---
+
+## 🛠️ Development
+
+### Development Server
 
 ```bash
 npm run dev
 ```
 
-### 3. Smart Contracts Setup
+Development server with HMR (Hot Module Replacement) runs at `http://localhost:5173`
+
+### Type Checking
 
 ```bash
-cd ../contracts
-npm install
+npm run type-check
 ```
 
-**Configure environment variables:**
+Run TypeScript compiler for type validation without emitting files.
+
+### Linting
 
 ```bash
-# Run setup script for interactive configuration
-npm run setup:env
+# Check for errors
+npm run lint
 
-# Or manually set variables:
-npx hardhat vars set MNEMONIC "your twelve word mnemonic phrase here"
-npx hardhat vars set INFURA_API_KEY "your_infura_key"
-npx hardhat vars set ETHERSCAN_API_KEY "your_etherscan_key"
+# Auto-fix errors
+npm run lint:fix
 ```
 
-**Compile and test contracts:**
+### Formatting
 
 ```bash
-# Compile contracts and generate TypeScript types
-npm run compile
+# Check formatting
+npm run format:check
 
-# Run test suite
-npm run test
-
-# Deploy to local network
-npm run deploy:local
-
-# Deploy to Sepolia (if not already deployed)
-npm run deploy:sepolia
+# Auto-format files
+npm run format
 ```
 
-## 🎯 Core Workflow
-
-### 1. Survey Creation Flow
-
-```typescript
-// 1. Creator designs survey with metadata and questions
-const surveyData = {
-  title: "Product Feedback Survey",
-  questions: [...],
-  respondentLimit: 100
-}
-
-// 2. Frontend uploads to IPFS
-const metadataCID = await uploadToIPFS(metadata)
-const questionsCID = await uploadToIPFS(questions)
-
-// 3. Factory creates new survey contract
-await factory.createSurvey(
-  owner,
-  symbol,
-  metadataCID,
-  questionsCID,
-  totalQuestions,
-  respondentLimit
-)
-
-// 4. Survey published with max scores for each question
-await survey.publishSurvey([5, 5, 5]) // max scores per question
-```
-
-### 2. Response Submission Flow
-
-```typescript
-// 1. Respondent connects wallet and loads survey
-const survey = await loadSurveyData(surveyAddress)
-
-// 2. Answers are encrypted client-side
-const encryptedResponses = await encryptResponses([4, 3, 5])
-
-// 3. Submit with zero-knowledge proofs
-await survey.submitResponses(encryptedResponses, proofs)
-
-// 4. Statistics updated homomorphically (no decryption)
-```
-
-### 3. Results Analysis Flow
-
-```typescript
-// 1. Survey owner can view aggregated statistics
-const stats = await survey.getQuestionStatistics(questionIndex)
-
-// 2. Decrypt aggregated values (not individual responses)
-const totalSum = await decrypt(stats.total)
-const respondentCount = await survey.totalRespondents()
-const average = totalSum / respondentCount
-```
-
-## 📋 Smart Contract Details
-
-### Core Contracts
-
-#### **ConfidentialSurvey_Factory**
-- **Address**: `0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214` (Sepolia)
-- **Purpose**: Creates and manages survey contracts
-- **Key Functions**:
-  - `createSurvey()` - Deploy new survey
-  - `getSurveysByOwner()` - List user's surveys
-  - `totalSurveys()` - Get total survey count
-
-#### **ConfidentialSurvey**
-- **Purpose**: Individual survey instance with FHE capabilities
-- **Key Functions**:
-  - `publishSurvey()` - Activate survey for responses
-  - `submitResponses()` - Submit encrypted responses
-  - `closeSurvey()` - End response collection
-  - `getQuestionStatistics()` - Access encrypted analytics
-
-### Contract States
-
-```solidity
-enum SurveyStatus {
-    Created,    // Initial state, can be edited
-    Active,     // Published, accepting responses
-    Closed,     // Completed, no more responses
-    Trashed     // Deleted
-}
-```
-
-### Security Features
-
-- **Access Control**: Only survey owners can manage their surveys
-- **Homomorphic Operations**: FHE enables computation on encrypted data
-- **Gas Optimization**: Limited to 15 questions and 1000 respondents
-- **Proxy Pattern**: Upgradeable contracts via OpenZeppelin proxies
-- **Reentrancy Protection**: SafeGuards against common attack vectors
-
-## 🛠️ Development
-
-### Frontend Development
-
-**Tech Stack:**
-- React 19 with TypeScript
-- TanStack Router for routing
-- Wagmi + Viem for Web3 integration  
-- TailwindCSS + Radix UI for styling
-- React Hook Form + Zod for forms
-- TanStack Query for data fetching
-
-**Key Commands:**
-```bash
-npm run dev          # Start dev server
-npm run build        # Production build  
-npm run lint         # Run ESLint
-npm run type-check   # TypeScript validation
-```
-
-### Smart Contract Development
-
-**Tech Stack:**
-- Solidity 0.8.24
-- Hardhat for development
-- FHEVM for homomorphic encryption
-- OpenZeppelin contracts
-- TypeChain for type generation
-
-**Key Commands:**
-```bash
-npm run compile      # Compile contracts
-npm run test         # Run test suite
-npm run coverage     # Test coverage
-npm run deploy       # Deploy contracts
-```
-
-## 🌐 Deployed Contracts (Sepolia)
-
-All contracts are **verified** on [Sepolia Blockscout](https://eth-sepolia.blockscout.com/):
-
-| Contract | Address | Purpose |
-|----------|---------|---------|
-| **Factory Proxy** 🎯 | [`0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214`](https://eth-sepolia.blockscout.com/address/0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214#code) | Main interface for creating surveys |
-| Survey Implementation | [`0xb213a72EfF95D042112a13Ea749094a7624F7e6A`](https://eth-sepolia.blockscout.com/address/0xb213a72EfF95D042112a13Ea749094a7624F7e6A#code) | Survey logic template |
-| Factory Implementation | [`0xe6EB51400def6B97C5cadb1984f701F3996152f0`](https://eth-sepolia.blockscout.com/address/0xe6EB51400def6B97C5cadb1984f701F3996152f0#code) | Factory logic |
-| Beacon Contract | [`0xc08F37e971a3c752c77702bf63f78bbFc2C9Bf5F`](https://eth-sepolia.blockscout.com/address/0xc08F37e971a3c752c77702bf63f78bbFc2C9Bf5F#code) | Upgrade coordination |
-| ProxyAdmin | [`0x8b7bcBCee9de4134e553365499f206698A9fB434`](https://eth-sepolia.blockscout.com/address/0x8b7bcBCee9de4134e553365499f206698A9fB434#code) | Upgrade management |
-
-> 🎯 **For integration**: Use Factory Proxy address `0xF5E5cdC25f7f5B7Cfd3F2d33819d4D5eA1Dc2214`
-
-## 🧪 Testing
-
-### Contract Testing
+### Clean Build Artifacts
 
 ```bash
-cd contracts
-npm run test                    # Run all tests
-npm run test -- --grep "Survey" # Run specific tests
-npm run coverage               # Generate coverage report
+npm run clean
 ```
 
-### Frontend Testing
-
-```bash
-cd frontend
-npm run test                   # Run unit tests
-npm run test:integration      # Run integration tests
-```
-
-### Manual Testing
-
-1. **Create Survey**: Use `/creator/new` to create a test survey
-2. **Respond to Survey**: Visit `/survey/{id}` to submit responses  
-3. **View Results**: Check `/survey/{id}/results` for analytics
-4. **Manage Surveys**: Use `/creator` dashboard
-
-## 🔄 Deployment & Upgrades
-
-### Fresh Deployment (New Network)
-
-```bash
-cd contracts
-npm run deploy:sepolia         # Deploy all contracts
-```
-
-### Upgrading Existing Deployment
-
-```bash
-# Upgrade survey logic (affects ALL existing surveys)
-npm run upgrade:survey-impl:sepolia
-
-# Upgrade factory logic (only affects NEW surveys)  
-npm run upgrade:factory-impl:sepolia
-```
-
-⚠️ **Warning**: Survey upgrades affect all existing surveys immediately. Test thoroughly on local/testnet first.
-
-## 📚 API Reference
-
-### Survey Factory Contract
-
-```typescript
-interface IConfidentialSurveyFactory {
-  function createSurvey(
-    address owner,
-    string memory symbol,
-    string memory metadataCID,
-    string memory questionsCID,
-    uint256 totalQuestions,
-    uint256 respondentLimit
-  ) external returns (address);
-  
-  function getSurveysByOwner(address owner) external view returns (address[]);
-  function totalSurveys() external view returns (uint256);
-}
-```
-
-### Survey Contract
-
-```typescript
-interface IConfidentialSurvey {
-  function publishSurvey(uint8[] calldata maxScores) external;
-  function submitResponses(
-    externalEuint8[] calldata encryptedResponses,
-    bytes calldata proofs
-  ) external;
-  function closeSurvey() external;
-  function getQuestionStatistics(uint256 questionId) external view;
-}
-```
-
-## 🤝 Contributing
-
-1. **Fork the repository**
-2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
-3. **Follow code style**: Run `npm run lint` and `npm run format`
-4. **Add tests**: Ensure good test coverage
-5. **Commit changes**: Use conventional commits
-6. **Push to branch**: `git push origin feature/amazing-feature`  
-7. **Open a Pull Request**
-
-### Development Guidelines
-
-- Use TypeScript strictly
-- Follow established folder structure
-- Write tests for new features
-- Update documentation for significant changes
-- Ensure contracts are gas-optimized
-
-## 🔒 Security Considerations
-
-- **FHE Limitations**: Currently supports basic arithmetic on encrypted data
-- **Gas Limits**: Maximum 15 questions and 1000 respondents per survey
-- **Access Control**: Proper owner validation on all admin functions
-- **Upgrades**: Use upgrade patterns carefully in production
-- **Testing**: Comprehensive test coverage before mainnet deployment
-
-## 📄 License
-
-This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-- **Documentation**: Check the `docs/` folders in each package
-- **Issues**: Open GitHub issues for bugs or feature requests
-- **Discussions**: Use GitHub Discussions for questions
-- **Contact**: [Your Contact Information]
-
-## 🙏 Acknowledgments
-
-- [Zama](https://zama.ai/) for FHEVM and homomorphic encryption
-- [OpenZeppelin](https://openzeppelin.com/) for secure contract patterns
-- [Hardhat](https://hardhat.org/) for development framework
-- [TanStack](https://tanstack.com/) for modern React tooling
+Remove `dist/` and temporary files.
 
 ---
 
-**Built with ❤️ by the FHEdback Team**
-import { useQuery } from '@tanstack/react-query';
-
-// 2. Internal imports (components, hooks, utils)
-import { Button } from '@/components/ui';
-import { useWallet } from '@/hooks';
-import { cn } from '@/utils';
-
-// 3. Types
-import type { Survey } from '@/types';
-```
-
-## 🧪 Testing
-
-- **Unit Tests**: Test individual components and functions
-- **Integration Tests**: Test component interactions
-- **E2E Tests**: Test complete user workflows
-
-```bash
-npm run test          # Run all tests
-npm run test:unit     # Run unit tests only
-npm run test:integration # Run integration tests only
-```
-
 ## 📦 Tech Stack
 
-### Frontend
-- **React 19** - UI library
-- **TypeScript** - Type safety
-- **Vite 7** - Build tool and dev server
-- **TanStack Router** - Type-safe routing
-- **TailwindCSS v4** - Styling framework
+### Core Framework
 
-### UI Components
-- **Radix UI** - Headless UI primitives
-- **Lucide React** - Icon library
-- **Class Variance Authority** - Component variants
-- **React Hook Form** - Form handling
-- **Zod** - Schema validation
+- **React 19.1.0** - Modern UI library with concurrent features
+- **TypeScript 5.8.3** - Type-safe development
+- **Vite 7.0.4** - Lightning-fast build tool & dev server
 
-### Blockchain & Privacy
-- **Wagmi** - React hooks for Ethereum
-- **Viem** - TypeScript interface for Ethereum
-- **Ethers.js** - Ethereum library
-- **Zama FHE Relayer SDK** - Fully Homomorphic Encryption
-- **RainbowKit** - Wallet connection
+### Routing & Data Fetching
 
-### Data & Storage
-- **TanStack Query** - Data fetching and caching
-- **Pinata** - IPFS file storage
-- **Recharts** - Data visualization
+- **TanStack Router 1.130.12** - Type-safe file-based routing
+- **TanStack Query 5.90.5** - Powerful data fetching & caching
+- **TanStack Router Devtools** - Development tools for debugging
 
-## 🔧 Configuration
+### Styling
 
-### Environment Variables
-Copy `.env.example` to `.env.local` and configure:
+- **TailwindCSS 4.1.11** - Utility-first CSS framework
+- **Radix UI** - Unstyled, accessible UI primitives
+  - Accordion, AlertDialog, Avatar, Checkbox, Dialog
+  - Dropdown, Label, Progress, Radio, ScrollArea
+  - Select, Separator, Slider, Switch, Tabs, Tooltip
+- **Class Variance Authority** - Component variant management
+- **clsx & tailwind-merge** - Conditional class names
+- **Lucide React** - Beautiful icon library
 
-```env
-# App Configuration
-VITE_APP_NAME=FhedBack
-VITE_APP_VERSION=1.0.0
+### Web3 & Blockchain
 
-# Blockchain
-VITE_ZAMA_TESTNET_RPC=https://devnet.zama.ai
-VITE_WALLETCONNECT_PROJECT_ID=your_project_id
+- **Wagmi 2.19.1** - React hooks for Ethereum
+- **Viem 2.38.5** - TypeScript interface for Ethereum
+- **RainbowKit 2.2.9** - Wallet connection UI
+- **Ethers.js 6.15.0** - Ethereum library
 
-# IPFS
-VITE_PINATA_JWT=your_pinata_jwt
-VITE_PINATA_GATEWAY_URL=https://gateway.pinata.cloud
+### Privacy & Encryption (Zama FHE)
+
+- **@zama-fhe/relayer-sdk 0.2.0** - Fully Homomorphic Encryption relayer integration
+- **@fhevm/mock-utils 0.1.0** - FHE testing utilities for development
+- **fhEVM** - Ethereum-compatible blockchain with native FHE support
+
+**About Zama's fhEVM:**
+Zama's fhEVM (Fully Homomorphic Encryption Virtual Machine) enables confidential smart contracts where data remains encrypted during computation. This allows FHEdback to:
+- Process survey responses without revealing individual answers
+- Compute statistics (averages, counts) on encrypted data
+- Maintain respondent privacy at the protocol level
+- Enable trustless, verifiable computations on sensitive data
+
+**Learn More:**
+- [Zama Documentation](https://docs.zama.ai/)
+- [fhEVM Whitepaper](https://github.com/zama-ai/fhevm)
+- [Zama Developer Program](https://www.zama.ai/developer-program)
+
+### Forms & Validation
+
+- **React Hook Form 7.62.0** - Performant form handling
+- **Zod 3.25.76** - TypeScript-first schema validation
+- **@hookform/resolvers 5.2.1** - Form validation resolvers
+
+### Storage & Backend Services
+
+- **Pinata 2.4.9** - IPFS file storage (ready for migration)
+- **Firebase 12.1.0** - Backend services (current testing implementation)
+
+> **Storage Strategy**: Firebase is used for rapid development and testing. The architecture supports seamless migration to IPFS through abstracted storage services in `src/services/storage.ts`.
+
+### UI Enhancement
+
+- **Motion 12.23.24** - Animation library
+- **Recharts 3.1.0** - Composable charting library
+- **Embla Carousel 8.6.0** - Carousel component
+- **Sonner 2.0.7** - Toast notifications
+- **Next Themes 0.4.6** - Theme management
+
+### Development Tools
+
+- **ESLint 9.30.1** - Code linting
+- **Prettier** - Code formatting
+- **TypeScript ESLint** - TypeScript linting rules
+
+
+---
+
+## 🌐 Routing
+
+Using **TanStack Router** with file-based routing:
+
+### Route Structure
+
+```
+routes/
+├── __root.tsx              # Root layout
+├── index.tsx               # Home: /
+├── survey.create.tsx       # Create: /survey/create
+├── survey.view.$addr.tsx   # View: /survey/view/:addr
+├── survey.stats.$addr.tsx  # Stats: /survey/stats/:addr
+├── surveys.me.tsx          # My Surveys: /surveys/me
+├── surveys.explore.tsx     # Explore: /surveys/explore
+└── edit-survey.tsx         # Edit: /edit-survey
 ```
 
-### VS Code Setup
-Recommended extensions are automatically suggested. The workspace includes:
-- TypeScript support
-- TailwindCSS IntelliSense
-- ESLint integration
-- Prettier formatting
-- Auto imports
+### Route Parameters
+
+```typescript
+// survey.view.$addr.tsx
+export const Route = createFileRoute('/survey/view/$addr')({
+  component: SurveyView,
+})
+
+// Access params
+function SurveyView() {
+  const { addr } = Route.useParams()
+  // ...
+}
+```
+
+### Navigation
+
+```typescript
+import { useNavigate } from '@tanstack/react-router'
+
+function MyComponent() {
+  const navigate = useNavigate()
+  
+  const goToSurvey = (address: string) => {
+    navigate({ to: '/survey/view/$addr', params: { addr: address } })
+  }
+}
+```
+
+---
+
+## 🔗 Smart Contract Integration
+
+### Contract Configuration
+
+Contract integration is managed through `src/services/contracts/index.ts`:
+
+```typescript
+import { FACTORY_ADDRESS, ABIS, getFactoryContract } from '@/services/contracts'
+
+// Factory contract configuration
+const factoryContract = getFactoryContract()
+// Returns: { address: "0x24405...", abi: [...] }
+
+// Individual survey ABI
+const surveyABI = ABIS.survey
+```
+
+### Reading from Contracts
+
+```typescript
+import { useReadContract } from 'wagmi'
+import { FACTORY_ADDRESS, ABIS } from '@/services/contracts'
+
+function MySurveys() {
+  const { data: surveys } = useReadContract({
+    address: FACTORY_ADDRESS,
+    abi: ABIS.factory,
+    functionName: 'getSurveysByOwner',
+    args: [userAddress],
+  })
+}
+```
+
+### Writing to Contracts
+
+```typescript
+import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { FACTORY_ADDRESS, ABIS } from '@/services/contracts'
+
+function CreateSurvey() {
+  const { writeContract, data: hash } = useWriteContract()
+  const { isLoading, isSuccess } = useWaitForTransactionReceipt({ hash })
+  
+  const createSurvey = async () => {
+    writeContract({
+      address: FACTORY_ADDRESS,
+      abi: ABIS.factory,
+      functionName: 'createSurvey',
+      args: [owner, symbol, metadataCID, questionsCID, totalQuestions, limit],
+    })
+  }
+}
+```
+
+### Helper Functions
+
+The contracts module provides utility functions:
+
+```typescript
+import { 
+  formatSurveyStatus, 
+  getSurveyStatusColor,
+  canModifySurvey,
+  formatAddress 
+} from '@/services/contracts'
+
+// Format status: 0 → "Created", 1 → "Active", etc.
+const status = formatSurveyStatus(0) // "Created"
+
+// Get status color for UI
+const colorClass = getSurveyStatusColor(1) // "bg-green-100 text-green-800"
+
+// Check if survey can be modified
+const editable = canModifySurvey(0) // true (only Created surveys)
+
+// Format address for display
+const short = formatAddress("0x1234...5678", 4) // "0x12...5678"
+```
+
+---
 
 ## 📝 Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run lint` - Run ESLint
-- `scripts/setup.sh` - Development environment setup
-- `scripts/build.sh` - Production build script
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start development server dengan HMR |
+| `npm run build` | Production build (TypeScript + Vite) |
+| `npm run build:strict` | Build dengan strict type checking |
+| `npm run preview` | Preview production build locally |
+| `npm run lint` | Run ESLint untuk check errors |
+| `npm run lint:fix` | Auto-fix ESLint errors |
+| `npm run format` | Format code dengan Prettier |
+| `npm run format:check` | Check code formatting |
+| `npm run type-check` | TypeScript type validation |
+| `npm run clean` | Clean build artifacts |
+| `npm run setup` | Run setup script (Linux/Mac) |
+
+---
+
+## 🏗️ Build & Deployment
+
+### Production Build
+
+```bash
+npm run build
+```
+
+Output in `dist/` folder.
+
+### Build Analysis
+
+```bash
+npm run build
+# Check dist/ folder size
+du -sh dist/
+```
+
+### Deployment
+
+#### Vercel (Recommended)
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel
+
+# Production deployment
+vercel --prod
+```
+
+#### Manual Deployment
+
+```bash
+# Build
+npm run build
+
+# Upload dist/ folder to hosting
+# Make sure to configure rewrites for SPA routing
+```
+
+### Environment Variables for Production
+
+Set in hosting platform:
+- Vercel: Project Settings → Environment Variables
+- Netlify: Site Settings → Environment Variables
+
+**Migration to IPFS:**
+When ready to migrate from Firebase to IPFS:
+1. Update `src/services/storage.ts` with IPFS implementation
+2. Replace Firebase config with Pinata/IPFS config
+3. No changes needed in components (abstraction layer handles it)
+
+---
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+**1. Module not found errors**
+```bash
+# Clear node_modules and reinstall
+rm -rf node_modules package-lock.json
+npm install
+```
+
+**2. TypeScript errors**
+```bash
+# Clear TypeScript cache
+rm -rf .tanstack node_modules/.tmp
+npm run type-check
+```
+
+**3. Vite HMR not working**
+```bash
+# Restart dev server
+# Check if port 5173 is available
+```
+
+**4. Wallet connection issues**
+- Check `VITE_WALLET_CONNECT_PROJECT_ID` in `.env.local`
+- Verify wallet network (should be Sepolia)
+- Clear browser cache & wallet cache
+
+**5. Storage upload failures**
+- Verify Firebase credentials in `.env.local`
+- Check Firebase project permissions
+- For IPFS migration: Verify `VITE_PINATA_JWT` token
+- Test with smaller files first
+
+### Debug Mode
+
+Enable debug logs:
+```typescript
+// In your component
+if (import.meta.env.DEV) {
+  console.log('Debug info:', data)
+}
+```
+
+---
 
 ## 🤝 Contributing
 
-1. Follow the established folder structure
-2. Write tests for new features
-3. Use TypeScript strictly
-4. Follow the import organization guidelines
-5. Update documentation for significant changes
+### Development Workflow
+
+1. **Create feature branch**
+   ```bash
+   git checkout -b feature/my-feature
+   ```
+
+2. **Follow code style**
+   ```bash
+   npm run lint
+   npm run format
+   npm run type-check
+   ```
+
+3. **Test your changes**
+   ```bash
+   npm run test
+   npm run build # Ensure builds successfully
+   ```
+
+4. **Commit with conventional commits**
+   ```bash
+   git commit -m "feat: add new survey filter"
+   git commit -m "fix: resolve wallet connection issue"
+   ```
+
+5. **Push & create PR**
+   ```bash
+   git push origin feature/my-feature
+   ```
+
+### Code Style Guidelines
+
+- Use TypeScript strictly (no `any` types)
+- Follow import order convention
+- Use functional components with hooks
+- Prefer composition over inheritance
+- Write self-documenting code with clear naming
+- Add JSDoc comments for complex functions
+- Keep components small and focused
+- Extract reusable logic to custom hooks
+
+### Component Guidelines
+
+- One component per file
+- Use TypeScript interfaces for props
+- Extract complex logic to custom hooks
+- Use Radix UI primitives for accessibility
+- Follow responsive design patterns
+- Test components in isolation
+
+### Storage Service Guidelines
+
+When working with storage services:
+- Use abstracted storage service from `src/services/storage.ts`
+- Don't directly import Firebase/IPFS in components
+- Keep storage implementation details in service layer
+- This ensures easy migration between storage providers
+
+---
 
 ## 📄 License
 
 This project is licensed under the MIT License.
 
-## 🆘 Support
+---
 
-For development questions, check the `docs/` folder or create an issue.
+## 🆘 Support & Resources
+
+### Documentation
+- [React Documentation](https://react.dev/)
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
+- [Vite Guide](https://vitejs.dev/guide/)
+- [TanStack Router](https://tanstack.com/router)
+- [Wagmi Documentation](https://wagmi.sh/)
+- [TailwindCSS](https://tailwindcss.com/docs)
+
+### Project Resources
+- **Main README**: `../README.md`
+- **Contracts README**: `../contracts/README.md`
+- **Test Results**: `../contracts/TEST_RESULTS.md`
+
+### Getting Help
+- Open an issue on GitHub
+- Check existing documentation
+- Review code examples in `src/`
+
+### Roadmap
+- ✅ Firebase implementation for testing
+- 🔄 Service layer abstraction (completed)
+- ⏳ IPFS migration (planned)
+- ⏳ Enhanced privacy features
+- ⏳ Mobile optimization
+
+---
+
+### Resources for Developers
+
+**Zama Resources:**
+- 📚 [Zama Documentation](https://docs.zama.ai/)
+- 🛠️ [fhEVM GitHub](https://github.com/zama-ai/fhevm)
+- 🎓 [Zama Developer Program](https://www.zama.ai/developer-program)
+
+**This Project:**
+- 📖 [Smart Contracts Documentation](../contracts/README.md)
+- 🧪 [Smnart Contracts Test Results](../contracts/TEST_RESULTS.md)
+- 💻 [GitHub Repository](https://github.com/erzawansyah/fhedback)
+
+---
+
+**Built with ❤️ by FHEdback Team**
+
+**Powered by Zama's fhEVM** 🔐

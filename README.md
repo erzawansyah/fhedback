@@ -6,8 +6,6 @@
 [![Solidity](https://img.shields.io/badge/Solidity-%5E0.8.24-orange)](https://docs.soliditylang.org/)
 [![Live Demo](https://img.shields.io/badge/demo-live-success)](https://fhedback.vercel.app)
 
-> 🇮🇩 [Baca dalam Bahasa Indonesia](README_ID.md)
-
 ---
 
 ## 🌟 Overview
