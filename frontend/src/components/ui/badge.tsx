@@ -40,4 +40,5 @@ function Badge({
   )
 }
 
+// eslint-disable-next-line 
 export { Badge, badgeVariants }

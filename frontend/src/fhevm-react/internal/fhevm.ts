@@ -1,4 +1,4 @@
-import { isAddress, Eip1193Provider, JsonRpcProvider } from "ethers";
+import { isAddress, type Eip1193Provider, JsonRpcProvider } from "ethers";
 import type {
   FhevmInitSDKOptions,
   FhevmInitSDKType,
@@ -7,7 +7,7 @@ import type {
 } from "./fhevmTypes";
 import { isFhevmWindowType, RelayerSDKLoader } from "./RelayerSDKLoader";
 import { publicKeyStorageGet, publicKeyStorageSet } from "./PublicKeyStorage";
-import { FhevmInstance, FhevmInstanceConfig } from "../fhevmTypes";
+import { type FhevmInstance, type FhevmInstanceConfig } from "../fhevmTypes";
 
 export class FhevmReactError extends Error {
   code: string;

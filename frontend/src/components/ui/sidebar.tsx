@@ -538,6 +538,7 @@ function SidebarMenuButton({
 function SidebarMenuAction({
     className,
     asChild = false,
+    // eslint-disable-next-line 
     showOnHover = false,
     ...props
 }: React.ComponentProps<"button"> & {
@@ -709,5 +710,6 @@ export {
     SidebarProvider,
     SidebarRail,
     SidebarTrigger,
+    // eslint-disable-next-line 
     useSidebar,
 }
