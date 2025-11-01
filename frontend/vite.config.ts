@@ -7,12 +7,12 @@ import path from "path";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
+    react(),
+    tailwindcss(),
     tanstackRouter({
       target: "react",
       autoCodeSplitting: true,
     }),
-    react(),
-    tailwindcss(),
   ],
   resolve: {
     alias: {
