@@ -3,6 +3,7 @@ import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 import { useMemo } from 'react'
 import Header from '@/components/Header'
 import { Toaster } from '../components/ui/sonner'
+import FhevmStatus from '../components/FhevmStatus'
 
 export const Route = createRootRoute({
     component: RootLayout,
@@ -24,6 +25,7 @@ function RootLayout() {
             <TanStackRouterDevtools
                 position="bottom-right"
             />
+            <FhevmStatus />
         </>
     )
 }
