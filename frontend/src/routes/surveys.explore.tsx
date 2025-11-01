@@ -60,6 +60,16 @@ const useSurveysData = () => {
 
 function RouteComponent() {
   const surveys = useSurveysData()
+
+  const sortedAndFiltered = useMemo(() => {
+    const hiddenSurveys: Address[] = [
+      "0x7610EC3dD79C69AA7C41ac5D742492A0F17e779d",
+    ]
+    const reversed = [...surveys.data.surveyIds].reverse()
+    return reversed.filter(addr => !hiddenSurveys.includes(addr))
+  }, [surveys.data.surveyIds])
+
+
   return (
     <main className="container mx-auto py-8">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -70,7 +80,7 @@ function RouteComponent() {
             Browse and discover surveys from the community. There are some survey available. You can view active surveys, check their details, and participate in surveys that interest you.
           </p>
         </Card>
-        {surveys.data.surveyIds.map((addr, idx) => {
+        {sortedAndFiltered.map((addr, idx) => {
           return (<SurveyItem key={idx} addr={addr} />)
         })}
       </div>
