@@ -45,9 +45,7 @@ export const useSurveySubmission = (addr: Address, account: Address) => {
 
   const _handleSubmit = async () => {
     try {
-      console.log("Encrypting survey responses...")
       const ciphertexts = await encryptResponses()
-      console.log('Encrypted survey data:', ciphertexts)
 
       const payload = {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,7 +54,6 @@ export const useSurveySubmission = (addr: Address, account: Address) => {
       }
 
       setState('submitting')
-      console.log("Submitting survey responses to the blockchain...")
       const tx = await writeContractAsync({
         address: addr as Address,
         abi: surveyAbi,
@@ -84,7 +81,6 @@ export const useSurveySubmission = (addr: Address, account: Address) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast.error('Failed to encrypt: ' + err.message)
-      console.log('Error during survey submission:', err)
       setState('idle')
     }
   }
@@ -113,7 +109,6 @@ export const useSurveySubmission = (addr: Address, account: Address) => {
       }
     } catch (err) {
       toast.error('Failed to close survey: ' + String(err))
-      console.log('Error closing survey:', err)
       onError?.()
     }
   }
@@ -174,7 +169,6 @@ export const useSurveySubmission = (addr: Address, account: Address) => {
       setStoredResponse(decryptedValues);
     } catch (error) {
       toast.error('Failed to reveal responses: ' + String(error))
-      console.log('Error revealing responses:', error)
     }
   }
 

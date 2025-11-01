@@ -10,6 +10,7 @@ import { Button } from '../components/ui/button'
 import { Loader2Icon, Share2, Trash } from 'lucide-react'
 import type { Address } from 'viem'
 import { toast } from 'sonner'
+import { WalletGuard } from '../components/WalletGuard'
 
 export const Route = createFileRoute('/surveys/me')({
   component: RouteComponent,
@@ -64,6 +65,14 @@ const useMySurveysData = () => {
 }
 
 function RouteComponent() {
+  return (
+    <WalletGuard>
+      <MySurveysPage />
+    </WalletGuard>
+  )
+}
+
+function MySurveysPage() {
   const surveys = useMySurveysData()
 
   return (

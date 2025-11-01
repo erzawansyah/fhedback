@@ -14,12 +14,21 @@ import { ArrowRightCircle, Loader2, Lock, StopCircle } from 'lucide-react'
 
 import { useSurveySubmission } from '../hooks/useSurveySubmission'
 import { useSurveyView } from '../hooks/useSurveyView'
+import { WalletGuard } from '../components/WalletGuard'
 
 export const Route = createFileRoute('/survey/view/$addr')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
+  return (
+    <WalletGuard>
+      <SurveyViewPage />
+    </WalletGuard>
+  )
+}
+
+function SurveyViewPage() {
   const { addr } = Route.useParams()
   const { data, account, hasResponded, isActive, isOwner, totalRespondent } =
     useSurveyView(addr as Address)

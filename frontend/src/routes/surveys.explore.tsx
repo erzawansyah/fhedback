@@ -10,6 +10,8 @@ import { Button } from '../components/ui/button'
 import type { Address } from 'viem'
 import { toast } from 'sonner'
 import { hideAddress } from '../utils/hideAddress'
+import { WalletGuard } from '../components/WalletGuard'
+
 export const Route = createFileRoute('/surveys/explore')({
   component: RouteComponent,
 })
@@ -59,6 +61,14 @@ const useSurveysData = () => {
 }
 
 function RouteComponent() {
+  return (
+    <WalletGuard>
+      <ExploreSurveysPage />
+    </WalletGuard>
+  )
+}
+
+function ExploreSurveysPage() {
   const surveys = useSurveysData()
 
   const sortedAndFiltered = useMemo(() => {

@@ -27,6 +27,7 @@ import { createDb } from '../services/firebase/dbStore'
 import { useAccount } from 'wagmi'
 import { useSurveyCreation } from '../hooks/useSurveyCreation'
 import { toast } from 'sonner'
+import { WalletGuard } from '../components/WalletGuard'
 
 export const Route = createFileRoute('/survey/create')({
   component: RouteComponent,
@@ -78,6 +79,14 @@ const InputSchema = z.object({
 const R = () => <span className="ml-0.5 text-danger">*</span>
 
 function RouteComponent() {
+  return (
+    <WalletGuard>
+      <CreateSurveyPage />
+    </WalletGuard>
+  )
+}
+
+function CreateSurveyPage() {
   const account = useAccount()
   const s = useSurveyCreation()
   const navigate = useNavigate({ from: Route.fullPath })
@@ -122,7 +131,6 @@ function RouteComponent() {
   const canAddMore = qCount < 20
 
   const onSubmit = async (data: z.infer<typeof InputSchema>) => {
-    console.log('Step:', step)
     if (step !== 'review') return
 
     setStatus('submitting')
@@ -204,7 +212,6 @@ function RouteComponent() {
   useEffect(() => {
     if (status === "success" && s.isConfirmed && s.receipt) {
       const surveyAddress = s.receipt.logs[0].address
-      console.log(s.receipt)
       // Navigate to the survey review page
       setTimeout(() => {
         navigate({

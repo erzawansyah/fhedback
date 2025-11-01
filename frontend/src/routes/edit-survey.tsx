@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Card } from '../components/ui/card'
+import { WalletGuard } from '../components/WalletGuard'
 
 export const Route = createFileRoute('/edit-survey')({
   component: RouteComponent,
@@ -11,6 +12,14 @@ export const Route = createFileRoute('/edit-survey')({
 })
 
 function RouteComponent() {
+  return (
+    <WalletGuard>
+      <EditSurveyPage />
+    </WalletGuard>
+  )
+}
+
+function EditSurveyPage() {
   const search = Route.useSearch()
   return (
     <main className='container max-w-6xl mx-auto p-4 pt-8'>

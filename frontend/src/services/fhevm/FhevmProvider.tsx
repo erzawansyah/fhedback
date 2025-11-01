@@ -24,12 +24,11 @@ export const FhevmProvider: React.FC<FhevmProviderProps> = ({ children }) => {
 
   // Log initialization progress for debugging
   React.useEffect(() => {
-    console.log('[FhevmProvider] FHEVM Status:', status);
     if (error) {
       console.error('[FhevmProvider] FHEVM Error:', error);
     }
     if (instance) {
-      console.log('[FhevmProvider] FHEVM Instance ready!');
+      console.log('[FhevmProvider] FHEVM Instance initialized:', instance);
     }
   }, [status, error, instance]);
 

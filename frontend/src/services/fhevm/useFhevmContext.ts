@@ -2,6 +2,7 @@ import { useContext, createContext } from "react";
 import { type FhevmGoState } from '@/fhevm-react/useFhevm';
 import type { FhevmInstance } from '@/fhevm-react/fhevmTypes';
 import { useAccount, useSignTypedData } from "wagmi";
+import { toast } from "sonner";
 
 interface FhevmContextValue {
   instance: FhevmInstance | undefined;
@@ -35,7 +36,7 @@ export const useFheDecryption = () => {
       const result = await fhe.publicDecrypt(handles);
       return result
     } catch (error) {
-      console.log('Error revealing handles:', error)
+      toast.error('Failed to reveal responses: ' + String(error))
     }
   }
 
@@ -94,7 +95,7 @@ export const useFheDecryption = () => {
 
       return result;
     } catch (error) {
-      console.log('Error revealing responses:', error)
+      toast.error('Error revealing responses: ' + String(error));
     }
   }
 
