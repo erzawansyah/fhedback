@@ -39,6 +39,16 @@ type EncryptedState = {
   questionFrequencies: { [key: number]: string }
 }
 
+type DecryptedPayload = {
+  descriptive: {
+    totalScore: number
+    sumSquares: number
+    minScore: number
+    maxScore: number
+  }
+  frequencies?: { [key: number]: number }
+}
+
 /* --------------------------- Route Component ------------------------- */
 
 function RouteComponent() {
@@ -85,10 +95,7 @@ function RouteComponent() {
 
 const QuestionStatCard: React.FC<QuestionType> = ({ index, text, helperText, contractAddress }) => {
   const [isDecrypted, setIsDecrypted] = useState(false)
-  const [decryptedData, setDecryptedData] = useState<{
-    descriptive: number[]
-    frequencies?: number[]
-  } | null>(null)
+  const [decryptedData, setDecryptedData] = useState<DecryptedPayload | null>(null)
 
   const { data: qStats } = useReadContracts({
     contracts: [
@@ -155,11 +162,6 @@ const QuestionStatCard: React.FC<QuestionType> = ({ index, text, helperText, con
 
 /* -------------------------- Decryption CTA -------------------------- */
 
-type DecryptedPayload = {
-  descriptive: number[]
-  frequencies?: number[]
-}
-
 const DecryptedButton: React.FC<{
   index: number
   stats: EncryptedState
@@ -198,12 +200,25 @@ const DecryptedButton: React.FC<{
       const decryptedResponses = await userDecrypt(descriptive, addr)
       const decryptedFrequencies = await userDecrypt(frequencyScore, addr)
 
-      // Normalize results to numbers
-      const parsedDescriptive = Array.isArray(decryptedResponses) ? decryptedResponses.map(Number) : []
-      const parsedFrequencies = Array.isArray(decryptedFrequencies) ? decryptedFrequencies.map(Number) : undefined
+      console.log('Raw decrypted descriptive:', decryptedResponses)
+      console.log('Raw decrypted frequencies:', decryptedFrequencies)
 
-      console.debug('Decrypted descriptive:', parsedDescriptive)
-      console.debug('Decrypted frequencies:', parsedFrequencies)
+      // Normalize results to numbers
+      const parsedDescriptive = {
+        totalScore: decryptedResponses ? Number(decryptedResponses[descriptive[0]]) : 0,
+        sumSquares: decryptedResponses ? Number(decryptedResponses[descriptive[1]]) : 0,
+        minScore: decryptedResponses ? Number(decryptedResponses[descriptive[2]]) : 0,
+        maxScore: decryptedResponses ? Number(decryptedResponses[descriptive[3]]) : 0,
+      }
+
+      const parsedFrequencies: { [key: number]: number } = {}
+      if (decryptedFrequencies) {
+        frequencyScore.forEach((encScore, i) => {
+          parsedFrequencies[i + 1] = decryptedFrequencies ? Number(decryptedFrequencies[encScore]) : 0
+        })
+      }
+      console.log('Decrypted descriptive:', parsedDescriptive)
+      console.log('Decrypted frequencies:', parsedFrequencies)
 
       onDecrypted({ descriptive: parsedDescriptive, frequencies: parsedFrequencies })
       toast.success('Responses decrypted')
@@ -229,46 +244,44 @@ const DecryptedButton: React.FC<{
    decrypted frequency data when available.
  */
 
-const Details: React.FC<{ stats: EncryptedState; decrypted: { descriptive: number[]; frequencies?: number[] } | null }> = ({ stats, decrypted }) => {
+const Details: React.FC<{ stats: EncryptedState; decrypted: DecryptedPayload | undefined | null }> = ({ stats, decrypted }) => {
   // When decrypted frequencies are available prefer them. Otherwise fall back to
   // computing KPIs from descriptive stats + totalRespondents (if available)
-  const maxScore = 5
+  const maxScore = Object.keys(stats.questionFrequencies).length
 
-  const freqsFromDecrypted = decrypted?.frequencies && decrypted.frequencies.length > 0 ? decrypted.frequencies : undefined
+  const freqsFromDecrypted = decrypted?.frequencies && Object.keys(decrypted.frequencies).length > 0 ? decrypted.frequencies : undefined
   const freqsFallback = [5, 18, 42, 40, 23]
   const freqs = freqsFromDecrypted ?? freqsFallback
+  console.log("Freqs:", freqs)
 
-  const N = freqs.reduce((a, b) => a + b, 0)
+  const N = stats.totalRespondents
 
   // If we have descriptive decrypted values, use them where possible. Expected order:
   // [totalScore, sumSquares, minScore, maxScore]
-  const descriptive = decrypted?.descriptive ?? []
-  const totalScoreFromDescriptive = descriptive.length > 0 ? descriptive[0] : undefined
-  const sumSquaresFromDescriptive = descriptive.length > 1 ? descriptive[1] : undefined
+  const descriptive = decrypted?.descriptive ?? { totalScore: 0, sumSquares: 0, minScore: 0, maxScore: 0 }
 
   // Compute mean/std using frequencies when available, otherwise fall back to descriptive + stats.totalRespondents
   let mean = 0
   let stdDev = 0
 
-  if (freqsFromDecrypted) {
-    const sum = freqs.reduce((acc, cnt, i) => acc + cnt * (i + 1), 0)
-    const sumSq = freqs.reduce((acc, cnt, i) => acc + cnt * Math.pow(i + 1, 2), 0)
-    mean = N ? sum / N : 0
-    const variance = N ? sumSq / N - mean * mean : 0
+  if (decrypted?.descriptive) {
+    mean = (descriptive.totalScore) / N
+    const variance = (descriptive.sumSquares) / N - mean * mean
     stdDev = Math.sqrt(Math.max(variance, 0))
-  } else if (typeof totalScoreFromDescriptive !== 'undefined' && typeof sumSquaresFromDescriptive !== 'undefined' && stats.totalRespondents > 0) {
-    mean = totalScoreFromDescriptive / stats.totalRespondents
-    const variance = sumSquaresFromDescriptive / stats.totalRespondents - mean * mean
-    stdDev = Math.sqrt(Math.max(variance, 0))
+  } else {
+    mean = 0
+    stdDev = 0
   }
+  const range = getRange(freqs)
+  console.log(range)
+  const firstIdx = range.min ?? -1
+  const lastIdxFromEnd = range.max ?? -1
 
-  const firstIdx = freqs.findIndex((c) => c > 0)
-  const lastIdxFromEnd = [...freqs].reverse().findIndex((c) => c > 0)
   const minVal = firstIdx === -1 ? 0 : firstIdx + 1
   const maxVal = lastIdxFromEnd === -1 ? 0 : maxScore - lastIdxFromEnd
 
   const topBoxPct = N ? (freqs[maxScore - 1] / N) * 100 : 0
-  const maxFreq = Math.max(1, ...freqs)
+  const maxFreq = Math.max(1, ...Object.values(freqs))
 
   return (
     <>
@@ -306,7 +319,9 @@ const Details: React.FC<{ stats: EncryptedState; decrypted: { descriptive: numbe
             </div>
 
             <div className="space-y-2">
-              {freqs.map((count, idx) => {
+              {Object.keys(freqs).map((key) => {
+                const count = freqs[Number(key)]
+                const idx = Number(key) - 1
                 const value = idx + 1
                 const pct = N ? (count / N) * 100 : 0
                 const rel = (count / maxFreq) * 100
@@ -338,6 +353,23 @@ const Details: React.FC<{ stats: EncryptedState; decrypted: { descriptive: numbe
       </div>
     </>
   )
+}
+
+function getRange(freqs: Record<string, number>) {
+  const keys = Object.keys(freqs).map(Number).sort((a, b) => a - b);
+  console.log("Keys", freqs, keys);
+
+  let min: number | null = null;
+  let max: number | null = null;
+
+  for (const k of keys) {
+    if (freqs[k] > 0) {
+      if (min === null) min = k;
+      max = k;
+    }
+  }
+
+  return { min, max };
 }
 
 

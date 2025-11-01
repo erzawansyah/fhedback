@@ -25,9 +25,23 @@ export const useFheDecryption = () => {
   const { signTypedDataAsync } = useSignTypedData();
   const account = useAccount();
 
-  const userDecrypt = async (encryptedResponse: string[], contractAddress: string | `0x${string}` | `Address`) => {
+  const publicDecrypt = async (handles: string[]) => {
     try {
-      if (!encryptedResponse || !Array.isArray(encryptedResponse) || encryptedResponse.length === 0) 
+      if (!handles || !Array.isArray(handles) || handles.length === 0) 
+        throw new Error("No encrypted responses provided");
+      if (!fhe || status !== 'ready') {
+        throw new Error("FHEVM not ready for decryption");
+      }
+      const result = await fhe.publicDecrypt(handles);
+      return result
+    } catch (error) {
+      console.log('Error revealing handles:', error)
+    }
+  }
+
+  const userDecrypt = async (handles: string[], contractAddress: string | `0x${string}` | `Address`) => {
+    try {
+      if (!handles || !Array.isArray(handles) || handles.length === 0) 
         throw new Error("No encrypted responses provided");
       if (!fhe || status !== 'ready') {
         throw new Error("FHEVM not ready for decryption");
@@ -35,7 +49,7 @@ export const useFheDecryption = () => {
 
       // simulate decryption process
       const keypair = fhe.generateKeypair()
-      const handleContractPair = (encryptedResponse as string[]).map((ciphertext) => {
+      const handleContractPair = (handles as string[]).map((ciphertext) => {
         return {
           handle: ciphertext,
           contractAddress: contractAddress,
@@ -84,5 +98,5 @@ export const useFheDecryption = () => {
     }
   }
 
-  return {userDecrypt};
+  return {publicDecrypt, userDecrypt};
 }
