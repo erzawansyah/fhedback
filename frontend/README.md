@@ -232,6 +232,131 @@ interface ImportMetaEnv {
 - Production-ready architecture for IPFS migration
 - Service layer abstracts storage implementation details
 
+### Survey Data Structure
+
+FHEdback uses two separate JSON structures to manage survey data: **metadata** and **questions**. These are stored off-chain (currently Firebase, future IPFS) with CIDs/references stored on-chain in the smart contract.
+
+> **📝 Note on Form Simplification**: The survey creation form in the platform is designed to be **simple and user-friendly**. Not all fields shown in the JSON structure examples below are currently used or required in the form. This simplified approach makes it easier for users to create surveys quickly. Additional fields are available in the data structure for future enhancements and advanced features.
+
+#### Metadata Structure
+
+Survey metadata contains general information and configuration:
+
+```json
+{
+  "title": "Survey Title Example",
+  "description": "This is an example of a survey description that provides context and instructions for participants.",
+  "language": "en",
+  "category": "General Category",
+  "instructions": "Please answer all questions to the best of your ability.",
+  "targetAudience": [
+    {
+      "name": "Age",
+      "value": "18-24"
+    },
+    {
+      "name": "Location",
+      "value": "Global"
+    },
+    {
+      "name": "Gender",
+      "value": "All"
+    }
+  ],
+  "tags": [
+    "example",
+    "survey",
+    "metadata"
+  ]
+}
+```
+
+**Metadata Fields:**
+- `title` (string): Survey title displayed to users
+- `description` (string): Detailed description of the survey purpose
+- `language` (string): Survey language code (ISO 639-1)
+- `category` (string): Survey category for classification
+- `instructions` (string): Instructions for participants
+- `targetAudience` (array): Target demographic information
+  - `name` (string): Demographic field name (e.g., "Age", "Location", "Gender")
+  - `value` (string): Target value for this field
+- `tags` (array): Tags for search and categorization
+
+#### Questions Structure
+
+Questions array contains the survey questions with response configuration:
+
+```json
+[
+  {
+    "id": 0,
+    "text": "How satisfied are you with our service?",
+    "helperText": "1 is Not Satisfied, 10 is Very Satisfied",
+    "response": {
+      "type": "rating",
+      "minScore": 1,
+      "maxScore": 10,
+      "minLabel": "Not Satisfied",
+      "maxLabel": "Very Satisfied"
+    }
+  },
+  {
+    "id": 1,
+    "text": "How likely are you to recommend us to a friend?",
+    "helperText": "1 is Not Likely, 10 is Very Likely",
+    "response": {
+      "type": "rating",
+      "minScore": 1,
+      "maxScore": 10,
+      "minLabel": "Not Likely",
+      "maxLabel": "Very Likely"
+    }
+  }
+]
+```
+
+**Question Fields:**
+- `id` (number): Unique identifier for the question (0-indexed)
+- `text` (string): The question text displayed to respondents
+- `helperText` (string): Optional helper text explaining the rating scale
+- `response` (object): Response configuration
+  - `type` (string): Currently supports "rating" type
+  - `minScore` (number): Minimum rating value
+  - `maxScore` (number): Maximum rating value
+  - `minLabel` (string): Label for minimum score (e.g., "Not Satisfied")
+  - `maxLabel` (string): Label for maximum score (e.g., "Very Satisfied")
+
+**Current Response Type:**
+Currently, FHEdback supports **rating** type questions with configurable score ranges (typically 1-10 scale). Future versions may include:
+- Multiple choice questions
+- Text responses (with FHE encryption)
+- Yes/No questions
+- Ranking questions
+
+#### Data Flow
+
+1. **Survey Creation:**
+   - Creator fills metadata form (title, description, etc.)
+   - Creator adds questions with rating configuration
+   - Frontend uploads metadata JSON to storage
+   - Frontend uploads questions JSON to storage
+   - Smart contract stores CIDs/references + question count
+
+2. **Survey Response:**
+   - Respondent fetches metadata and questions from storage
+   - Respondent submits encrypted ratings (FHE encrypted)
+   - Smart contract stores encrypted responses on-chain
+
+3. **Statistics Retrieval:**
+   - Smart contract performs FHE operations on encrypted data
+   - Returns aggregated statistics (total, sum, average, etc.)
+   - Frontend displays statistics without revealing individual responses
+
+**Example Files:**
+- Metadata: `src/assets/json/metadata-example.json`
+- Questions: `src/assets/json/questions-example.json`
+- Stats Response: `src/assets/json/stats.json`
+
 ### Contract Addresses
 
 Contract addresses and ABIs are configured in `src/services/contracts/index.ts`:
