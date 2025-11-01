@@ -212,7 +212,7 @@ contract ConfidentialSurvey is ConfidentialSurvey_Base, ReentrancyGuard {
     }
 
     // -------------------------------------
-    // Owner Capabilities
+    // Decrypt Capabilities
     // -------------------------------------
 
     /**
@@ -240,15 +240,15 @@ contract ConfidentialSurvey is ConfidentialSurvey_Base, ReentrancyGuard {
 
     /**
      * @custom:since 0.1.0
-     * @notice Grants the public to decrypt aggregated statistics for a question
+     * @notice Grants the respondent to decrypt aggregated statistics for a question
      * @dev Only available after the survey is closed to preserve privacy during data collection
      * @param _qIdx Index of the question to grant decryption access for
-     * @notice Allows owner to decrypt: total, sumSquares, minScore, maxScore, and frequency data
+     * @notice Allows respondent to decrypt: total, sumSquares, minScore, maxScore, and frequency data
      * @notice This enables post-survey statistical analysis while maintaining respondent privacy
      * @notice Individual responses remain encrypted and inaccessible
      */
-    function makeItPublic(uint256 _qIdx) external onlyOwner onlyClosed {
-        require(_qIdx < survey.totalQuestions, "bad index");
+    function grantRespondentDecrypt(uint256 _qIdx) external onlyClosed {
+        require(hasResponded[msg.sender], "Not respondent");
         QuestionStats storage qs = questionStatistics[_qIdx];
 
         FHE.allow(qs.total, msg.sender);
@@ -270,8 +270,8 @@ contract ConfidentialSurvey is ConfidentialSurvey_Base, ReentrancyGuard {
      * @notice This enables post-survey statistical analysis while maintaining respondent privacy
      * @notice Individual responses remain encrypted and inaccessible
      */
-    function grantRespondentDecrypt(uint256 _qIdx) external onlyClosed {
-        require(hasResponded[msg.sender], "Not respondent");
+    function makeItPublic(uint256 _qIdx) external onlyOwner onlyClosed {
+        require(_qIdx < survey.totalQuestions, "bad index");
         QuestionStats storage qs = questionStatistics[_qIdx];
 
         FHE.allow(qs.total, msg.sender);

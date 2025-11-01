@@ -861,6 +861,57 @@ describe_flow(
             ).to.be.revertedWith("not owner");
           },
         );
+
+        it_test(
+          "Owner can make the statistics publicly decryptable",
+          async function () {
+            await expect(surveyContract.makeItPublic(1)).to.not.be.reverted;
+          },
+        );
+      });
+
+      describe_flow("4.3 Respondent Decryption Authorization", function () {
+        beforeEach(async function () {
+          await initialization();
+          await surveyContract.publishSurvey(SURVEY_CONFIG.MAX_SCORES);
+
+          // Submit responses which will auto-close the survey when limit is reached
+          await respondentSubmission([
+            { signer: signers.alice, responses: [3, 4, 5] },
+            { signer: signers.bob, responses: [2, 3, 4] },
+            { signer: signers.charlie, responses: [5, 5, 5] },
+            { signer: signers.dave, responses: [1, 2, 3] },
+            { signer: signers.eve, responses: [4, 4, 4] },
+            { signer: signers.frealy, responses: [3, 5, 2] },
+          ]);
+
+          // Verify the survey is automatically closed after reaching respondent limit
+          const survey = await surveyContract.survey();
+          expect(survey.status).to.equal(2); // Closed status
+          expect(await surveyContract.getTotalRespondents()).to.equal(
+            SURVEY_CONFIG.MAX_RESPONDENTS,
+          );
+        });
+
+        it_test(
+          "Should allow respondents to grant themselves decryption access after survey closure",
+          async function () {
+            // Each respondent grants decrypt access for question index 1
+            const respondents = [
+              signers.alice,
+              signers.bob,
+              signers.charlie,
+              signers.dave,
+              signers.eve,
+              signers.frealy,
+            ];
+            for (const respondent of respondents) {
+              const respondentContract = surveyContract.connect(respondent);
+              await expect(respondentContract.grantRespondentDecrypt(1)).to.not
+                .be.reverted;
+            }
+          },
+        );
       });
     });
 
