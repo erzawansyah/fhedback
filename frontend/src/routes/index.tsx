@@ -227,10 +227,10 @@ function Home() {
                     <div className='bg-secondary-background border-4 border-border p-4 md:p-8 transform rotate-1'>
                         <h3 className='font-bold text-xl md:text-2xl mb-4'>Factory Contract</h3>
                         <p className='font-mono text-xs md:text-sm bg-main border-2 border-border p-3 break-all mb-6'>
-                            0x24405CcEE48dc76B34b7c80865e9c5CF2bEDCD15
+                            0x82C34294A1D9c8e38B43CE916D0C566416b1d7DC
                         </p>
                         <a
-                            href="https://eth-sepolia.blockscout.com/address/0x24405CcEE48dc76B34b7c80865e9c5CF2bEDCD15"
+                            href="https://eth-sepolia.blockscout.com/address/0x82C34294A1D9c8e38B43CE916D0C566416b1d7DC"
                             target="_blank"
                             rel="noopener noreferrer"
                             className='inline-block'

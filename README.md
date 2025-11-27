@@ -101,19 +101,19 @@ Survey creators get accurate statistical insights without ever being able to vie
 **Factory Contract** - Main Entry Point
 
 ```
-Address:  0x24405CcEE48dc76B34b7c80865e9c5CF2bEDCD15
+Address:  0x82C34294A1D9c8e38B43CE916D0C566416b1d7DC
 Status:   ✅ Active
 Network:  Sepolia Testnet
 Purpose:  Factory to create new survey contracts
-Explorer: https://eth-sepolia.blockscout.com/address/0x24405CcEE48dc76B34b7c80865e9c5CF2bEDCD15
+Explorer: https://eth-sepolia.blockscout.com/address/0x82C34294A1D9c8e38B43CE916D0C566416b1d7DC
 ```
 
 **Example Survey Contract**
 
 ```
-Address:  0x353E12EE4A861737c1604fF6Abe5684879970421
+Address:  0x1d1eBa567d9797e344AEBed9e29b8966B7084960
 Status:   ✅ Active Survey Instance
-Explorer: https://eth-sepolia.blockscout.com/address/0x353E12EE4A861737c1604fF6Abe5684879970421
+Explorer: https://eth-sepolia.blockscout.com/address/0x1d1eBa567d9797e344AEBed9e29b8966B7084960
 ```
 
 ### 🏗️ Contract Architecture

@@ -71,7 +71,7 @@ contract ConfidentialSurvey_Factory is Ownable, ReentrancyGuard {
 
 **Deployed Address (Sepolia):**
 ```
-0x24405CcEE48dc76B34b7c80865e9c5CF2bEDCD15
+0x82C34294A1D9c8e38B43CE916D0C566416b1d7DC
 ```
 
 #### 2. ConfidentialSurvey
