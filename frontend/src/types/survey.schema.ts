@@ -4,13 +4,11 @@ import {
   SURVEY_LIMITS, 
   SURVEY_CATEGORIES, 
   VALIDATION_MESSAGES 
-} from "../constants/app"
+} from "@/assets/constant"
 
 /* -----------------------------------------
    SURVEY METADATA
 ----------------------------------------- */
-
-
 
 // Survey category values
 export const SURVEY_CATEGORY_VALUES = [
