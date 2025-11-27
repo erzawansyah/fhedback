@@ -162,3 +162,6 @@ supabase/.temp/
 
 # Tanstack
 .tanstack/
+
+# Auto generated constants
+src/constants/
