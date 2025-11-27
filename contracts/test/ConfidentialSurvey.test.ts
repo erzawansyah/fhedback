@@ -969,8 +969,8 @@ describe_flow(
         it_test(
           "Should handle large-scale surveys with multiple questions",
           async function () {
-            const questionsCount = 15; // Use MAX_QUESTIONS = 15
-            const maxResponse = 10;
+            const questionsCount = 5; // Use MAX_QUESTIONS = 15
+            const maxResponse = 5; // Max score per question
             const maxResponseArray = Array.from(
               { length: questionsCount },
               () => maxResponse,

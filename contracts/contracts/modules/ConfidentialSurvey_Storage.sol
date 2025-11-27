@@ -2,9 +2,9 @@
 pragma solidity ^0.8.24;
 
 import "@fhevm/solidity/lib/FHE.sol";
-import {SepoliaConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
+import {ZamaEthereumConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 
-contract ConfidentialSurvey_Storage is SepoliaConfig {
+contract ConfidentialSurvey_Storage is ZamaEthereumConfig {
     // -------------------------------------
     // Enums & Structs
     // -------------------------------------
