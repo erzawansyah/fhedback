@@ -22,7 +22,7 @@ import { isAddress, type Address } from "viem"
  * This is the Factory Proxy address that the frontend should interact with.
  * It provides a stable interface while allowing for upgrades to the underlying logic.
  */
-export const FACTORY_ADDRESS: Address = "0x24405CcEE48dc76B34b7c80865e9c5CF2bEDCD15" as const
+export const FACTORY_ADDRESS: Address = "0x82C34294A1D9c8e38B43CE916D0C566416b1d7DC" as const
 
 /**
  * Contract ABIs for TypeScript integration
