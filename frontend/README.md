@@ -1,5 +1,7 @@
 # 🎨 FHEdback Frontend - React Application
 
+> **Status: frozen.** FHEdback is kept as an archived reference (FHEVM v0.9). The demo no longer performs FHE operations against the current Sepolia relayer. See the [root README](../README.md#-project-status).
+
 > Modern React frontend for FHEdback confidential survey platform with Fully Homomorphic Encryption (FHE)
 
 [![React](https://img.shields.io/badge/React-19.1.0-61dafb?logo=react)](https://reactjs.org/)
@@ -43,7 +45,7 @@ This project is developed as part of the **Zama Developer Program**, showcasing 
 **Key Highlights:**
 - 🔐 **Privacy-First**: Survey responses remain encrypted on-chain, even during computation
 - ⛓️ **Blockchain Native**: Built on Ethereum-compatible networks using Zama's fhEVM
-- 🔬 **Production Ready**: Demonstrates real-world FHE application beyond proof-of-concepts
+- 🔬 **Reference Implementation**: Demonstrates a real-world FHE application beyond proof-of-concepts (now frozen, see above)
 - 🌐 **Web3 Integration**: Seamless wallet connection and smart contract interaction
 
 > **⚠️ Note on Storage**: Currently, this project uses **Firebase** for testing and development purposes. The ideal solution is to use **IPFS** for fully decentralized storage. However, the project architecture has been designed with abstraction layers that allow for easy migration to IPFS in the future with minimal code changes.
@@ -126,7 +128,7 @@ frontend/
 ├── 📄 package.json            # Dependencies & scripts
 ├── 📄 vite.config.ts          # Vite configuration
 ├── 📄 tsconfig.json           # TypeScript config
-└── 📄 .env.local              # Environment variables (gitignored)
+└── 📄 .env                    # Environment variables (gitignored)
 ```
 
 ---
@@ -155,10 +157,10 @@ frontend/
 
 3. **Setup environment variables**:
    ```bash
-   cp .env.example .env.local
+   cp .env.example .env
    ```
 
-4. **Configure `.env.local`**:
+4. **Configure `.env`** (all variables are listed in `.env.example`):
    ```env
    # Firebase Configuration (Currently used for testing)
    VITE_FIREBASE_API_KEY=your_firebase_api_key
@@ -167,10 +169,6 @@ frontend/
    VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
    VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
    VITE_FIREBASE_APP_ID=your_app_id
-
-   # ReCAPTCHA (Optional - for bot protection)
-   VITE_RECAPTCHA_SITE_KEY=your_recaptcha_site_key
-   VITE_RECAPTCHA_SECRET_KEY=your_recaptcha_secret_key
 
    # WalletConnect (Required for wallet connection)
    VITE_WALLET_CONNECT_PROJECT_ID=your_walletconnect_project_id
@@ -759,12 +757,12 @@ npm run type-check
 ```
 
 **4. Wallet connection issues**
-- Check `VITE_WALLET_CONNECT_PROJECT_ID` in `.env.local`
+- Check `VITE_WALLET_CONNECT_PROJECT_ID` in `.env`
 - Verify wallet network (should be Sepolia)
 - Clear browser cache & wallet cache
 
 **5. Storage upload failures**
-- Verify Firebase credentials in `.env.local`
+- Verify Firebase credentials in `.env`
 - Check Firebase project permissions
 - For IPFS migration: Verify `VITE_PINATA_JWT` token
 - Test with smaller files first
@@ -897,7 +895,7 @@ This project is licensed under the MIT License.
 
 **Project Links:**
 - **Repository**: [github.com/erzawansyah/fhedback](https://github.com/erzawansyah/fhedback)
-- **Live Demo**: [fhedback.vercel.app](https://fhedback.vercel.app)
+- **Demo (archived)**: [fhedback.vercel.app](https://fhedback.vercel.app)
 - **Website**: [mew3.xyz](https://mew3.xyz)
 
 **Connect with the Developer:**

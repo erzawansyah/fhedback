@@ -4,7 +4,20 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Solidity](https://img.shields.io/badge/Solidity-%5E0.8.24-orange)](https://docs.soliditylang.org/)
-[![Live Demo](https://img.shields.io/badge/demo-live-success)](https://fhedback.vercel.app)
+[![Demo](https://img.shields.io/badge/demo-archived-lightgrey)](https://fhedback.vercel.app)
+[![Zama Developer Program](https://img.shields.io/badge/Zama%20Developer%20Program-winner%20Oct%202025-yellow)](https://zama.ai/)
+[![CI](https://github.com/erzawansyah/fhedback/actions/workflows/ci.yml/badge.svg)](https://github.com/erzawansyah/fhedback/actions/workflows/ci.yml)
+
+---
+
+## 📌 Status Proyek
+
+**Dibekukan (demo diarsipkan).** FHEdback memenangkan Zama Developer Program pada Oktober 2025 dan kini disimpan sebagai implementasi referensi.
+
+- Dibangun untuk **FHEVM v0.9** dengan `@zama-fhe/relayer-sdk` **0.3.0-5** di Sepolia. Versi ini sengaja dikunci.
+- Relayer Sepolia milik Zama sudah berubah sejak itu. [Demo](https://fhedback.vercel.app) masih bisa dibuka, tetapi membuat, mengisi, dan mendekripsi survey tidak lagi berjalan di sana.
+- Contract masih bisa di-compile dan test suite berjalan di atas mock FHEVM lokal (lihat [contracts/README.md](contracts/README.md)).
+- Menghidupkan kembali demo berarti meng-upgrade stack FHEVM dan men-deploy ulang factory. Itu belum direncanakan.
 
 ---
 
@@ -86,9 +99,11 @@ Pembuat survey mendapatkan insights statistik yang akurat tanpa pernah bisa meli
 
 ---
 
-## 🔗 Live Demo & Smart Contracts
+## 🔗 Demo & Smart Contracts
 
-### 🌐 Aplikasi Live
+> Demo dan contract di bawah berasal dari submission Developer Program (FHEVM v0.9). Lihat [Status Proyek](#-status-proyek): demo masih bisa dibuka, tetapi operasi FHE tidak lagi berjalan dengan relayer Sepolia saat ini.
+
+### 🌐 Demo (diarsipkan)
 
 **Frontend Demo:**
 - **Primary**: [https://fhedback.vercel.app](https://fhedback.vercel.app)
@@ -102,7 +117,7 @@ Pembuat survey mendapatkan insights statistik yang akurat tanpa pernah bisa meli
 
 ```
 Address:  0x82C34294A1D9c8e38B43CE916D0C566416b1d7DC
-Status:   ✅ Active
+Status:   Ter-deploy (FHEVM v0.9, tidak lagi dilayani relayer saat ini)
 Network:  Sepolia Testnet
 Purpose:  Factory untuk membuat survey contracts baru
 Explorer: https://eth-sepolia.blockscout.com/address/0x82C34294A1D9c8e38B43CE916D0C566416b1d7DC
@@ -112,7 +127,7 @@ Explorer: https://eth-sepolia.blockscout.com/address/0x82C34294A1D9c8e38B43CE916
 
 ```
 Address:  0x1d1eBa567d9797e344AEBed9e29b8966B7084960
-Status:   ✅ Active Survey Instance
+Status:   Contoh instance survey (FHEVM v0.9)
 Explorer: https://eth-sepolia.blockscout.com/address/0x1d1eBa567d9797e344AEBed9e29b8966B7084960
 ```
 
@@ -160,6 +175,8 @@ Untuk dokumentasi teknis lengkap, silakan tinjau README di masing-masing direkto
 
 ### Untuk Pengguna (Non-Technical)
 
+> Alur ini menggambarkan cara aplikasi bekerja selama Developer Program. Alur ini tidak lagi bisa diselesaikan di demo yang diarsipkan.
+
 1. **Akses aplikasi**: Buka [fhedback.vercel.app](https://fhedback.vercel.app)
 2. **Connect wallet**: Sambungkan wallet MetaMask atau lainnya
 3. **Buat survey**: Gunakan form builder untuk membuat survey
@@ -171,6 +188,8 @@ Untuk dokumentasi teknis lengkap, silakan tinjau README di masing-masing direkto
 Lihat dokumentasi lengkap di:
 - **Smart Contracts**: [contracts/README.md](contracts/README.md)
 - **Frontend**: [frontend/README.md](frontend/README.md)
+
+Daftar area pengembangan potensial (tipe pertanyaan baru, insentif, pencegahan bot, statistik lanjutan, BeaconProxy) ada di [README.md](README.md#-potential-development-areas).
 
 ---
 
@@ -186,9 +205,21 @@ Kontribusi sangat diterima! Silakan:
 
 ---
 
-## 📄 License
+## 🗂️ Riwayat
 
-Project ini menggunakan **MIT License**.
+FHEdback berkembang dari tiga eksperimen sebelumnya, yang kini disimpan di [`_legacy/`](_legacy/README.md):
+
+- `questionnaire_contracts` → `_legacy/contracts/questionnaire` (contract lengkap pertama, Developer Program Level 3)
+- `zama-fhe-contract` → `_legacy/contracts/zama-fhe` (eksperimen FHE pertama)
+- `questionnaire_frontend` → `_legacy/frontend_legacy` (frontend pertama)
+
+---
+
+## 📄 Lisensi
+
+Kode milik FHEdback dirilis dengan [MIT License](LICENSE), termasuk smart contract Solidity di `contracts/contracts/` (header SPDX `MIT`).
+
+Scaffold `contracts/` (konfigurasi Hardhat, tasks, dan tooling) diturunkan dari [fhevm-hardhat-template](https://github.com/zama-ai/fhevm-hardhat-template) milik Zama dan tetap memakai lisensi aslinya, [BSD-3-Clause-Clear](contracts/LICENSE). Karena itu `contracts/package.json` mencantumkan `(MIT AND BSD-3-Clause-Clear)`.
 
 ---
 
@@ -203,7 +234,7 @@ Project ini menggunakan **MIT License**.
 ## 📞 Contact
 
 - **Repository**: [github.com/erzawansyah/fhedback](https://github.com/erzawansyah/fhedback)
-- **Live Demo**: [fhedback.vercel.app](https://fhedback.vercel.app)
+- **Demo (diarsipkan)**: [fhedback.vercel.app](https://fhedback.vercel.app)
 - **Owner**: [@erzawansyah](https://github.com/erzawansyah)
 
 ---

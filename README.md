@@ -303,9 +303,9 @@ FHEdback grew out of three earlier experiments, now preserved in [`_legacy/`](_l
 
 ## 📄 License
 
-FHEdback's own code is released under the [MIT License](LICENSE).
+FHEdback's own code is released under the [MIT License](LICENSE), including the Solidity contracts in `contracts/contracts/` (SPDX `MIT`).
 
-The `contracts/` scaffold is derived from Zama's [fhevm-hardhat-template](https://github.com/zama-ai/fhevm-hardhat-template) and keeps its original [BSD-3-Clause-Clear license](contracts/LICENSE).
+The `contracts/` scaffold (Hardhat configuration, tasks, and tooling) is derived from Zama's [fhevm-hardhat-template](https://github.com/zama-ai/fhevm-hardhat-template) and keeps its original [BSD-3-Clause-Clear license](contracts/LICENSE). That is why `contracts/package.json` declares `(MIT AND BSD-3-Clause-Clear)`.
 
 ---
 
