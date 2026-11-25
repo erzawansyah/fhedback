@@ -7,6 +7,7 @@ import NotFound from './components/NotFound'
 import '@rainbow-me/rainbowkit/styles.css';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
 import { FhevmProvider } from './services/fhevm/FhevmProvider'
+import ArchiveBanner from './components/ArchiveBanner'
 
 // Create a new router instance
 const router = createRouter({
@@ -26,6 +27,7 @@ const queryClient = new QueryClient()
 function App() {
   return (
     <>
+      <ArchiveBanner />
       <WagmiProvider config={wagmiConfig}>
         <QueryClientProvider client={queryClient}>
           <RainbowKitProvider>

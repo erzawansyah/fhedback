@@ -4,7 +4,20 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Solidity](https://img.shields.io/badge/Solidity-%5E0.8.24-orange)](https://docs.soliditylang.org/)
-[![Live Demo](https://img.shields.io/badge/demo-live-success)](https://fhedback.vercel.app)
+[![Demo](https://img.shields.io/badge/demo-archived-lightgrey)](https://fhedback.vercel.app)
+[![Zama Developer Program](https://img.shields.io/badge/Zama%20Developer%20Program-winner%20Oct%202025-yellow)](https://zama.ai/)
+[![CI](https://github.com/erzawansyah/fhedback/actions/workflows/ci.yml/badge.svg)](https://github.com/erzawansyah/fhedback/actions/workflows/ci.yml)
+
+---
+
+## 📌 Project Status
+
+**Frozen (archived demo).** FHEdback won the Zama Developer Program in October 2025 and is kept as a reference implementation.
+
+- Built for **FHEVM v0.9** with `@zama-fhe/relayer-sdk` **0.3.0-5** on Sepolia. These versions are pinned on purpose.
+- Zama's Sepolia relayer has since changed. The [demo](https://fhedback.vercel.app) still loads, but creating, answering, and decrypting surveys no longer works there.
+- Contracts still compile and the test suite runs against the local FHEVM mock (see [contracts/README.md](contracts/README.md)).
+- Reviving the live demo means upgrading the FHEVM stack and redeploying the factory. That is not planned right now.
 
 ---
 
@@ -86,9 +99,11 @@ Survey creators get accurate statistical insights without ever being able to vie
 
 ---
 
-## 🔗 Live Demo & Smart Contracts
+## 🔗 Demo & Smart Contracts
 
-### 🌐 Live Application
+> The demo and contracts below are from the Developer Program submission (FHEVM v0.9). See [Project Status](#-project-status): the demo loads, but FHE operations no longer work against today's Sepolia relayer.
+
+### 🌐 Demo (archived)
 
 **Frontend Demo:**
 - **Primary**: [https://fhedback.vercel.app](https://fhedback.vercel.app)
@@ -102,7 +117,7 @@ Survey creators get accurate statistical insights without ever being able to vie
 
 ```
 Address:  0x82C34294A1D9c8e38B43CE916D0C566416b1d7DC
-Status:   ✅ Active
+Status:   Deployed (FHEVM v0.9, no longer served by the current relayer)
 Network:  Sepolia Testnet
 Purpose:  Factory to create new survey contracts
 Explorer: https://eth-sepolia.blockscout.com/address/0x82C34294A1D9c8e38B43CE916D0C566416b1d7DC
@@ -112,7 +127,7 @@ Explorer: https://eth-sepolia.blockscout.com/address/0x82C34294A1D9c8e38B43CE916
 
 ```
 Address:  0x1d1eBa567d9797e344AEBed9e29b8966B7084960
-Status:   ✅ Active Survey Instance
+Status:   Example survey instance (FHEVM v0.9)
 Explorer: https://eth-sepolia.blockscout.com/address/0x1d1eBa567d9797e344AEBed9e29b8966B7084960
 ```
 
@@ -159,6 +174,8 @@ For complete technical documentation, please review the README in each directory
 ## 🚀 Quick Start
 
 ### For Users (Non-Technical)
+
+> This flow describes how the app worked during the Developer Program. It no longer completes on the archived demo.
 
 1. **Access application**: Visit [fhedback.vercel.app](https://fhedback.vercel.app)
 2. **Connect wallet**: Connect your MetaMask or other wallet
@@ -274,9 +291,21 @@ Contributions are very welcome! Please:
 
 ---
 
+## 🗂️ History
+
+FHEdback grew out of three earlier experiments, now preserved in [`_legacy/`](_legacy/README.md):
+
+- `questionnaire_contracts` → `_legacy/contracts/questionnaire` (first complete contract, Developer Program Level 3)
+- `zama-fhe-contract` → `_legacy/contracts/zama-fhe` (first FHE experiments)
+- `questionnaire_frontend` → `_legacy/frontend_legacy` (first frontend)
+
+---
+
 ## 📄 License
 
-This project uses **MIT License**.
+FHEdback's own code is released under the [MIT License](LICENSE), including the Solidity contracts in `contracts/contracts/` (SPDX `MIT`).
+
+The `contracts/` scaffold (Hardhat configuration, tasks, and tooling) is derived from Zama's [fhevm-hardhat-template](https://github.com/zama-ai/fhevm-hardhat-template) and keeps its original [BSD-3-Clause-Clear license](contracts/LICENSE). That is why `contracts/package.json` declares `(MIT AND BSD-3-Clause-Clear)`.
 
 ---
 
@@ -292,7 +321,7 @@ This project uses **MIT License**.
 
 **Project Links:**
 - **Repository**: [github.com/erzawansyah/fhedback](https://github.com/erzawansyah/fhedback)
-- **Live Demo**: [fhedback.vercel.app](https://fhedback.vercel.app)
+- **Demo (archived)**: [fhedback.vercel.app](https://fhedback.vercel.app)
 - **Website**: [mew3.xyz](https://mew3.xyz)
 
 **Connect with the Developer:**

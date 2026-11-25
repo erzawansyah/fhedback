@@ -1,10 +1,12 @@
 # 🔐 FHEdback Smart Contracts
 
+> **Status: frozen.** FHEdback is kept as an archived reference (FHEVM v0.9). The demo no longer performs FHE operations against the current Sepolia relayer. See the [root README](../README.md#-project-status).
+
 > Confidential Survey Platform powered by Zama's Fully Homomorphic Encryption (FHE). This directory contains all smart contracts, deployment scripts, tests, and development tools.
 
 [![Solidity](https://img.shields.io/badge/Solidity-%5E0.8.24-orange)](https://docs.soliditylang.org/)
 [![Hardhat](https://img.shields.io/badge/Hardhat-2.26.0-yellow)](https://hardhat.org/)
-[![FHEVM](https://img.shields.io/badge/FHEVM-0.7.0-purple)](https://docs.zama.ai/fhevm)
+[![FHEVM](https://img.shields.io/badge/FHEVM-0.9-purple)](https://docs.zama.ai/fhevm)
 
 ---
 
@@ -673,7 +675,10 @@ Contributions welcome! Please:
 
 ## 📄 License
 
-This project is licensed under **BSD-3-Clause-Clear License**.
+This directory is dual-sourced, so `package.json` declares `(MIT AND BSD-3-Clause-Clear)`:
+
+- The FHEdback Solidity contracts in `contracts/` (`ConfidentialSurvey`, `ConfidentialSurvey_Factory`, `modules/`) are **MIT** (see their SPDX headers and the [root LICENSE](../LICENSE)).
+- The Hardhat scaffold (configuration, tasks, tooling) is derived from Zama's [fhevm-hardhat-template](https://github.com/zama-ai/fhevm-hardhat-template) and keeps its **BSD-3-Clause-Clear** license (see [LICENSE](LICENSE)).
 
 ---
 
@@ -689,7 +694,7 @@ This project is licensed under **BSD-3-Clause-Clear License**.
 
 **Project Links:**
 - **Repository**: [github.com/erzawansyah/fhedback](https://github.com/erzawansyah/fhedback)
-- **Live Demo**: [fhedback.vercel.app](https://fhedback.vercel.app)
+- **Demo (archived)**: [fhedback.vercel.app](https://fhedback.vercel.app)
 - **Website**: [mew3.xyz](https://mew3.xyz)
 
 **Connect with the Developer:**
