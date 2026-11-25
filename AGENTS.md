@@ -34,7 +34,7 @@ cp .env.example .env   # fill Firebase + WalletConnect values
 npm run dev
 npm run build
 npm run lint
-npm run type-check
+npm run type-check     # run after a build/dev start: src/routeTree.gen.ts is generated and git-ignored
 ```
 
 ## Conventions
