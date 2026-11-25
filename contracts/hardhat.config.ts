@@ -112,6 +112,11 @@ const config: HardhatUserConfig = {
     outDir: "types",
     target: "ethers-v6",
   },
+  // FHE mock operations are slow; the default 40s timeout makes the larger
+  // lifecycle tests flaky on loaded machines and CI runners.
+  mocha: {
+    timeout: 180000,
+  },
 };
 
 export default config;
